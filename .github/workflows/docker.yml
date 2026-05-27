@@ -77,7 +77,7 @@ jobs:
             sudo docker run -d \
               --name baoyuimages \
               --restart unless-stopped \
-              -p 3000:3000 \
+              -p 6668:3000 \
               -v /opt/baoyuimages/data:/app/data \
               -e DATABASE_URL=file:/app/data/baoyuimages.db \
               "$IMAGE"
