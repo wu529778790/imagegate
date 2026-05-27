@@ -1,16 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Card, Col, Form, Input, Radio, Row, Select, Space, Typography, message, Spin } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
 const { TextArea } = Input;
 
+const PROVIDERS = [
+  { value: "zai", label: "Z.AI (智谱)" },
+  { value: "xiaomi", label: "Xiaomi" },
+];
+
 export default function GeneratePage() {
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        form.setFieldsValue({
+          provider: data.default_provider || "zai",
+          model: data.zai_model || "",
+          ar: data.default_ar || "1:1",
+          quality: data.default_quality || "2k",
+        });
+      });
+  }, [form]);
+
+  const handleProviderChange = (provider: string) => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        const modelKey = `${provider}_model`;
+        form.setFieldValue("model", data[modelKey] || "");
+      });
+  };
 
   const handleGenerate = async (values: {
     prompt: string;
@@ -66,9 +93,10 @@ export default function GeneratePage() {
               <Row gutter={16}>
                 <Col span={12}>
                   <Form.Item name="provider" label="Provider">
-                    <Select allowClear placeholder="Auto-detect">
-                      <Select.Option value="zai">Z.AI (智谱)</Select.Option>
-                      <Select.Option value="xiaomi">Xiaomi</Select.Option>
+                    <Select onChange={handleProviderChange}>
+                      {PROVIDERS.map((p) => (
+                        <Select.Option key={p.value} value={p.value}>{p.label}</Select.Option>
+                      ))}
                     </Select>
                   </Form.Item>
                 </Col>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getActiveKeyByProvider, addRecord, updateRecord } from "@/lib/db";
+import { getSetting, getActiveKeyByProvider, addRecord, updateRecord } from "@/lib/db";
 import { createProvider } from "@/providers";
 import type { Provider } from "@/providers";
 
@@ -16,29 +16,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "prompt is required" }, { status: 400 });
   }
 
+  // Resolve provider: from request > from settings > auto-detect from api_keys
   let providerName = requestedProvider as Provider | undefined;
-  let apiKeyRecord;
+  let apiKey: string | undefined;
 
   if (providerName) {
-    apiKeyRecord = getActiveKeyByProvider(providerName);
+    // Try settings table first, then api_keys table
+    apiKey = getSetting(`${providerName}_api_key`) ?? undefined;
+    if (!apiKey) {
+      const keyRecord = getActiveKeyByProvider(providerName);
+      apiKey = keyRecord?.api_key;
+    }
   } else {
-    for (const name of ["zai", "xiaomi"] as Provider[]) {
-      apiKeyRecord = getActiveKeyByProvider(name);
-      if (apiKeyRecord) {
-        providerName = name;
-        break;
+    // Auto-detect: check settings first, then api_keys
+    const defaultProvider = (getSetting("default_provider") ?? "zai") as Provider;
+    apiKey = getSetting(`${defaultProvider}_api_key`) ?? undefined;
+    if (apiKey) {
+      providerName = defaultProvider;
+    } else {
+      for (const name of ["zai", "xiaomi"] as Provider[]) {
+        const keyRecord = getActiveKeyByProvider(name);
+        if (keyRecord) {
+          apiKey = keyRecord.api_key;
+          providerName = name;
+          break;
+        }
       }
     }
   }
 
-  if (!apiKeyRecord || !providerName) {
-    return NextResponse.json({ error: "No active API key found for provider" }, { status: 400 });
+  if (!apiKey || !providerName) {
+    return NextResponse.json({ error: "No API key configured. Go to Settings to add one." }, { status: 400 });
   }
 
-  const resolvedModel = model || DEFAULT_MODELS[providerName];
+  // Resolve model: from request > from settings > from provider default
+  const resolvedModel = model || getSetting(`${providerName}_model`) || DEFAULT_MODELS[providerName];
+
+  // Resolve base URL from settings
+  const baseUrl = getSetting(`${providerName}_base_url`) || undefined;
 
   const record = addRecord({
-    api_key_id: apiKeyRecord.id,
     provider: providerName,
     model: resolvedModel,
     prompt,
@@ -49,8 +66,8 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const provider = createProvider(providerName);
-    const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKeyRecord.api_key, { aspectRatio: ar, quality });
+    const provider = createProvider(providerName, { baseUrl });
+    const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality });
 
     const durationMs = Date.now() - startTime;
 

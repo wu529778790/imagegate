@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSetting, setSetting } from "@/lib/db";
 
-const SETTINGS_KEYS = ["default_provider", "default_quality", "default_ar", "zai_base_url", "xiaomi_base_url"];
+const SETTINGS_KEYS = [
+  "default_provider",
+  "default_quality",
+  "default_ar",
+  "zai_api_key",
+  "zai_base_url",
+  "zai_model",
+];
 
 export async function GET() {
   const settings: Record<string, string | null> = {};
