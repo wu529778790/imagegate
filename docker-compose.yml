@@ -1,0 +1,10 @@
+services:
+  image-api:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=file:/app/data/image-api.db
+    restart: unless-stopped
