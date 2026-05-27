@@ -14,6 +14,8 @@ RUN npm run build
 # Remove dev dependencies
 RUN npm prune --production
 
+RUN mkdir -p /app/data
+
 EXPOSE 3000
 
 ENV NODE_ENV=production
