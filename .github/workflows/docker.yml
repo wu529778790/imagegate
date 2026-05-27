@@ -69,6 +69,8 @@ jobs:
           script: |
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
             IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
+            sudo mkdir -p /opt/baoyuimages/data
+            sudo chmod 777 /opt/baoyuimages/data
             sudo docker pull "$IMAGE"
             sudo docker stop baoyuimages || true
             sudo docker rm baoyuimages || true
