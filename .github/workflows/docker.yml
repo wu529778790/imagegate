@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: baoyuImages
+  IMAGE_NAME: ${{ github.owner }}/baoyuImages
 
 jobs:
   build:
