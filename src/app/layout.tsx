@@ -41,27 +41,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   zIndex: 100,
                 }}
               >
-                <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <PictureOutlined style={{ color: "#fff", fontSize: 18 }} />
-                  </div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                  <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <PictureOutlined style={{ color: "#fff", fontSize: 18 }} />
+                    </div>
                     <Text strong style={{ fontSize: 20, letterSpacing: -0.5, color: "#1e1b4b" }}>
                       妙笔
                     </Text>
-                    <Text style={{ fontSize: 12, color: "#94a3b8" }}>一键生成小红书风格图片</Text>
-                  </div>
-                </Link>
+                  </Link>
+                  <Link href="/" style={{ color: "#64748b", fontSize: 14 }}>小红书</Link>
+                  <Link href="/infographic" style={{ color: "#64748b", fontSize: 14 }}>信息图</Link>
+                </div>
                 <Button icon={<SettingOutlined />} type="text" style={{ color: "#64748b" }} onClick={() => setSettingsOpen(true)}>
                   设置
                 </Button>
