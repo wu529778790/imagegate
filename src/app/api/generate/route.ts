@@ -96,10 +96,12 @@ export async function POST(request: NextRequest) {
     const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality, n, size });
 
     const durationMs = Date.now() - startTime;
+    const imageData = `data:image/png;base64,${imageBuffer.toString("base64")}`;
 
     updateRecord(record.id, {
       status: "success",
       duration_ms: durationMs,
+      image_url: imageData,
     });
 
     return NextResponse.json({
