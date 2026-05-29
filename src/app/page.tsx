@@ -129,32 +129,31 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
                 </Form.Item>
 
                 <Form.Item label={<span style={{ fontWeight: 500 }}>视觉风格</span>}>
-                  <Row gutter={[12, 12]}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
                     {XHS_STYLES.map(s => (
-                      <Col key={s.value} span={8}>
-                        <Tooltip title={s.description}>
-                          <div
-                            style={{
-                              border: previewStyle === s.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
-                              borderRadius: 8,
-                              overflow: "hidden",
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                            }}
-                            onClick={() => {
-                              setPreviewStyle(s.value);
-                              form.setFieldValue("style", s.value);
-                            }}
-                          >
-                            <img src={s.preview} alt={s.label} style={{ width: "100%", height: 100, objectFit: "cover" }} />
-                            <div style={{ padding: "6px 0", textAlign: "center", fontSize: 13, fontWeight: 500, background: "#fff" }}>
-                              {s.label}
-                            </div>
+                      <Tooltip key={s.value} title={s.description}>
+                        <div
+                          style={{
+                            border: previewStyle === s.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
+                            borderRadius: 8,
+                            overflow: "hidden",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            background: "#fff",
+                          }}
+                          onClick={() => {
+                            setPreviewStyle(s.value);
+                            form.setFieldValue("style", s.value);
+                          }}
+                        >
+                          <img src={s.preview} alt={s.label} style={{ width: "100%", height: 80, objectFit: "cover" }} />
+                          <div style={{ padding: "4px 0", textAlign: "center", fontSize: 12, fontWeight: 500 }}>
+                            {s.label}
                           </div>
-                        </Tooltip>
-                      </Col>
+                        </div>
+                      </Tooltip>
                     ))}
-                  </Row>
+                  </div>
                 </Form.Item>
 
                 <Form.Item name="style" hidden>
@@ -162,32 +161,31 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
                 </Form.Item>
 
                 <Form.Item label={<span style={{ fontWeight: 500 }}>信息布局</span>}>
-                  <Row gutter={[12, 12]}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
                     {XHS_LAYOUTS.map(l => (
-                      <Col key={l.value} span={8}>
-                        <Tooltip title={l.description}>
-                          <div
-                            style={{
-                              border: previewLayout === l.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
-                              borderRadius: 8,
-                              overflow: "hidden",
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                            }}
-                            onClick={() => {
-                              setPreviewLayout(l.value);
-                              form.setFieldValue("layout", l.value);
-                            }}
-                          >
-                            <img src={l.preview} alt={l.label} style={{ width: "100%", height: 100, objectFit: "cover" }} />
-                            <div style={{ padding: "6px 0", textAlign: "center", fontSize: 13, fontWeight: 500, background: "#fff" }}>
-                              {l.label}
-                            </div>
+                      <Tooltip key={l.value} title={l.description}>
+                        <div
+                          style={{
+                            border: previewLayout === l.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
+                            borderRadius: 8,
+                            overflow: "hidden",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            background: "#fff",
+                          }}
+                          onClick={() => {
+                            setPreviewLayout(l.value);
+                            form.setFieldValue("layout", l.value);
+                          }}
+                        >
+                          <img src={l.preview} alt={l.label} style={{ width: "100%", height: 80, objectFit: "cover" }} />
+                          <div style={{ padding: "4px 0", textAlign: "center", fontSize: 12, fontWeight: 500 }}>
+                            {l.label}
                           </div>
-                        </Tooltip>
-                      </Col>
+                        </div>
+                      </Tooltip>
                     ))}
-                  </Row>
+                  </div>
                 </Form.Item>
 
                 <Form.Item name="layout" hidden>
