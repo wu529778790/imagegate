@@ -1,14 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ConfigProvider, Layout, Button, Typography } from "antd";
 import { SettingOutlined, PictureOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import SettingsModal from "@/components/SettingsModal";
 
 const { Header, Content } = Layout;
 const { Text } = Typography;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   return (
     <html lang="zh-CN">
       <body style={{ margin: 0 }}>
@@ -55,16 +59,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     妙笔
                   </Text>
                 </Link>
-                <Link href="/settings">
-                  <Button icon={<SettingOutlined />} type="text" style={{ color: "#64748b" }}>
-                    设置
-                  </Button>
-                </Link>
+                <Button icon={<SettingOutlined />} type="text" style={{ color: "#64748b" }} onClick={() => setSettingsOpen(true)}>
+                  设置
+                </Button>
               </Header>
               <Content style={{ padding: 0 }}>
                 {children}
               </Content>
             </Layout>
+            <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
           </ConfigProvider>
         </AntdRegistry>
       </body>

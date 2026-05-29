@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Button, Card, Col, Form, Input, Row, Select, Typography, message, Space } from "antd";
+import { useEffect, useState } from "react";
+import { Button, Form, Input, Modal, Select, Space, message, Collapse, Typography } from "antd";
 import { SaveOutlined, LinkOutlined } from "@ant-design/icons";
 
-const { Title } = Typography;
+const { Text } = Typography;
 
 interface ProviderConfig {
   name: string;
@@ -127,52 +127,71 @@ const PROVIDERS: ProviderConfig[] = [
   },
 ];
 
-export default function SettingsPage() {
-  const [loading, setLoading] = useState(false);
-  const [globalForm] = Form.useForm();
-  const [zaiForm] = Form.useForm();
-  const [openaiForm] = Form.useForm();
-  const [googleForm] = Form.useForm();
-  const [openrouterForm] = Form.useForm();
-  const [dashscopeForm] = Form.useForm();
-  const [minimaxForm] = Form.useForm();
-  const [replicateForm] = Form.useForm();
-  const [jimengForm] = Form.useForm();
-  const [seedreamForm] = Form.useForm();
-  const [azureForm] = Form.useForm();
+interface SettingsModalProps {
+  open: boolean;
+  onClose: () => void;
+}
 
-  const providerForms = useMemo<Record<string, ReturnType<typeof Form.useForm>[0]>>(() => ({
-    zai: zaiForm,
-    openai: openaiForm,
-    google: googleForm,
-    openrouter: openrouterForm,
-    dashscope: dashscopeForm,
-    minimax: minimaxForm,
-    replicate: replicateForm,
-    jimeng: jimengForm,
-    seedream: seedreamForm,
-    azure: azureForm,
-  }), [zaiForm, openaiForm, googleForm, openrouterForm, dashscopeForm, minimaxForm, replicateForm, jimengForm, seedreamForm, azureForm]);
+// 创建一个子组件来渲染单个服务商配置
+function ProviderForm({ provider, loading, onSave }: { provider: ProviderConfig; loading: boolean; onSave: (provider: ProviderConfig, values: Record<string, string>) => Promise<void> }) {
+  const [form] = Form.useForm();
 
   useEffect(() => {
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
-        globalForm.setFieldsValue({
-          default_provider: data.default_provider,
-          default_quality: data.default_quality,
-          default_ar: data.default_ar,
-        });
-        for (const provider of PROVIDERS) {
-          const form = providerForms[provider.name];
-          const values: Record<string, string> = {};
-          for (const field of provider.fields) {
-            values[field.key] = data[field.key] ?? "";
-          }
-          form.setFieldsValue(values);
+        const values: Record<string, string> = {};
+        for (const field of provider.fields) {
+          values[field.key] = data[field.key] ?? "";
         }
+        form.setFieldsValue(values);
       });
-  }, [globalForm, providerForms]);
+  }, [form, provider.fields]);
+
+  return (
+    <Form form={form} layout="vertical" style={{ marginBottom: 0 }}>
+      <Space size={16} style={{ width: "100%" }}>
+        {provider.fields.map((field) => (
+          <Form.Item key={field.key} name={field.key} label={field.label} style={{ flex: 1 }}>
+            {field.type === "password" ? (
+              <Input.Password placeholder={field.placeholder} />
+            ) : (
+              <Input placeholder={field.placeholder} />
+            )}
+          </Form.Item>
+        ))}
+      </Space>
+      <Form.Item style={{ marginBottom: 0 }}>
+        <Button type="primary" loading={loading} onClick={async () => {
+          const values = await form.validateFields().catch(() => null);
+          if (values) {
+            await onSave(provider, values);
+          }
+        }} icon={<SaveOutlined />} size="small">
+          保存
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+}
+
+export default function SettingsModal({ open, onClose }: SettingsModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [globalForm] = Form.useForm();
+
+  useEffect(() => {
+    if (open) {
+      fetch("/api/settings")
+        .then((res) => res.json())
+        .then((data) => {
+          globalForm.setFieldsValue({
+            default_provider: data.default_provider,
+            default_quality: data.default_quality,
+            default_ar: data.default_ar,
+          });
+        });
+    }
+  }, [open, globalForm]);
 
   const handleSaveGlobal = async (values: Record<string, string>) => {
     setLoading(true);
@@ -194,11 +213,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveProvider = async (provider: ProviderConfig) => {
-    const form = providerForms[provider.name];
-    const values = await form.validateFields().catch(() => null);
-    if (!values) return;
-
+  const handleSaveProvider = async (provider: ProviderConfig, values: Record<string, string>) => {
     setLoading(true);
     try {
       const res = await fetch("/api/settings", {
@@ -219,100 +234,73 @@ export default function SettingsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 0" }}>
-      <Title level={3} style={{ marginBottom: 24, fontWeight: 600 }}>设置</Title>
-
+    <Modal
+      title="设置"
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      width={700}
+      styles={{ body: { maxHeight: "calc(100vh - 200px)", overflowY: "auto" } }}
+    >
       {/* 全局默认设置 */}
-      <Card
-        title={<span style={{ fontWeight: 600 }}>全局默认</span>}
-        bordered={false}
-        style={{ borderRadius: 12, marginBottom: 24 }}
-      >
+      <div style={{ marginBottom: 24 }}>
+        <Text strong style={{ fontSize: 14, marginBottom: 12, display: "block" }}>全局默认</Text>
         <Form form={globalForm} layout="vertical" onFinish={handleSaveGlobal}>
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="default_provider" label={<span style={{ fontWeight: 500 }}>默认服务商</span>}>
-                <Select allowClear placeholder="自动检测">
-                  {PROVIDERS.map((p) => (
-                    <Select.Option key={p.name} value={p.name}>{p.label}</Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="default_quality" label={<span style={{ fontWeight: 500 }}>默认质量</span>}>
-                <Select allowClear placeholder="2k">
-                  <Select.Option value="normal">普通</Select.Option>
-                  <Select.Option value="2k">2K</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="default_ar" label={<span style={{ fontWeight: 500 }}>默认宽高比</span>}>
-                <Select allowClear placeholder="1:1">
-                  <Select.Option value="1:1">1:1</Select.Option>
-                  <Select.Option value="16:9">16:9</Select.Option>
-                  <Select.Option value="9:16">9:16</Select.Option>
-                  <Select.Option value="4:3">4:3</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+          <Space size={16} style={{ width: "100%" }}>
+            <Form.Item name="default_provider" label="默认服务商" style={{ flex: 1 }}>
+              <Select allowClear placeholder="自动检测">
+                {PROVIDERS.map((p) => (
+                  <Select.Option key={p.name} value={p.name}>{p.label}</Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item name="default_quality" label="默认质量" style={{ flex: 1 }}>
+              <Select allowClear placeholder="2k">
+                <Select.Option value="normal">普通</Select.Option>
+                <Select.Option value="2k">2K</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="default_ar" label="默认宽高比" style={{ flex: 1 }}>
+              <Select allowClear placeholder="1:1">
+                <Select.Option value="1:1">1:1</Select.Option>
+                <Select.Option value="16:9">16:9</Select.Option>
+                <Select.Option value="9:16">9:16</Select.Option>
+                <Select.Option value="4:3">4:3</Select.Option>
+              </Select>
+            </Form.Item>
+          </Space>
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />} style={{ borderRadius: 8 }}>
+            <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />} size="small">
               保存全局设置
             </Button>
           </Form.Item>
         </Form>
-      </Card>
-
-      {/* 服务商配置 */}
-      <div style={{ marginBottom: 16 }}>
-        <Title level={4} style={{ marginBottom: 16, fontWeight: 600 }}>服务商配置</Title>
       </div>
 
-      {PROVIDERS.map((provider) => (
-        <Card
-          key={provider.name}
-          bordered={false}
-          style={{ borderRadius: 12, marginBottom: 16 }}
-          title={
-            <Space size={12}>
-              <div style={{ width: 6, height: 24, borderRadius: 3, background: provider.color }} />
-              <span style={{ fontWeight: 600 }}>{provider.label}</span>
+      {/* 服务商配置 */}
+      <Collapse
+        items={PROVIDERS.map((provider) => ({
+          key: provider.name,
+          label: (
+            <Space>
+              <div style={{ width: 6, height: 16, borderRadius: 3, background: provider.color }} />
+              <Text strong>{provider.label}</Text>
               <a
                 href={provider.developerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}
+                onClick={(e) => e.stopPropagation()}
+                style={{ fontSize: 12, color: "#64748b" }}
               >
                 <LinkOutlined /> 开发者中心
               </a>
             </Space>
-          }
-          extra={
-            <Button type="primary" loading={loading} onClick={() => handleSaveProvider(provider)} icon={<SaveOutlined />} style={{ borderRadius: 8 }}>
-              保存
-            </Button>
-          }
-        >
-          <Form form={providerForms[provider.name]} layout="vertical" style={{ marginBottom: 0 }}>
-            <Row gutter={16}>
-              {provider.fields.map((field) => (
-                <Col key={field.key} span={8}>
-                  <Form.Item name={field.key} label={<span style={{ fontWeight: 500 }}>{field.label}</span>}>
-                    {field.type === "password" ? (
-                      <Input.Password placeholder={field.placeholder} />
-                    ) : (
-                      <Input placeholder={field.placeholder} />
-                    )}
-                  </Form.Item>
-                </Col>
-              ))}
-            </Row>
-          </Form>
-        </Card>
-      ))}
-    </div>
+          ),
+          children: (
+            <ProviderForm provider={provider} loading={loading} onSave={handleSaveProvider} />
+          ),
+        }))}
+      />
+    </Modal>
   );
 }
