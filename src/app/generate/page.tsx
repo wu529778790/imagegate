@@ -9,6 +9,15 @@ const { TextArea } = Input;
 
 const PROVIDERS = [
   { value: "zai", label: "Z.AI (智谱)" },
+  { value: "openai", label: "OpenAI" },
+  { value: "google", label: "Google (Gemini)" },
+  { value: "openrouter", label: "OpenRouter" },
+  { value: "dashscope", label: "DashScope (通义万相)" },
+  { value: "minimax", label: "MiniMax" },
+  { value: "replicate", label: "Replicate" },
+  { value: "jimeng", label: "即梦 (Jimeng)" },
+  { value: "seedream", label: "豆包 Seedream" },
+  { value: "azure", label: "Azure OpenAI" },
 ];
 
 const ASPECT_RATIOS = [

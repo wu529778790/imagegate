@@ -24,13 +24,124 @@ const PROVIDERS: ProviderConfig[] = [
       { key: "zai_model", label: "模型", placeholder: "cogview-3" },
     ],
   },
+  {
+    name: "openai",
+    label: "OpenAI",
+    color: "#10a37f",
+    fields: [
+      { key: "openai_api_key", label: "API Key", placeholder: "输入 OpenAI API Key", type: "password" },
+      { key: "openai_base_url", label: "Base URL", placeholder: "https://api.openai.com/v1" },
+      { key: "openai_model", label: "模型", placeholder: "gpt-image-2" },
+    ],
+  },
+  {
+    name: "google",
+    label: "Google (Gemini)",
+    color: "#4285f4",
+    fields: [
+      { key: "google_api_key", label: "API Key", placeholder: "输入 Google API Key", type: "password" },
+      { key: "google_base_url", label: "Base URL", placeholder: "https://generativelanguage.googleapis.com/v1beta" },
+      { key: "google_model", label: "模型", placeholder: "gemini-2.0-flash-preview-image-generation" },
+    ],
+  },
+  {
+    name: "openrouter",
+    label: "OpenRouter",
+    color: "#ff6b35",
+    fields: [
+      { key: "openrouter_api_key", label: "API Key", placeholder: "输入 OpenRouter API Key", type: "password" },
+      { key: "openrouter_base_url", label: "Base URL", placeholder: "https://openrouter.ai/api/v1" },
+      { key: "openrouter_model", label: "模型", placeholder: "google/gemini-2.0-flash-preview-image-generation" },
+    ],
+  },
+  {
+    name: "dashscope",
+    label: "DashScope (通义万相)",
+    color: "#ff6a00",
+    fields: [
+      { key: "dashscope_api_key", label: "API Key", placeholder: "输入 DashScope API Key", type: "password" },
+      { key: "dashscope_base_url", label: "Base URL", placeholder: "https://dashscope.aliyuncs.com/api/v1" },
+      { key: "dashscope_model", label: "模型", placeholder: "qwen-image-2.0-pro" },
+    ],
+  },
+  {
+    name: "minimax",
+    label: "MiniMax",
+    color: "#6366f1",
+    fields: [
+      { key: "minimax_api_key", label: "API Key", placeholder: "输入 MiniMax API Key", type: "password" },
+      { key: "minimax_base_url", label: "Base URL", placeholder: "https://api.minimax.chat" },
+      { key: "minimax_model", label: "模型", placeholder: "image-01" },
+    ],
+  },
+  {
+    name: "replicate",
+    label: "Replicate",
+    color: "#000000",
+    fields: [
+      { key: "replicate_api_key", label: "API Token", placeholder: "输入 Replicate API Token", type: "password" },
+      { key: "replicate_base_url", label: "Base URL", placeholder: "https://api.replicate.com/v1" },
+      { key: "replicate_model", label: "模型", placeholder: "google/nano-banana-2" },
+    ],
+  },
+  {
+    name: "jimeng",
+    label: "即梦 (Jimeng)",
+    color: "#3b82f6",
+    fields: [
+      { key: "jimeng_api_key", label: "API Key (AccessKey:SecretKey)", placeholder: "输入即梦 AccessKey:SecretKey", type: "password" },
+      { key: "jimeng_base_url", label: "Base URL", placeholder: "https://visual.volcengineapi.com" },
+      { key: "jimeng_model", label: "模型", placeholder: "jimeng_t2i_v40" },
+    ],
+  },
+  {
+    name: "seedream",
+    label: "豆包 Seedream",
+    color: "#00d4aa",
+    fields: [
+      { key: "seedream_api_key", label: "API Key", placeholder: "输入豆包 ARK API Key", type: "password" },
+      { key: "seedream_base_url", label: "Base URL", placeholder: "https://ark.cn-beijing.volces.com/api/v3" },
+      { key: "seedream_model", label: "模型", placeholder: "doubao-seedream-5-0-260128" },
+    ],
+  },
+  {
+    name: "azure",
+    label: "Azure OpenAI",
+    color: "#0078d4",
+    fields: [
+      { key: "azure_api_key", label: "API Key", placeholder: "输入 Azure OpenAI API Key", type: "password" },
+      { key: "azure_base_url", label: "Endpoint", placeholder: "https://your-resource.openai.azure.com" },
+      { key: "azure_model", label: "Deployment", placeholder: "gpt-image-2" },
+    ],
+  },
 ];
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [globalForm] = Form.useForm();
   const [zaiForm] = Form.useForm();
-  const providerForms = useMemo<Record<string, ReturnType<typeof Form.useForm>[0]>>(() => ({ zai: zaiForm }), [zaiForm]);
+  const [openaiForm] = Form.useForm();
+  const [googleForm] = Form.useForm();
+  const [openrouterForm] = Form.useForm();
+  const [dashscopeForm] = Form.useForm();
+  const [minimaxForm] = Form.useForm();
+  const [replicateForm] = Form.useForm();
+  const [jimengForm] = Form.useForm();
+  const [seedreamForm] = Form.useForm();
+  const [azureForm] = Form.useForm();
+
+  const providerForms = useMemo<Record<string, ReturnType<typeof Form.useForm>[0]>>(() => ({
+    zai: zaiForm,
+    openai: openaiForm,
+    google: googleForm,
+    openrouter: openrouterForm,
+    dashscope: dashscopeForm,
+    minimax: minimaxForm,
+    replicate: replicateForm,
+    jimeng: jimengForm,
+    seedream: seedreamForm,
+    azure: azureForm,
+  }), [zaiForm, openaiForm, googleForm, openrouterForm, dashscopeForm, minimaxForm, replicateForm, jimengForm, seedreamForm, azureForm]);
 
   useEffect(() => {
     fetch("/api/settings")

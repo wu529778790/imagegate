@@ -14,9 +14,27 @@
 
 import type { GenerateImageOptions, ImageProvider, Provider } from "./types";
 import { ZaiProvider } from "./zai";
+import { OpenAIProvider } from "./openai";
+import { GoogleProvider } from "./google";
+import { OpenRouterProvider } from "./openrouter";
+import { DashScopeProvider } from "./dashscope";
+import { MiniMaxProvider } from "./minimax";
+import { ReplicateProvider } from "./replicate";
+import { JimengProvider } from "./jimeng";
+import { SeedreamProvider } from "./seedream";
+import { AzureProvider } from "./azure";
 
 export type { GenerateImageOptions, ImageProvider, Provider, ProviderError } from "./types";
 export { ZaiProvider } from "./zai";
+export { OpenAIProvider } from "./openai";
+export { GoogleProvider } from "./google";
+export { OpenRouterProvider } from "./openrouter";
+export { DashScopeProvider } from "./dashscope";
+export { MiniMaxProvider } from "./minimax";
+export { ReplicateProvider } from "./replicate";
+export { JimengProvider } from "./jimeng";
+export { SeedreamProvider } from "./seedream";
+export { AzureProvider } from "./azure";
 
 // ---------------------------------------------------------------------------
 // Provider factory
@@ -32,6 +50,15 @@ export interface ProviderConfig {
 /** Single source of truth for all provider constructors. Each factory creates a provider from config. */
 const PROVIDER_REGISTRY: Record<Provider, (config?: ProviderConfig) => ImageProvider> = {
   zai: (config) => new ZaiProvider(config?.baseUrl),
+  openai: (config) => new OpenAIProvider(config?.baseUrl),
+  google: (config) => new GoogleProvider(config?.baseUrl),
+  openrouter: (config) => new OpenRouterProvider(config?.baseUrl),
+  dashscope: (config) => new DashScopeProvider(config?.baseUrl),
+  minimax: (config) => new MiniMaxProvider(config?.baseUrl),
+  replicate: (config) => new ReplicateProvider(config?.baseUrl),
+  jimeng: (config) => new JimengProvider({ baseUrl: config?.baseUrl }),
+  seedream: (config) => new SeedreamProvider(config?.baseUrl),
+  azure: (config) => new AzureProvider({ baseUrl: config?.baseUrl }),
 };
 
 /**

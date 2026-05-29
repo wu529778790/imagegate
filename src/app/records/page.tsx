@@ -96,6 +96,15 @@ export default function RecordsPage() {
             onChange={setProviderFilter}
             options={[
               { value: "zai", label: "Z.AI" },
+              { value: "openai", label: "OpenAI" },
+              { value: "google", label: "Google" },
+              { value: "openrouter", label: "OpenRouter" },
+              { value: "dashscope", label: "DashScope" },
+              { value: "minimax", label: "MiniMax" },
+              { value: "replicate", label: "Replicate" },
+              { value: "jimeng", label: "即梦" },
+              { value: "seedream", label: "豆包" },
+              { value: "azure", label: "Azure" },
             ]}
           />
           <Select

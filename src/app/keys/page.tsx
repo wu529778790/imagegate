@@ -163,6 +163,15 @@ export default function KeysPage() {
           <Form.Item name="provider" label={<span style={{ fontWeight: 500 }}>服务商</span>} rules={[{ required: true, message: "请选择服务商" }]}>
             <Select placeholder="选择服务商">
               <Select.Option value="zai">Z.AI (智谱)</Select.Option>
+              <Select.Option value="openai">OpenAI</Select.Option>
+              <Select.Option value="google">Google (Gemini)</Select.Option>
+              <Select.Option value="openrouter">OpenRouter</Select.Option>
+              <Select.Option value="dashscope">DashScope (通义万相)</Select.Option>
+              <Select.Option value="minimax">MiniMax</Select.Option>
+              <Select.Option value="replicate">Replicate</Select.Option>
+              <Select.Option value="jimeng">即梦 (Jimeng)</Select.Option>
+              <Select.Option value="seedream">豆包 Seedream</Select.Option>
+              <Select.Option value="azure">Azure OpenAI</Select.Option>
             </Select>
           </Form.Item>
           <Form.Item name="api_key" label={<span style={{ fontWeight: 500 }}>API Key</span>} rules={[{ required: true, message: "请输入 API Key" }]}>

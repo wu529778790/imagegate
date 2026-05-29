@@ -1,5 +1,15 @@
 /** Supported image generation providers. */
-export type Provider = "zai";
+export type Provider =
+  | "zai"
+  | "openai"
+  | "google"
+  | "openrouter"
+  | "dashscope"
+  | "minimax"
+  | "replicate"
+  | "jimeng"
+  | "seedream"
+  | "azure";
 
 /** Quality preset for image generation. */
 export type Quality = "normal" | "2k";

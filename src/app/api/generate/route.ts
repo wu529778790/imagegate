@@ -5,9 +5,29 @@ import type { Provider } from "@/providers";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
   zai: "cogview-3",
+  openai: "gpt-image-2",
+  google: "gemini-2.0-flash-preview-image-generation",
+  openrouter: "google/gemini-2.0-flash-preview-image-generation",
+  dashscope: "qwen-image-2.0-pro",
+  minimax: "image-01",
+  replicate: "google/nano-banana-2",
+  jimeng: "jimeng_t2i_v40",
+  seedream: "doubao-seedream-5-0-260128",
+  azure: "gpt-image-2",
 };
 
-const VALID_PROVIDERS: Provider[] = ["zai"];
+const VALID_PROVIDERS: Provider[] = [
+  "zai",
+  "openai",
+  "google",
+  "openrouter",
+  "dashscope",
+  "minimax",
+  "replicate",
+  "jimeng",
+  "seedream",
+  "azure",
+];
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -39,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (apiKey) {
       providerName = defaultProvider;
     } else {
-      for (const name of ["zai"] as Provider[]) {
+      for (const name of VALID_PROVIDERS) {
         const keyRecord = getActiveKeyByProvider(name);
         if (keyRecord) {
           apiKey = keyRecord.api_key;
