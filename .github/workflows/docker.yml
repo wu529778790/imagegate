@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/baoyuImages
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
@@ -69,20 +69,21 @@ jobs:
           script: |
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
             IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
-            sudo mkdir -p /opt/baoyuimages/data
-            sudo chmod 700 /opt/baoyuimages/data
+            CONTAINER_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]' | sed 's|.*/||')
+            sudo mkdir -p /opt/${CONTAINER_NAME}/data
+            sudo chmod 700 /opt/${CONTAINER_NAME}/data
             sudo docker pull "$IMAGE"
-            sudo docker stop BaoyuImages || true
-            sudo docker rm BaoyuImages || true
+            sudo docker stop ${CONTAINER_NAME} || true
+            sudo docker rm ${CONTAINER_NAME} || true
             sudo docker run -d \
-              --name BaoyuImages \
+              --name ${CONTAINER_NAME} \
               --restart unless-stopped \
               -p 6668:3000 \
-              -v /opt/baoyuimages/data:/app/data \
+              -v /opt/${CONTAINER_NAME}/data:/app/data \
               -e DATABASE_URL=file:/app/data/baoyuimages.db \
               "$IMAGE"
             sudo docker image prune -f
             echo "=== Container Status ==="
-            sudo docker ps -a --filter name=BaoyuImages
+            sudo docker ps -a --filter name=${CONTAINER_NAME}
             echo "=== Container Logs ==="
-            sudo docker logs BaoyuImages --tail 30
+            sudo docker logs ${CONTAINER_NAME} --tail 30
