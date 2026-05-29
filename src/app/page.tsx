@@ -249,7 +249,7 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
                         </Form.Item>
 
                         <Form.Item label={<span style={{ fontWeight: 500 }}>视觉风格</span>}>
-                          <Row gutter={[8, 8]}>
+                          <Row gutter={[12, 12]}>
                             {XHS_STYLES.map(s => (
                               <Col key={s.value} span={8}>
                                 <Tooltip title={s.description}>
@@ -266,8 +266,8 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
                                       xhsForm.setFieldValue("style", s.value);
                                     }}
                                   >
-                                    <img src={s.preview} alt={s.label} style={{ width: "100%", height: 60, objectFit: "cover" }} />
-                                    <div style={{ padding: "4px 0", textAlign: "center", fontSize: 12, background: "#fff" }}>
+                                    <img src={s.preview} alt={s.label} style={{ width: "100%", height: 100, objectFit: "cover" }} />
+                                    <div style={{ padding: "6px 0", textAlign: "center", fontSize: 13, fontWeight: 500, background: "#fff" }}>
                                       {s.label}
                                     </div>
                                   </div>
@@ -282,7 +282,7 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
                         </Form.Item>
 
                         <Form.Item label={<span style={{ fontWeight: 500 }}>信息布局</span>}>
-                          <Row gutter={[8, 8]}>
+                          <Row gutter={[12, 12]}>
                             {XHS_LAYOUTS.map(l => (
                               <Col key={l.value} span={8}>
                                 <Tooltip title={l.description}>
@@ -299,8 +299,8 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
                                       xhsForm.setFieldValue("layout", l.value);
                                     }}
                                   >
-                                    <img src={l.preview} alt={l.label} style={{ width: "100%", height: 60, objectFit: "cover" }} />
-                                    <div style={{ padding: "4px 0", textAlign: "center", fontSize: 12, background: "#fff" }}>
+                                    <img src={l.preview} alt={l.label} style={{ width: "100%", height: 100, objectFit: "cover" }} />
+                                    <div style={{ padding: "6px 0", textAlign: "center", fontSize: 13, fontWeight: 500, background: "#fff" }}>
                                       {l.label}
                                     </div>
                                   </div>
