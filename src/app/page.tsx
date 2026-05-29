@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Col, Form, Input, Radio, Row, Select, Tabs, Typography, message, Spin, Tooltip } from "antd";
+import { Button, Card, Col, Form, Input, Radio, Row, Select, Typography, message, Spin, Tooltip } from "antd";
 import { DownloadOutlined, PictureOutlined, ThunderboltOutlined } from "@ant-design/icons";
 
 const { Title, Paragraph } = Typography;
@@ -39,75 +39,18 @@ const XHS_PALETTES = [
   { value: "neon", label: "霓虹", description: "高能量、未来感" },
 ];
 
-const ASPECT_RATIOS = [
-  { value: "1:1", label: "1:1" },
-  { value: "4:3", label: "4:3" },
-  { value: "3:4", label: "3:4" },
-  { value: "16:9", label: "16:9" },
-  { value: "9:16", label: "9:16" },
-  { value: "3:2", label: "3:2" },
-  { value: "2:3", label: "2:3" },
-  { value: "2:1", label: "2:1" },
-  { value: "1:2", label: "1:2" },
-];
-
 interface ImageResult {
   url: string;
-  type: "basic" | "xhs";
 }
 
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<ImageResult[]>([]);
-  const [basicForm] = Form.useForm();
-  const [xhsForm] = Form.useForm();
+  const [form] = Form.useForm();
   const [previewStyle, setPreviewStyle] = useState<string | null>(null);
   const [previewLayout, setPreviewLayout] = useState<string | null>(null);
 
-  // 基础图片生成
-  const handleBasicGenerate = async (values: {
-    prompt: string;
-    ar?: string;
-    quality?: string;
-    size?: string;
-  }) => {
-    setLoading(true);
-    setImages([]);
-
-    try {
-      const payload: Record<string, unknown> = { prompt: values.prompt };
-      if (values.ar) payload.ar = values.ar;
-      if (values.quality) payload.quality = values.quality;
-      if (values.size) payload.size = values.size;
-
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        message.error(data.error || "生成失败");
-        return;
-      }
-
-      setImages([{
-        url: `data:image/png;base64,${data.image}`,
-        type: "basic",
-      }]);
-
-      message.success(`生成完成，耗时 ${data.duration_ms}ms`);
-    } catch {
-      message.error("网络错误");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 小红书图片生成
-  const handleXhsGenerate = async (values: {
+  const handleGenerate = async (values: {
     content: string;
     style: string;
     layout: string;
@@ -133,7 +76,7 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
 1. 适合社交媒体分享
 2. 文字清晰可读
 3. 视觉效果吸引人
-4. 笱合选择的风格和布局`;
+4. 符合选择的风格和布局`;
 
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -153,7 +96,6 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
 
       setImages([{
         url: `data:image/png;base64,${data.image}`,
-        type: "xhs",
       }]);
 
       message.success(`生成完成，耗时 ${data.duration_ms}ms`);
@@ -180,7 +122,7 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
           妙笔
         </Title>
         <Paragraph style={{ fontSize: 18, color: "#64748b", maxWidth: 600, margin: "0 auto" }}>
-          妙笔生花，一键生成精美图片。支持多种风格、布局和配色方案。
+          妙笔生花，一键生成小红书风格图片卡片
         </Paragraph>
       </div>
 
@@ -194,149 +136,96 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
               style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
               styles={{ body: { padding: 24 } }}
             >
-              <Tabs
-                defaultActiveKey="basic"
-                items={[
-                  {
-                    key: "basic",
-                    label: (
-                      <span style={{ fontWeight: 500 }}>
-                        <PictureOutlined style={{ marginRight: 6 }} />
-                        基础生成
-                      </span>
-                    ),
-                    children: (
-                      <Form form={basicForm} layout="vertical" onFinish={handleBasicGenerate} initialValues={{ ar: "1:1", quality: "2k" }}>
-                        <Form.Item name="prompt" label={<span style={{ fontWeight: 500 }}>描述你想生成的图片</span>} rules={[{ required: true, message: "请输入描述" }]}>
-                          <TextArea rows={4} placeholder="例如：一只可爱的猫咪在阳光下睡觉，水彩画风格" style={{ borderRadius: 8 }} />
-                        </Form.Item>
-                        <Form.Item name="ar" label={<span style={{ fontWeight: 500 }}>宽高比</span>}>
-                          <Radio.Group buttonStyle="solid" style={{ flexWrap: "wrap" }}>
-                            {ASPECT_RATIOS.map(r => (
-                              <Radio.Button key={r.value} value={r.value}>{r.label}</Radio.Button>
-                            ))}
-                          </Radio.Group>
-                        </Form.Item>
-                        <Form.Item name="quality" label={<span style={{ fontWeight: 500 }}>质量</span>}>
-                          <Radio.Group buttonStyle="solid">
-                            <Radio.Button value="normal">普通</Radio.Button>
-                            <Radio.Button value="2k">2K</Radio.Button>
-                          </Radio.Group>
-                        </Form.Item>
-                        <Form.Item name="size" label={<span style={{ fontWeight: 500 }}>自定义尺寸</span>} tooltip="格式：宽x高，如 1280x720">
-                          <Input placeholder="可选，如 1280x720" style={{ borderRadius: 8 }} />
-                        </Form.Item>
-                        <Form.Item style={{ marginBottom: 0 }}>
-                          <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<ThunderboltOutlined />} style={{ height: 48, borderRadius: 10, fontWeight: 600 }}>
-                            生成图片
-                          </Button>
-                        </Form.Item>
-                      </Form>
-                    ),
-                  },
-                  {
-                    key: "xhs",
-                    label: (
-                      <span style={{ fontWeight: 500 }}>
-                        <ThunderboltOutlined style={{ marginRight: 6 }} />
-                        小红书风格
-                      </span>
-                    ),
-                    children: (
-                      <Form form={xhsForm} layout="vertical" onFinish={handleXhsGenerate} initialValues={{ style: "cute", layout: "balanced" }}>
-                        <Form.Item name="content" label={<span style={{ fontWeight: 500 }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
-                          <TextArea rows={4} placeholder="输入你想生成卡片的内容..." style={{ borderRadius: 8 }} />
-                        </Form.Item>
+              <Form form={form} layout="vertical" onFinish={handleGenerate} initialValues={{ style: "cute", layout: "balanced" }}>
+                <Form.Item name="content" label={<span style={{ fontWeight: 500 }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
+                  <TextArea rows={4} placeholder="输入你想生成卡片的内容..." style={{ borderRadius: 8 }} />
+                </Form.Item>
 
-                        <Form.Item label={<span style={{ fontWeight: 500 }}>视觉风格</span>}>
-                          <Row gutter={[12, 12]}>
-                            {XHS_STYLES.map(s => (
-                              <Col key={s.value} span={8}>
-                                <Tooltip title={s.description}>
-                                  <div
-                                    style={{
-                                      border: previewStyle === s.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
-                                      borderRadius: 8,
-                                      overflow: "hidden",
-                                      cursor: "pointer",
-                                      transition: "all 0.2s",
-                                    }}
-                                    onClick={() => {
-                                      setPreviewStyle(s.value);
-                                      xhsForm.setFieldValue("style", s.value);
-                                    }}
-                                  >
-                                    <img src={s.preview} alt={s.label} style={{ width: "100%", height: 100, objectFit: "cover" }} />
-                                    <div style={{ padding: "6px 0", textAlign: "center", fontSize: 13, fontWeight: 500, background: "#fff" }}>
-                                      {s.label}
-                                    </div>
-                                  </div>
-                                </Tooltip>
-                              </Col>
-                            ))}
-                          </Row>
-                        </Form.Item>
+                <Form.Item label={<span style={{ fontWeight: 500 }}>视觉风格</span>}>
+                  <Row gutter={[12, 12]}>
+                    {XHS_STYLES.map(s => (
+                      <Col key={s.value} span={8}>
+                        <Tooltip title={s.description}>
+                          <div
+                            style={{
+                              border: previewStyle === s.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                            }}
+                            onClick={() => {
+                              setPreviewStyle(s.value);
+                              form.setFieldValue("style", s.value);
+                            }}
+                          >
+                            <img src={s.preview} alt={s.label} style={{ width: "100%", height: 100, objectFit: "cover" }} />
+                            <div style={{ padding: "6px 0", textAlign: "center", fontSize: 13, fontWeight: 500, background: "#fff" }}>
+                              {s.label}
+                            </div>
+                          </div>
+                        </Tooltip>
+                      </Col>
+                    ))}
+                  </Row>
+                </Form.Item>
 
-                        <Form.Item name="style" hidden>
-                          <Input />
-                        </Form.Item>
+                <Form.Item name="style" hidden>
+                  <Input />
+                </Form.Item>
 
-                        <Form.Item label={<span style={{ fontWeight: 500 }}>信息布局</span>}>
-                          <Row gutter={[12, 12]}>
-                            {XHS_LAYOUTS.map(l => (
-                              <Col key={l.value} span={8}>
-                                <Tooltip title={l.description}>
-                                  <div
-                                    style={{
-                                      border: previewLayout === l.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
-                                      borderRadius: 8,
-                                      overflow: "hidden",
-                                      cursor: "pointer",
-                                      transition: "all 0.2s",
-                                    }}
-                                    onClick={() => {
-                                      setPreviewLayout(l.value);
-                                      xhsForm.setFieldValue("layout", l.value);
-                                    }}
-                                  >
-                                    <img src={l.preview} alt={l.label} style={{ width: "100%", height: 100, objectFit: "cover" }} />
-                                    <div style={{ padding: "6px 0", textAlign: "center", fontSize: 13, fontWeight: 500, background: "#fff" }}>
-                                      {l.label}
-                                    </div>
-                                  </div>
-                                </Tooltip>
-                              </Col>
-                            ))}
-                          </Row>
-                        </Form.Item>
+                <Form.Item label={<span style={{ fontWeight: 500 }}>信息布局</span>}>
+                  <Row gutter={[12, 12]}>
+                    {XHS_LAYOUTS.map(l => (
+                      <Col key={l.value} span={8}>
+                        <Tooltip title={l.description}>
+                          <div
+                            style={{
+                              border: previewLayout === l.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                            }}
+                            onClick={() => {
+                              setPreviewLayout(l.value);
+                              form.setFieldValue("layout", l.value);
+                            }}
+                          >
+                            <img src={l.preview} alt={l.label} style={{ width: "100%", height: 100, objectFit: "cover" }} />
+                            <div style={{ padding: "6px 0", textAlign: "center", fontSize: 13, fontWeight: 500, background: "#fff" }}>
+                              {l.label}
+                            </div>
+                          </div>
+                        </Tooltip>
+                      </Col>
+                    ))}
+                  </Row>
+                </Form.Item>
 
-                        <Form.Item name="layout" hidden>
-                          <Input />
-                        </Form.Item>
+                <Form.Item name="layout" hidden>
+                  <Input />
+                </Form.Item>
 
-                        <Form.Item name="palette" label={<span style={{ fontWeight: 500 }}>配色方案</span>}>
-                          <Select placeholder="选择配色（可选）" allowClear>
-                            {XHS_PALETTES.map(p => (
-                              <Select.Option key={p.value} value={p.value}>
-                                <div>
-                                  <div>{p.label}</div>
-                                  <div style={{ fontSize: 12, color: "#999" }}>{p.description}</div>
-                                </div>
-                              </Select.Option>
-                            ))}
-                          </Select>
-                        </Form.Item>
+                <Form.Item name="palette" label={<span style={{ fontWeight: 500 }}>配色方案</span>}>
+                  <Select placeholder="选择配色（可选）" allowClear>
+                    {XHS_PALETTES.map(p => (
+                      <Select.Option key={p.value} value={p.value}>
+                        <div>
+                          <div>{p.label}</div>
+                          <div style={{ fontSize: 12, color: "#999" }}>{p.description}</div>
+                        </div>
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
 
-                        <Form.Item style={{ marginBottom: 0 }}>
-                          <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<ThunderboltOutlined />} style={{ height: 48, borderRadius: 10, fontWeight: 600 }}>
-                            生成小红书图片
-                          </Button>
-                        </Form.Item>
-                      </Form>
-                    ),
-                  },
-                ]}
-              />
+                <Form.Item style={{ marginBottom: 0 }}>
+                  <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<ThunderboltOutlined />} style={{ height: 48, borderRadius: 10, fontWeight: 600 }}>
+                    生成图片
+                  </Button>
+                </Form.Item>
+              </Form>
             </Card>
           </Col>
 
@@ -373,7 +262,7 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
               ) : (
                 <div style={{ textAlign: "center", padding: "120px 0", color: "#cbd5e1" }}>
                   <PictureOutlined style={{ fontSize: 80, marginBottom: 20 }} />
-                  <div style={{ fontSize: 16 }}>输入描述后点击生成</div>
+                  <div style={{ fontSize: 16 }}>输入内容后点击生成</div>
                 </div>
               )}
             </Card>
