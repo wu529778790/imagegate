@@ -56,7 +56,7 @@ function buildSizeFromAspectRatio(ar: string | null, quality: "normal" | "2k"): 
   const parsed = ar ? parseAspectRatio(ar) : null;
   const ratio = parsed ? parsed.width / parsed.height : 1;
 
-  if (!parsed || Math.abs(ratio - 1) < 0.1) {
+  if (!parsed || (parsed.width === parsed.height)) {
     const edge = quality === "2k" ? 2048 : 1024;
     return `${edge}x${edge}`;
   }
@@ -96,6 +96,9 @@ function resolveSize(options: Pick<GenerateImageOptions, "size" | "aspectRatio" 
     }
     if (parsed.width % 16 !== 0 || parsed.height % 16 !== 0) {
       throw new Error("Width and height must both be multiples of 16.");
+    }
+    if (parsed.width * parsed.height < 655_360) {
+      throw new Error("Image must be at least 655,360 pixels (e.g. 816x816).");
     }
     return `${parsed.width}x${parsed.height}`;
   }

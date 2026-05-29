@@ -12,6 +12,18 @@ const PROVIDERS = [
   { value: "xiaomi", label: "小米" },
 ];
 
+const ASPECT_RATIOS = [
+  { value: "1:1", label: "1:1" },
+  { value: "4:3", label: "4:3" },
+  { value: "3:4", label: "3:4" },
+  { value: "16:9", label: "16:9" },
+  { value: "9:16", label: "9:16" },
+  { value: "3:2", label: "3:2" },
+  { value: "2:3", label: "2:3" },
+  { value: "2:1", label: "2:1" },
+  { value: "1:2", label: "1:2" },
+];
+
 export default function GeneratePage() {
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -22,10 +34,10 @@ export default function GeneratePage() {
       .then((res) => res.json())
       .then((data) => {
         form.setFieldsValue({
-          provider: data.default_provider || "zai",
-          model: data.zai_model || "",
-          ar: data.default_ar || "1:1",
-          quality: data.default_quality || "2k",
+          provider: data.default_provider ?? "zai",
+          model: data.zai_model ?? "",
+          ar: data.default_ar ?? "1:1",
+          quality: data.default_quality ?? "2k",
         });
       });
   }, [form]);
@@ -35,7 +47,7 @@ export default function GeneratePage() {
       .then((res) => res.json())
       .then((data) => {
         const modelKey = `${provider}_model`;
-        form.setFieldValue("model", data[modelKey] || "");
+        form.setFieldValue("model", data[modelKey] ?? "");
       });
   };
 
@@ -45,15 +57,22 @@ export default function GeneratePage() {
     model?: string;
     ar?: string;
     quality?: string;
+    size?: string;
   }) => {
     setLoading(true);
     setImageUrl(null);
 
     try {
+      // If custom size is provided, remove ar so backend uses size
+      const payload = { ...values };
+      if (payload.size) {
+        delete payload.ar;
+      }
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -106,23 +125,25 @@ export default function GeneratePage() {
                   </Form.Item>
                 </Col>
               </Row>
+              <Form.Item name="ar" label={<span style={{ fontWeight: 500 }}>宽高比</span>}>
+                <Radio.Group buttonStyle="solid">
+                  {ASPECT_RATIOS.map((r) => (
+                    <Radio.Button key={r.value} value={r.value}>{r.label}</Radio.Button>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
               <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item name="ar" label={<span style={{ fontWeight: 500 }}>宽高比</span>}>
-                    <Radio.Group buttonStyle="solid">
-                      <Radio.Button value="1:1">1:1</Radio.Button>
-                      <Radio.Button value="16:9">16:9</Radio.Button>
-                      <Radio.Button value="9:16">9:16</Radio.Button>
-                      <Radio.Button value="4:3">4:3</Radio.Button>
-                    </Radio.Group>
-                  </Form.Item>
-                </Col>
                 <Col span={12}>
                   <Form.Item name="quality" label={<span style={{ fontWeight: 500 }}>质量</span>}>
                     <Radio.Group buttonStyle="solid">
                       <Radio.Button value="normal">普通</Radio.Button>
                       <Radio.Button value="2k">2K</Radio.Button>
                     </Radio.Group>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="size" label={<span style={{ fontWeight: 500 }}>自定义尺寸</span>} tooltip="填写后将忽略宽高比，格式: 宽x高，如 1280x720。宽高都必须是 16 的倍数">
+                    <Input placeholder="1280x720（可选）" />
                   </Form.Item>
                 </Col>
               </Row>

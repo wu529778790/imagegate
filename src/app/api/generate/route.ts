@@ -12,7 +12,7 @@ const VALID_PROVIDERS: Provider[] = ["zai", "xiaomi"];
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { prompt, provider: requestedProvider, model, ar, quality } = body;
+  const { prompt, provider: requestedProvider, model, ar, quality, n, size } = body;
 
   if (!prompt) {
     return NextResponse.json({ error: "prompt is required" }, { status: 400 });
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     provider: providerName,
     model: resolvedModel,
     prompt,
-    parameters: JSON.stringify({ ar, quality }),
+    parameters: JSON.stringify({ ar, quality, size, n }),
     status: "pending",
   });
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const provider = createProvider(providerName, { baseUrl });
-    const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality });
+    const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality, n, size });
 
     const durationMs = Date.now() - startTime;
 

@@ -31,10 +31,11 @@ export interface ProviderConfig {
   defaultModel?: string;
 }
 
-const providers = new Map<Provider, () => ImageProvider>();
-
-providers.set("zai", () => new ZaiProvider());
-providers.set("xiaomi", () => new XiaomiProvider());
+/** Single source of truth for all provider constructors. Each factory creates a provider from config. */
+const PROVIDER_REGISTRY: Record<Provider, (config?: ProviderConfig) => ImageProvider> = {
+  zai: (config) => new ZaiProvider(config?.baseUrl),
+  xiaomi: (config) => new XiaomiProvider({ baseUrl: config?.baseUrl, defaultModel: config?.defaultModel }),
+};
 
 /**
  * Create a provider instance by name.
@@ -44,14 +45,9 @@ providers.set("xiaomi", () => new XiaomiProvider());
  * @returns An ImageProvider instance.
  */
 export function createProvider(name: Provider, config?: ProviderConfig): ImageProvider {
-  switch (name) {
-    case "zai":
-      return new ZaiProvider(config?.baseUrl);
-    case "xiaomi":
-      return new XiaomiProvider({ baseUrl: config?.baseUrl, defaultModel: config?.defaultModel });
-    default:
-      throw new Error(`Unknown provider: ${name}`);
-  }
+  const factory = PROVIDER_REGISTRY[name];
+  if (!factory) throw new Error(`Unknown provider: ${name}`);
+  return factory(config);
 }
 
 /**
@@ -80,5 +76,5 @@ export async function generateImage(
 
 /** List all available provider names. */
 export function listProviders(): Provider[] {
-  return Array.from(providers.keys());
+  return Object.keys(PROVIDER_REGISTRY) as Provider[];
 }

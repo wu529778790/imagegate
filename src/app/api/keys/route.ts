@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllKeys, addKey } from "@/lib/db";
 
+function maskApiKey(apiKey: string): string {
+  if (apiKey.length <= 8) return "****";
+  return apiKey.slice(0, 8) + "****" + apiKey.slice(-4);
+}
+
 export async function GET() {
   const keys = getAllKeys().map(({ api_key, ...rest }) => ({
     ...rest,
-    api_key: api_key.slice(0, 8) + "****" + api_key.slice(-4),
+    api_key: maskApiKey(api_key),
   }));
   return NextResponse.json(keys);
 }
@@ -17,5 +22,5 @@ export async function POST(request: NextRequest) {
   }
 
   const key = addKey(name, provider, api_key);
-  return NextResponse.json({ ...key, api_key: key.api_key.slice(0, 8) + "****" + key.api_key.slice(-4) }, { status: 201 });
+  return NextResponse.json({ ...key, api_key: maskApiKey(key.api_key) }, { status: 201 });
 }

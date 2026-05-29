@@ -56,7 +56,7 @@ export default function SettingsPage() {
           const form = providerForms[provider.name];
           const values: Record<string, string> = {};
           for (const field of provider.fields) {
-            values[field.key] = data[field.key] || "";
+            values[field.key] = data[field.key] ?? "";
           }
           form.setFieldsValue(values);
         }
@@ -65,17 +65,22 @@ export default function SettingsPage() {
 
   const handleSaveGlobal = async (values: Record<string, string>) => {
     setLoading(true);
-    const res = await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    if (res.ok) {
-      message.success("全局设置已保存");
-    } else {
-      message.error("保存失败");
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      if (res.ok) {
+        message.success("全局设置已保存");
+      } else {
+        message.error("保存失败");
+      }
+    } catch {
+      message.error("网络错误，保存失败");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSaveProvider = async (provider: ProviderConfig) => {
@@ -84,17 +89,22 @@ export default function SettingsPage() {
     if (!values) return;
 
     setLoading(true);
-    const res = await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    if (res.ok) {
-      message.success(`${provider.label} 设置已保存`);
-    } else {
-      message.error("保存失败");
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      if (res.ok) {
+        message.success(`${provider.label} 设置已保存`);
+      } else {
+        message.error("保存失败");
+      }
+    } catch {
+      message.error("网络错误，保存失败");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

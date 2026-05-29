@@ -23,6 +23,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
   const { is_active } = await request.json();
+  if (typeof is_active !== "boolean") {
+    return NextResponse.json({ error: "is_active must be a boolean" }, { status: 400 });
+  }
   toggleKey(id, is_active);
   return NextResponse.json({ success: true });
 }
