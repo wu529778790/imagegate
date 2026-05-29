@@ -55,9 +55,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   >
                     <PictureOutlined style={{ color: "#fff", fontSize: 18 }} />
                   </div>
-                  <Text strong style={{ fontSize: 20, letterSpacing: -0.5, color: "#1e1b4b" }}>
-                    妙笔
-                  </Text>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <Text strong style={{ fontSize: 20, letterSpacing: -0.5, color: "#1e1b4b" }}>
+                      妙笔
+                    </Text>
+                    <Text style={{ fontSize: 12, color: "#94a3b8" }}>一键生成小红书风格图片</Text>
+                  </div>
                 </Link>
                 <Button icon={<SettingOutlined />} type="text" style={{ color: "#64748b" }} onClick={() => setSettingsOpen(true)}>
                   设置

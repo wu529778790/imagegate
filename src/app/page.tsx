@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Col, Form, Input, Row, Select, Typography, message, Spin, Tooltip } from "antd";
+import { Button, Card, Col, Form, Input, Row, Select, message, Spin, Tooltip } from "antd";
 import { DownloadOutlined, PictureOutlined, ThunderboltOutlined } from "@ant-design/icons";
-
-const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
 
 // 小红书风格选项
@@ -115,19 +113,8 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
 
   return (
     <div style={{ minHeight: "calc(100vh - 64px)", background: "linear-gradient(180deg, #f8fafc 0%, #e0e7ff 100%)" }}>
-      {/* Hero Section */}
-      <div style={{ textAlign: "center", padding: "60px 20px 40px" }}>
-        <Title level={1} style={{ marginBottom: 16, fontWeight: 700 }}>
-          <ThunderboltOutlined style={{ color: "#4f46e5", marginRight: 12 }} />
-          妙笔
-        </Title>
-        <Paragraph style={{ fontSize: 18, color: "#64748b", maxWidth: 600, margin: "0 auto" }}>
-          妙笔生花，一键生成小红书风格图片卡片
-        </Paragraph>
-      </div>
-
       {/* Main Content */}
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 24px 60px" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 24px 60px" }}>
         <Row gutter={24}>
           {/* Left: Input */}
           <Col xs={24} lg={10}>
