@@ -4,7 +4,7 @@ import { createProvider } from "@/providers";
 import type { Provider } from "@/providers";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
-  zai: "glm-image",
+  zai: "cogview-3",
   xiaomi: "xiaomi-image",
 };
 

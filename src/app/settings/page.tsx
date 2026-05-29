@@ -20,8 +20,8 @@ const PROVIDERS: ProviderConfig[] = [
     color: "#4f46e5",
     fields: [
       { key: "zai_api_key", label: "API Key", placeholder: "输入智谱 API Key", type: "password" },
-      { key: "zai_base_url", label: "Base URL", placeholder: "https://api.z.ai/api/paas/v4" },
-      { key: "zai_model", label: "模型", placeholder: "glm-image" },
+      { key: "zai_base_url", label: "Base URL", placeholder: "https://open.bigmodel.cn/api/paas/v4" },
+      { key: "zai_model", label: "模型", placeholder: "cogview-3" },
     ],
   },
   {

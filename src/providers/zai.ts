@@ -2,7 +2,7 @@
  * Z.AI (智谱) image generation provider.
  *
  * Uses the Z.AI /api/paas/v4/images/generations endpoint.
- * Supports the GLM-image model family with various aspect ratios and quality presets.
+ * Supports the CogView model family (cogview-3, cogview-3-plus) with various aspect ratios and quality presets.
  */
 
 import type {
@@ -49,7 +49,8 @@ type ZaiModelFamily = "glm" | "legacy";
 // ---------------------------------------------------------------------------
 
 function getModelFamily(model: string): ZaiModelFamily {
-  return model.trim().toLowerCase() === "glm-image" ? "glm" : "legacy";
+  const m = model.trim().toLowerCase();
+  return m === "glm-image" || m === "cogview-3" || m === "cogview-3-plus" ? "glm" : "legacy";
 }
 
 function parseAspectRatio(ar: string): { width: number; height: number } | null {
@@ -260,12 +261,12 @@ async function extractImageFromResponse(result: ZaiApiResponse): Promise<Buffer>
 
 export class ZaiProvider implements ImageProvider {
   readonly name = "zai" as const;
-  readonly defaultModel = "glm-image";
+  readonly defaultModel = "cogview-3";
 
   private readonly baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = (baseUrl ?? "https://api.z.ai/api/paas/v4")
+    this.baseUrl = (baseUrl ?? "https://open.bigmodel.cn/api/paas/v4")
       .replace(/\/+$/g, "");
   }
 

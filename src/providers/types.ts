@@ -31,7 +31,7 @@ export interface ImageProvider {
    * Generate an image from a text prompt.
    *
    * @param prompt - The text prompt describing the desired image.
-   * @param model - The model identifier (e.g. "glm-image").
+   * @param model - The model identifier (e.g. "cogview-3").
    * @param apiKey - API key for the provider.
    * @param options - Generation options (aspect ratio, quality, etc.).
    * @returns A Buffer containing the PNG image bytes.

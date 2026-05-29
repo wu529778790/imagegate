@@ -5,11 +5,11 @@
  *   import { generateImage, createProvider } from "./providers/index.js";
  *
  *   // Direct call with provider name
- *   const buf = await generateImage("zai", "a cat", "glm-image", "your-api-key");
+ *   const buf = await generateImage("zai", "a cat", "cogview-3", "your-api-key");
  *
  *   // Or use a provider instance for multiple calls
- *   const provider = createProvider("zai", { baseUrl: "https://api.z.ai/api/paas/v4" });
- *   const buf = await provider.generateImage("a cat", "glm-image", "your-api-key");
+ *   const provider = createProvider("zai", { baseUrl: "https://open.bigmodel.cn/api/paas/v4" });
+ *   const buf = await provider.generateImage("a cat", "cogview-3", "your-api-key");
  */
 
 import type { GenerateImageOptions, ImageProvider, Provider } from "./types";
