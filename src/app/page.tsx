@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Button, Card, Form, Input, Row, Col, Select, Modal, message, Tooltip } from "antd";
 import { DownloadOutlined, ThunderboltOutlined } from "@ant-design/icons";
 
-// 小红书风格选项
+// 小红书风格选项（共9种，与baoyu-skills一致）
 const XHS_STYLES = [
-  { value: "cute", label: "甜美可爱", preview: "/images/xhs-styles/cute.webp", description: "少女风、甜美 aesthetic" },
+  { value: "cute", label: "甜美可爱", preview: "/images/xhs-styles/cute.webp", description: "少女风、甜美 aesthetic（默认）" },
   { value: "fresh", label: "清新自然", preview: "/images/xhs-styles/fresh.webp", description: "干净清爽、自然风格" },
   { value: "warm", label: "温暖舒适", preview: "/images/xhs-styles/warm.webp", description: "温馨友好、亲切感" },
   { value: "bold", label: "大胆醒目", preview: "/images/xhs-styles/bold.webp", description: "高冲击力、吸引眼球" },
@@ -15,18 +15,15 @@ const XHS_STYLES = [
   { value: "pop", label: "活力炫彩", preview: "/images/xhs-styles/pop.webp", description: "鲜艳活泼、吸引目光" },
   { value: "notion", label: "极简手绘", preview: "/images/xhs-styles/notion.webp", description: "极简手绘线条、知识感" },
   { value: "chalkboard", label: "黑板粉笔", preview: "/images/xhs-styles/chalkboard.webp", description: "彩色粉笔、教育风格" },
-  { value: "study-notes", label: "学习笔记", preview: "/images/xhs-styles/notion.webp", description: "手写笔记风格" },
 ];
 
 const XHS_LAYOUTS = [
-  { value: "sparse", label: "简约", preview: "/images/xhs-layouts/sparse.webp", description: "1-2个要点，最大冲击" },
-  { value: "balanced", label: "均衡", preview: "/images/xhs-layouts/balanced.webp", description: "3-4个要点，标准布局" },
-  { value: "dense", label: "密集", preview: "/images/xhs-layouts/dense.webp", description: "5-8个要点，知识卡片" },
-  { value: "list", label: "列表", preview: "/images/xhs-layouts/list.webp", description: "排名/清单" },
-  { value: "comparison", label: "对比", preview: "/images/xhs-layouts/comparison.webp", description: "并排对比" },
-  { value: "flow", label: "流程", preview: "/images/xhs-layouts/flow.webp", description: "流程/时间线" },
-  { value: "mindmap", label: "思维导图", preview: "/images/xhs-layouts/balanced.webp", description: "中心辐射" },
-  { value: "quadrant", label: "四象限", preview: "/images/xhs-layouts/dense.webp", description: "四象限分区" },
+  { value: "sparse", label: "简约", preview: "/images/xhs-layouts/sparse.webp", description: "1-2个要点，最大冲击（封面、金句）" },
+  { value: "balanced", label: "均衡", preview: "/images/xhs-layouts/balanced.webp", description: "3-4个要点，标准布局（常规内容）" },
+  { value: "dense", label: "密集", preview: "/images/xhs-layouts/dense.webp", description: "5-8个要点，知识卡片（总结、干货）" },
+  { value: "list", label: "列表", preview: "/images/xhs-layouts/list.webp", description: "4-7项，清单/排行榜" },
+  { value: "comparison", label: "对比", preview: "/images/xhs-layouts/comparison.webp", description: "两栏对比，优缺点分析" },
+  { value: "flow", label: "流程", preview: "/images/xhs-layouts/flow.webp", description: "3-6步，流程/时间线" },
 ];
 
 const XHS_PALETTES = [
