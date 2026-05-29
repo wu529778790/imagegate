@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ConfigProvider, Layout, Button, Typography } from "antd";
-import { SettingOutlined, PictureOutlined } from "@ant-design/icons";
+import { SettingOutlined, PictureOutlined, HistoryOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import SettingsModal from "@/components/SettingsModal";
+import HistoryModal from "@/components/HistoryModal";
 
 const { Header, Content } = Layout;
 const { Text } = Typography;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <html lang="zh-CN">
@@ -63,15 +65,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <Link href="/" style={{ color: "#64748b", fontSize: 14 }}>小红书</Link>
                   <Link href="/infographic" style={{ color: "#64748b", fontSize: 14 }}>信息图</Link>
                 </div>
-                <Button icon={<SettingOutlined />} type="text" style={{ color: "#64748b" }} onClick={() => setSettingsOpen(true)}>
-                  设置
-                </Button>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Button icon={<HistoryOutlined />} type="text" style={{ color: "#64748b" }} onClick={() => setHistoryOpen(true)}>
+                    历史
+                  </Button>
+                  <Button icon={<SettingOutlined />} type="text" style={{ color: "#64748b" }} onClick={() => setSettingsOpen(true)}>
+                    设置
+                  </Button>
+                </div>
               </Header>
               <Content style={{ padding: 0 }}>
                 {children}
               </Content>
             </Layout>
             <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+            <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
           </ConfigProvider>
         </AntdRegistry>
       </body>
