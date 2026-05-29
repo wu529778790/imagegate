@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Col, Form, Input, Row, Select, Modal, message, Spin, Tooltip } from "antd";
+import { Button, Card, Form, Input, Row, Col, Select, Modal, message, Tooltip } from "antd";
 import { DownloadOutlined, ThunderboltOutlined } from "@ant-design/icons";
 
 // 小红书风格选项
@@ -107,38 +107,40 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
 
   return (
     <div style={{ minHeight: "calc(100vh - 64px)", background: "linear-gradient(180deg, #f8fafc 0%, #e0e7ff 100%)" }}>
-      {/* Main Content */}
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 24px 60px" }}>
+      <div style={{ padding: "24px 24px 60px" }}>
         <Card
           bordered={false}
           style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
-          styles={{ body: { padding: 24 } }}
+          styles={{ body: { padding: 32 } }}
         >
           <Form form={form} layout="vertical" onFinish={handleGenerate} initialValues={{ style: "cute", layout: "balanced" }}>
-            <Form.Item name="content" label={<span style={{ fontWeight: 500 }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
-              <Input.TextArea rows={4} placeholder="输入你想生成卡片的内容..." style={{ borderRadius: 8 }} />
+            {/* 内容输入 */}
+            <Form.Item name="content" label={<span style={{ fontWeight: 600, fontSize: 16 }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
+              <Input.TextArea rows={4} placeholder="输入你想生成卡片的内容..." style={{ borderRadius: 8, fontSize: 15 }} />
             </Form.Item>
 
-            <Form.Item label={<span style={{ fontWeight: 500 }}>视觉风格</span>}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
+            {/* 视觉风格 */}
+            <Form.Item label={<span style={{ fontWeight: 600, fontSize: 16 }}>视觉风格</span>}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
                 {XHS_STYLES.map(s => (
-                  <Tooltip key={s.value} title={s.description}>
+                  <Tooltip key={s.value} title={s.description} placement="top">
                     <div
                       style={{
-                        border: previewStyle === s.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
-                        borderRadius: 8,
+                        border: previewStyle === s.value ? "3px solid #4f46e5" : "2px solid #e5e7eb",
+                        borderRadius: 12,
                         overflow: "hidden",
                         cursor: "pointer",
                         transition: "all 0.2s",
                         background: "#fff",
+                        transform: previewStyle === s.value ? "scale(1.02)" : "scale(1)",
                       }}
                       onClick={() => {
                         setPreviewStyle(s.value);
                         form.setFieldValue("style", s.value);
                       }}
                     >
-                      <img src={s.preview} alt={s.label} style={{ width: "100%", height: 80, objectFit: "cover" }} />
-                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 12, fontWeight: 500 }}>
+                      <img src={s.preview} alt={s.label} style={{ width: "100%", height: 120, objectFit: "cover" }} />
+                      <div style={{ padding: "8px 0", textAlign: "center", fontSize: 13, fontWeight: 500 }}>
                         {s.label}
                       </div>
                     </div>
@@ -151,26 +153,28 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
               <Input />
             </Form.Item>
 
-            <Form.Item label={<span style={{ fontWeight: 500 }}>信息布局</span>}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+            {/* 信息布局 */}
+            <Form.Item label={<span style={{ fontWeight: 600, fontSize: 16 }}>信息布局</span>}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                 {XHS_LAYOUTS.map(l => (
-                  <Tooltip key={l.value} title={l.description}>
+                  <Tooltip key={l.value} title={l.description} placement="top">
                     <div
                       style={{
-                        border: previewLayout === l.value ? "2px solid #4f46e5" : "2px solid #e5e7eb",
-                        borderRadius: 8,
+                        border: previewLayout === l.value ? "3px solid #4f46e5" : "2px solid #e5e7eb",
+                        borderRadius: 12,
                         overflow: "hidden",
                         cursor: "pointer",
                         transition: "all 0.2s",
                         background: "#fff",
+                        transform: previewLayout === l.value ? "scale(1.02)" : "scale(1)",
                       }}
                       onClick={() => {
                         setPreviewLayout(l.value);
                         form.setFieldValue("layout", l.value);
                       }}
                     >
-                      <img src={l.preview} alt={l.label} style={{ width: "100%", height: 80, objectFit: "cover" }} />
-                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 12, fontWeight: 500 }}>
+                      <img src={l.preview} alt={l.label} style={{ width: "100%", height: 120, objectFit: "cover" }} />
+                      <div style={{ padding: "8px 0", textAlign: "center", fontSize: 13, fontWeight: 500 }}>
                         {l.label}
                       </div>
                     </div>
@@ -183,24 +187,30 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
               <Input />
             </Form.Item>
 
-            <Form.Item name="palette" label={<span style={{ fontWeight: 500 }}>配色方案</span>}>
-              <Select placeholder="选择配色（可选）" allowClear>
-                {XHS_PALETTES.map(p => (
-                  <Select.Option key={p.value} value={p.value}>
-                    <div>
-                      <div>{p.label}</div>
-                      <div style={{ fontSize: 12, color: "#999" }}>{p.description}</div>
-                    </div>
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: 0 }}>
-              <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<ThunderboltOutlined />} style={{ height: 48, borderRadius: 10, fontWeight: 600 }}>
-                {loading ? "生成中..." : "生成图片"}
-              </Button>
-            </Form.Item>
+            {/* 配色方案 */}
+            <Row gutter={16}>
+              <Col span={8}>
+                <Form.Item name="palette" label={<span style={{ fontWeight: 600, fontSize: 16 }}>配色方案</span>}>
+                  <Select placeholder="选择配色（可选）" allowClear size="large">
+                    {XHS_PALETTES.map(p => (
+                      <Select.Option key={p.value} value={p.value}>
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{p.label}</div>
+                          <div style={{ fontSize: 12, color: "#999" }}>{p.description}</div>
+                        </div>
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={16}>
+                <Form.Item label={<span style={{ fontWeight: 600, fontSize: 16 }}>&nbsp;</span>}>
+                  <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<ThunderboltOutlined />} style={{ height: 48, borderRadius: 10, fontWeight: 600 }}>
+                    {loading ? "生成中..." : "生成图片"}
+                  </Button>
+                </Form.Item>
+              </Col>
+            </Row>
           </Form>
         </Card>
       </div>
@@ -210,11 +220,11 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
         open={previewVisible}
         onCancel={() => setPreviewVisible(false)}
         footer={[
-          <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownload}>
+          <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownload} size="large">
             下载图片
           </Button>,
         ]}
-        width={600}
+        width={700}
         centered
       >
         {previewImage && (
