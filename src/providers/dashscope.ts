@@ -142,22 +142,6 @@ async function pollForResult(taskId: string, apiKey: string, maxAttempts = 60): 
   throw new Error("DashScope task timed out");
 }
 
-async function extractImageFromResponse(result: DashScopeSyncResponse): Promise<Buffer> {
-  const imageUrl = result.output?.results?.[0]?.url;
-
-  if (!imageUrl) {
-    throw new Error("No image URL in DashScope response");
-  }
-
-  const imageResponse = await fetch(imageUrl);
-  if (!imageResponse.ok) {
-    throw new Error(`Failed to download image: ${imageResponse.status}`);
-  }
-
-  const arrayBuffer = await imageResponse.arrayBuffer();
-  return Buffer.from(arrayBuffer);
-}
-
 // ---------------------------------------------------------------------------
 // Provider implementation
 // ---------------------------------------------------------------------------
@@ -169,8 +153,15 @@ export class DashScopeProvider implements ImageProvider {
   private readonly baseUrl: string;
 
   constructor(baseUrl?: string) {
+    // DashScope API endpoint: https://dashscope.aliyuncs.com/api/v1
+    // The full endpoint for image generation is: /services/aigc/text2image/image-synthesis
     this.baseUrl = (baseUrl ?? "https://dashscope.aliyuncs.com/api/v1")
       .replace(/\/+$/g, "");
+  }
+
+  private getImageEndpoint(): string {
+    // Always use the correct endpoint for DashScope image generation
+    return "https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis";
   }
 
   async generateImage(
@@ -186,86 +177,50 @@ export class DashScopeProvider implements ImageProvider {
     const resolvedModel = model || this.defaultModel;
     const size = resolveSize(resolvedModel, options);
 
-    // Check if model supports sync mode (qwen-image-2.0* models)
-    const isQwenImage = resolvedModel.startsWith("qwen-image-2.0");
+    // Use the correct endpoint
+    const url = this.getImageEndpoint();
 
-    if (isQwenImage) {
-      // Sync mode for qwen-image-2.0 models
-      const url = `${this.baseUrl}/services/aigc/text2image/image-synthesis`;
+    const body = {
+      model: resolvedModel,
+      input: {
+        prompt,
+      },
+      parameters: {
+        size,
+        n: 1,
+      },
+    };
 
-      const body = {
-        model: resolvedModel,
-        input: {
-          prompt,
-        },
-        parameters: {
-          size,
-          n: 1,
-        },
-      };
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "X-DashScope-Async": "enable",
+      },
+      body: JSON.stringify(body),
+    });
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-          "X-DashScope-Async": "enable",
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new ProviderError("dashscope", response.status, `DashScope API error (${response.status}): ${errText}`);
-      }
-
-      const result = (await response.json()) as DashScopeAsyncResponse;
-      const taskId = result.output?.task_id;
-
-      if (!taskId) {
-        throw new Error("No task ID in DashScope response");
-      }
-
-      // Poll for results
-      const imageUrl = await pollForResult(taskId, apiKey);
-      const imageResponse = await fetch(imageUrl);
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to download image: ${imageResponse.status}`);
-      }
-      const arrayBuffer = await imageResponse.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } else {
-      // Legacy sync mode for other models
-      const url = `${this.baseUrl}/services/aigc/text2image/image-synthesis`;
-
-      const body = {
-        model: resolvedModel,
-        input: {
-          prompt,
-        },
-        parameters: {
-          size,
-          n: 1,
-        },
-      };
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new ProviderError("dashscope", response.status, `DashScope API error (${response.status}): ${errText}`);
-      }
-
-      const result = (await response.json()) as DashScopeSyncResponse;
-      return extractImageFromResponse(result);
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new ProviderError("dashscope", response.status, `DashScope API error (${response.status}): ${errText}`);
     }
+
+    const result = (await response.json()) as DashScopeAsyncResponse;
+    const taskId = result.output?.task_id;
+
+    if (!taskId) {
+      throw new Error("No task ID in DashScope response");
+    }
+
+    // Poll for results
+    const imageUrl = await pollForResult(taskId, apiKey);
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to download image: ${imageResponse.status}`);
+    }
+    const arrayBuffer = await imageResponse.arrayBuffer();
+    return Buffer.from(arrayBuffer);
   }
 }
 

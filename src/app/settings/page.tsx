@@ -66,7 +66,7 @@ const PROVIDERS: ProviderConfig[] = [
     developerUrl: "https://dashscope.console.aliyun.com/apiKey",
     fields: [
       { key: "dashscope_api_key", label: "API Key", placeholder: "输入 DashScope API Key", type: "password" },
-      { key: "dashscope_base_url", label: "Base URL", placeholder: "https://dashscope.aliyuncs.com/api/v1" },
+      { key: "dashscope_base_url", label: "Base URL (可选)", placeholder: "https://dashscope.aliyuncs.com/api/v1" },
       { key: "dashscope_model", label: "模型", placeholder: "qwen-image-2.0-pro" },
     ],
   },
