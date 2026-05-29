@@ -14,11 +14,17 @@ RUN npm run build
 # Remove dev dependencies
 RUN npm prune --production
 
+# Copy public directory to standalone output
+RUN cp -r public .next/standalone/public
+
+# Copy static files to standalone output
+RUN cp -r .next/static .next/standalone/.next/static
+
 RUN mkdir -p /app/data
 
 EXPOSE 3000
 
 ENV NODE_ENV=production
-ENV DATABASE_URL=file:/app/data/baoyuimages.db
+ENV DATABASE_URL=file:/app/data/magicbrush.db
 
-CMD ["npm", "start"]
+CMD ["node", ".next/standalone/server.js"]
