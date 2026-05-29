@@ -132,7 +132,7 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
 
   return (
     <div style={{ minHeight: "calc(100vh - 64px)", background: "linear-gradient(180deg, #f8fafc 0%, #e0e7ff 100%)" }}>
-      <div style={{ padding: "24px 24px 60px" }}>
+      <div style={{ padding: "24px 24px 100px" }}>
         <Card
           bordered={false}
           style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
@@ -214,7 +214,7 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
 
             {/* 参数设置 */}
             <Row gutter={16}>
-              <Col span={6}>
+              <Col span={8}>
                 <Form.Item name="aspect" label={<span style={{ fontWeight: 600 }}>比例</span>}>
                   <Select size="large">
                     <Select.Option value="16:9">16:9 横版</Select.Option>
@@ -225,7 +225,7 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={6}>
+              <Col span={8}>
                 <Form.Item name="lang" label={<span style={{ fontWeight: 600 }}>语言</span>}>
                   <Select size="large">
                     <Select.Option value="zh">中文</Select.Option>
@@ -234,16 +234,43 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={12}>
-                <Form.Item label={<span style={{ fontWeight: 600 }}>&nbsp;</span>}>
-                  <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<ThunderboltOutlined />} style={{ height: 48, borderRadius: 10, fontWeight: 600 }}>
-                    {loading ? "生成中..." : "生成信息图"}
-                  </Button>
-                </Form.Item>
-              </Col>
             </Row>
           </Form>
         </Card>
+      </div>
+
+      {/* 固定底部生成按钮 */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(10px)",
+          borderTop: "1px solid #e5e7eb",
+          padding: "16px 24px",
+          display: "flex",
+          justifyContent: "center",
+          zIndex: 100,
+        }}
+      >
+        <Button
+          type="primary"
+          onClick={() => form.submit()}
+          loading={loading}
+          size="large"
+          icon={<ThunderboltOutlined />}
+          style={{
+            height: 56,
+            borderRadius: 12,
+            fontWeight: 600,
+            fontSize: 16,
+            padding: "0 48px",
+          }}
+        >
+          {loading ? "生成中..." : "生成信息图"}
+        </Button>
       </div>
 
       {/* 预览弹窗 */}
