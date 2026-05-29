@@ -8,6 +8,7 @@ import {
   KeyOutlined,
   HistoryOutlined,
   SettingOutlined,
+  SmileOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +19,7 @@ const { Text } = Typography;
 const menuItems = [
   { key: "/", icon: <HomeOutlined />, label: <Link href="/">仪表盘</Link> },
   { key: "/generate", icon: <PictureOutlined />, label: <Link href="/generate">生成图片</Link> },
+  { key: "/xhs", icon: <SmileOutlined />, label: <Link href="/xhs">小红书图片</Link> },
   { key: "/keys", icon: <KeyOutlined />, label: <Link href="/keys">API 密钥</Link> },
   { key: "/records", icon: <HistoryOutlined />, label: <Link href="/records">生成记录</Link> },
   { key: "/settings", icon: <SettingOutlined />, label: <Link href="/settings">设置</Link> },
