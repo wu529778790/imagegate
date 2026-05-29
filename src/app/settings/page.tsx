@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button, Card, Col, Form, Input, Row, Select, Typography, message } from "antd";
+import { Button, Card, Col, Form, Input, Row, Select, Typography, message, Space } from "antd";
 import { SaveOutlined, LinkOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
@@ -66,7 +66,7 @@ const PROVIDERS: ProviderConfig[] = [
     developerUrl: "https://dashscope.console.aliyun.com/apiKey",
     fields: [
       { key: "dashscope_api_key", label: "API Key", placeholder: "输入 DashScope API Key", type: "password" },
-      { key: "dashscope_base_url", label: "Base URL (可选)", placeholder: "https://dashscope.aliyuncs.com/api/v1" },
+      { key: "dashscope_base_url", label: "Base URL (可选)", placeholder: "https://dashscope.aliyuncs.com" },
       { key: "dashscope_model", label: "模型", placeholder: "qwen-image-2.0-pro" },
     ],
   },
@@ -77,7 +77,7 @@ const PROVIDERS: ProviderConfig[] = [
     developerUrl: "https://platform.minimaxi.com/user-center/api-keys",
     fields: [
       { key: "minimax_api_key", label: "API Key", placeholder: "输入 MiniMax API Key", type: "password" },
-      { key: "minimax_base_url", label: "Base URL", placeholder: "https://api.minimax.chat" },
+      { key: "minimax_base_url", label: "Base URL", placeholder: "https://api.minimaxi.com" },
       { key: "minimax_model", label: "模型", placeholder: "image-01" },
     ],
   },
@@ -88,7 +88,7 @@ const PROVIDERS: ProviderConfig[] = [
     developerUrl: "https://replicate.com/account/api-tokens",
     fields: [
       { key: "replicate_api_key", label: "API Token", placeholder: "输入 Replicate API Token", type: "password" },
-      { key: "replicate_base_url", label: "Base URL", placeholder: "https://api.replicate.com/v1" },
+      { key: "replicate_base_url", label: "Base URL", placeholder: "https://api.replicate.com" },
       { key: "replicate_model", label: "模型", placeholder: "google/nano-banana-2" },
     ],
   },
@@ -219,13 +219,14 @@ export default function SettingsPage() {
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 0" }}>
       <Title level={3} style={{ marginBottom: 24, fontWeight: 600 }}>设置</Title>
 
+      {/* 全局默认设置 */}
       <Card
-        title={<span style={{ fontWeight: 500 }}>全局默认</span>}
+        title={<span style={{ fontWeight: 600 }}>全局默认</span>}
         bordered={false}
-        style={{ borderRadius: 12, marginBottom: 24, maxWidth: 700 }}
+        style={{ borderRadius: 12, marginBottom: 24 }}
       >
         <Form form={globalForm} layout="vertical" onFinish={handleSaveGlobal}>
           <Row gutter={16}>
@@ -265,15 +266,20 @@ export default function SettingsPage() {
         </Form>
       </Card>
 
+      {/* 服务商配置 */}
+      <div style={{ marginBottom: 16 }}>
+        <Title level={4} style={{ marginBottom: 16, fontWeight: 600 }}>服务商配置</Title>
+      </div>
+
       {PROVIDERS.map((provider) => (
         <Card
           key={provider.name}
           bordered={false}
-          style={{ borderRadius: 12, marginBottom: 24, maxWidth: 700 }}
+          style={{ borderRadius: 12, marginBottom: 16 }}
           title={
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 8, height: 32, borderRadius: 4, background: provider.color }} />
-              <span style={{ fontWeight: 500 }}>{provider.label}</span>
+            <Space size={12}>
+              <div style={{ width: 6, height: 24, borderRadius: 3, background: provider.color }} />
+              <span style={{ fontWeight: 600 }}>{provider.label}</span>
               <a
                 href={provider.developerUrl}
                 target="_blank"
@@ -282,7 +288,7 @@ export default function SettingsPage() {
               >
                 <LinkOutlined /> 开发者中心
               </a>
-            </div>
+            </Space>
           }
           extra={
             <Button type="primary" loading={loading} onClick={() => handleSaveProvider(provider)} icon={<SaveOutlined />} style={{ borderRadius: 8 }}>
@@ -290,16 +296,20 @@ export default function SettingsPage() {
             </Button>
           }
         >
-          <Form form={providerForms[provider.name]} layout="vertical">
-            {provider.fields.map((field) => (
-              <Form.Item key={field.key} name={field.key} label={<span style={{ fontWeight: 500 }}>{field.label}</span>}>
-                {field.type === "password" ? (
-                  <Input.Password placeholder={field.placeholder} />
-                ) : (
-                  <Input placeholder={field.placeholder} />
-                )}
-              </Form.Item>
-            ))}
+          <Form form={providerForms[provider.name]} layout="vertical" style={{ marginBottom: 0 }}>
+            <Row gutter={16}>
+              {provider.fields.map((field) => (
+                <Col key={field.key} span={8}>
+                  <Form.Item name={field.key} label={<span style={{ fontWeight: 500 }}>{field.label}</span>}>
+                    {field.type === "password" ? (
+                      <Input.Password placeholder={field.placeholder} />
+                    ) : (
+                      <Input placeholder={field.placeholder} />
+                    )}
+                  </Form.Item>
+                </Col>
+              ))}
+            </Row>
           </Form>
         </Card>
       ))}
