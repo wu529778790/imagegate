@@ -8,6 +8,8 @@ import path from "path";
 import { addToSyncQueue } from "@/lib/sync";
 import { GenerateImageSchema, validate } from "@/lib/validation";
 import { createErrorResponse } from "@/lib/errors";
+import { applyRateLimit, rateLimiters } from "@/lib/rate-limit";
+import logger, { generateRequestId, createRequestLogger } from "@/lib/logger";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
   zai: "cogview-3",
@@ -74,7 +76,20 @@ async function saveImageToLocalStorage(
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = generateRequestId();
+  const reqLogger = createRequestLogger(requestId);
+  const startTime = Date.now();
+
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, rateLimiters.generate);
+    if (rateLimitResponse) {
+      reqLogger.warn("Rate limit exceeded", { ip: request.headers.get("x-forwarded-for") });
+      return rateLimitResponse;
+    }
+
+    reqLogger.requestStart(requestId, "POST", "/api/generate");
+
     // Get current user session (optional - allows anonymous usage)
     const session = await auth();
     const userId = session?.user?.id ? parseInt(session.user.id) : null;
@@ -85,6 +100,7 @@ export async function POST(request: NextRequest) {
     const { prompt, provider: requestedProvider, model, ar, quality, n, size } = validatedData;
 
     if (requestedProvider && !VALID_PROVIDERS.includes(requestedProvider)) {
+      reqLogger.warn("Invalid provider requested", { provider: requestedProvider });
       return NextResponse.json(
         { error: { code: "INVALID_PROVIDER", message: `Invalid provider: ${requestedProvider}` } },
         { status: 400 }
@@ -121,6 +137,7 @@ export async function POST(request: NextRequest) {
   }
 
     if (!apiKey || !providerName) {
+      reqLogger.warn("No API key configured");
       return NextResponse.json(
         { error: { code: "NO_API_KEY", message: "No API key configured. Go to Settings to add one." } },
         { status: 400 }
@@ -133,6 +150,12 @@ export async function POST(request: NextRequest) {
     // Resolve base URL from settings
     const baseUrl = getSetting(`${providerName}_base_url`) || undefined;
 
+    reqLogger.info("Generating image", {
+      provider: providerName,
+      model: resolvedModel,
+      userId: userId || "anonymous",
+    });
+
     const record = addRecord({
       api_key_id: getKeyIdByProviderAndKey(providerName, apiKey),
       provider: providerName,
@@ -142,13 +165,19 @@ export async function POST(request: NextRequest) {
       status: "pending",
     });
 
-    const startTime = Date.now();
+    const generateStartTime = Date.now();
 
     try {
       const provider = createProvider(providerName, { baseUrl });
       const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality, n, size });
 
-      const durationMs = Date.now() - startTime;
+      const durationMs = Date.now() - generateStartTime;
+
+      // Log successful generation
+      reqLogger.imageGeneration(providerName, resolvedModel, true, durationMs, {
+        userId: userId || "anonymous",
+      });
+
       const imageData = `data:image/png;base64,${imageBuffer.toString("base64")}`;
 
       // Update record with success status
@@ -171,6 +200,10 @@ export async function POST(request: NextRequest) {
             record.id
           );
 
+          reqLogger.info("Image saved to local storage", {
+            localPath: savedImage.localPath,
+          });
+
           // Add to sync queue for GitHub upload (async, non-blocking)
           if (savedImage) {
             const db = getDb();
@@ -187,16 +220,21 @@ export async function POST(request: NextRequest) {
                 resolvedModel,
                 prompt
               ).catch((syncError) => {
-                console.error("Failed to add to sync queue:", syncError);
-                // Don't fail the request if sync queue fails
+                reqLogger.error("Failed to add to sync queue", syncError as Error);
               });
             }
           }
         } catch (saveError) {
-          console.error("Failed to save image to local storage:", saveError);
+          reqLogger.error("Failed to save image to local storage", saveError as Error);
           // Don't fail the request if saving fails
         }
       }
+
+      // Log request completion
+      reqLogger.requestEnd(requestId, "POST", "/api/generate", 200, Date.now() - startTime, {
+        provider: providerName,
+        model: resolvedModel,
+      });
 
       return NextResponse.json({
         success: true,
@@ -210,22 +248,31 @@ export async function POST(request: NextRequest) {
         } : null,
       });
     } catch (error) {
-      const durationMs = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const durationMs = Date.now() - generateStartTime;
+
+      // Log failed generation
+      reqLogger.imageGeneration(providerName, resolvedModel, false, durationMs, {
+        userId: userId || "anonymous",
+        error: (error as Error).message,
+      });
 
       updateRecord(record.id, {
         status: "failed",
-        error_message: errorMessage,
+        error_message: (error as Error).message,
         duration_ms: durationMs,
       });
 
       // Return sanitized error message
+      reqLogger.requestEnd(requestId, "POST", "/api/generate", 500, Date.now() - startTime);
+
       return NextResponse.json(
         { error: { code: "GENERATION_FAILED", message: "图片生成失败，请重试" } },
         { status: 500 }
       );
     }
   } catch (error) {
+    reqLogger.error("Unexpected error in generate API", error as Error);
+    reqLogger.requestEnd(requestId, "POST", "/api/generate", 500, Date.now() - startTime);
     return createErrorResponse(error, "GenerateAPI");
   }
 }
