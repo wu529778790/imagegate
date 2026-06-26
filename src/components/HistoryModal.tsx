@@ -37,7 +37,11 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
 
   useEffect(() => {
     if (open) {
-      fetchHistory();
+      // Use setTimeout to avoid calling setState synchronously in effect
+      const timer = setTimeout(() => {
+        fetchHistory();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [open]);
 

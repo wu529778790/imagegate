@@ -9,7 +9,7 @@ import { addToSyncQueue } from "@/lib/sync";
 import { GenerateImageSchema, validate } from "@/lib/validation";
 import { createErrorResponse } from "@/lib/errors";
 import { applyRateLimit, rateLimiters } from "@/lib/rate-limit";
-import logger, { generateRequestId, createRequestLogger } from "@/lib/logger";
+import { generateRequestId, createRequestLogger } from "@/lib/logger";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
   zai: "cogview-3",

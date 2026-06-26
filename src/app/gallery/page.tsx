@@ -100,7 +100,7 @@ export default function GalleryPage() {
       } else {
         message.error(result.error || "同步失败");
       }
-    } catch (error) {
+    } catch {
       message.error("同步失败");
     } finally {
       setSyncing(false);
@@ -124,7 +124,7 @@ export default function GalleryPage() {
       } else {
         message.error(result.error || "操作失败");
       }
-    } catch (error) {
+    } catch {
       message.error("操作失败");
     } finally {
       setSyncing(false);
@@ -133,8 +133,12 @@ export default function GalleryPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      fetchImages();
-      fetchSyncStatus();
+      // Use setTimeout to avoid calling setState synchronously in effect
+      const timer = setTimeout(() => {
+        fetchImages();
+        fetchSyncStatus();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [status]);
 
