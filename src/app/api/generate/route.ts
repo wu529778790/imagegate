@@ -10,6 +10,7 @@ import { GenerateImageSchema, validate } from "@/lib/validation";
 import { createErrorResponse } from "@/lib/errors";
 import { applyRateLimit, rateLimiters } from "@/lib/rate-limit";
 import { generateRequestId, createRequestLogger } from "@/lib/logger";
+import { withTimeout, TIMEOUT_CONFIG, TimeoutError, createTimeoutResponse } from "@/lib/timeout";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
   zai: "cogview-3",
@@ -169,7 +170,13 @@ export async function POST(request: NextRequest) {
 
     try {
       const provider = createProvider(providerName, { baseUrl });
-      const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality, n, size });
+
+      // Apply timeout to image generation
+      const imageBuffer = await withTimeout(
+        provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality, n, size }),
+        TIMEOUT_CONFIG.IMAGE_GENERATION,
+        `Image generation timed out after ${TIMEOUT_CONFIG.IMAGE_GENERATION}ms`
+      );
 
       const durationMs = Date.now() - generateStartTime;
 
@@ -261,6 +268,17 @@ export async function POST(request: NextRequest) {
         error_message: (error as Error).message,
         duration_ms: durationMs,
       });
+
+      // Handle timeout errors specifically
+      if (error instanceof TimeoutError) {
+        reqLogger.warn("Image generation timed out", {
+          provider: providerName,
+          model: resolvedModel,
+          timeout: TIMEOUT_CONFIG.IMAGE_GENERATION,
+        });
+        reqLogger.requestEnd(requestId, "POST", "/api/generate", 408, Date.now() - startTime);
+        return createTimeoutResponse("图片生成");
+      }
 
       // Return sanitized error message
       reqLogger.requestEnd(requestId, "POST", "/api/generate", 500, Date.now() - startTime);
