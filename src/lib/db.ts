@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
+import { encrypt, decrypt, isEncrypted } from "./crypto";
 
 const DB_PATH = process.env.DATABASE_URL?.replace("file:", "") || path.join(process.cwd(), "data", "magicbrush.db");
 
@@ -95,22 +96,44 @@ export interface ApiKey {
   created_at: string;
 }
 
+/**
+ * Decrypt API key if it's encrypted
+ */
+function decryptApiKey(key: ApiKey): ApiKey {
+  return {
+    ...key,
+    api_key: isEncrypted(key.api_key) ? decrypt(key.api_key) : key.api_key,
+  };
+}
+
 export function getAllKeys(): ApiKey[] {
-  return getDb().prepare("SELECT * FROM api_keys ORDER BY created_at DESC").all() as ApiKey[];
+  const keys = getDb().prepare("SELECT * FROM api_keys ORDER BY created_at DESC").all() as ApiKey[];
+  return keys.map(decryptApiKey);
 }
 
 export function getActiveKeyByProvider(provider: string): ApiKey | undefined {
-  return getDb().prepare("SELECT * FROM api_keys WHERE provider = ? AND is_active = 1 LIMIT 1").get(provider) as ApiKey | undefined;
+  const key = getDb().prepare("SELECT * FROM api_keys WHERE provider = ? AND is_active = 1 LIMIT 1").get(provider) as ApiKey | undefined;
+  return key ? decryptApiKey(key) : undefined;
 }
 
 export function getKeyIdByProviderAndKey(provider: string, apiKey: string): number | null {
-  const row = getDb().prepare("SELECT id FROM api_keys WHERE provider = ? AND api_key = ? LIMIT 1").get(provider, apiKey) as { id: number } | undefined;
-  return row?.id ?? null;
+  // We need to check all keys for this provider and compare decrypted values
+  const keys = getDb().prepare("SELECT id, api_key FROM api_keys WHERE provider = ?").all(provider) as { id: number; api_key: string }[];
+  for (const key of keys) {
+    const decrypted = isEncrypted(key.api_key) ? decrypt(key.api_key) : key.api_key;
+    if (decrypted === apiKey) {
+      return key.id;
+    }
+  }
+  return null;
 }
 
 export function addKey(name: string, provider: string, apiKey: string): ApiKey {
-  const result = getDb().prepare("INSERT INTO api_keys (name, provider, api_key) VALUES (?, ?, ?)").run(name, provider, apiKey);
-  return getDb().prepare("SELECT * FROM api_keys WHERE id = ?").get(result.lastInsertRowid) as ApiKey;
+  // Encrypt the API key before storing
+  const encryptedKey = encrypt(apiKey);
+  const result = getDb().prepare("INSERT INTO api_keys (name, provider, api_key) VALUES (?, ?, ?)").run(name, provider, encryptedKey);
+  const key = getDb().prepare("SELECT * FROM api_keys WHERE id = ?").get(result.lastInsertRowid) as ApiKey;
+  return decryptApiKey(key);
 }
 
 export function deleteKey(id: number): void {
@@ -233,11 +256,40 @@ export function getStats(): Stats {
 }
 
 // Settings
+const ENCRYPTED_SETTINGS_KEYS = [
+  "zai_api_key",
+  "openai_api_key",
+  "google_api_key",
+  "openrouter_api_key",
+  "dashscope_api_key",
+  "minimax_api_key",
+  "replicate_api_key",
+  "jimeng_api_key",
+  "seedream_api_key",
+  "azure_api_key",
+];
+
+/**
+ * Check if a setting key should be encrypted
+ */
+function shouldEncrypt(key: string): boolean {
+  return ENCRYPTED_SETTINGS_KEYS.includes(key);
+}
+
 export function getSetting(key: string): string | null {
   const row = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(key) as { value: string } | undefined;
-  return row?.value ?? null;
+  if (!row?.value) return null;
+
+  // Decrypt if needed
+  if (shouldEncrypt(key) && isEncrypted(row.value)) {
+    return decrypt(row.value);
+  }
+
+  return row.value;
 }
 
 export function setSetting(key: string, value: string): void {
-  getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)").run(key, value);
+  // Encrypt API keys before storing
+  const valueToStore = shouldEncrypt(key) ? encrypt(value) : value;
+  getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)").run(key, valueToStore);
 }

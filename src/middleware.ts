@@ -10,6 +10,11 @@ export function middleware(request: NextRequest) {
     "/api/auth",
     "/api/auth/session",
     "/api/images", // Allow image API routes
+    "/api/settings", // Allow settings API (for configuration)
+    "/api/keys", // Allow API keys management
+    "/api/records", // Allow records API
+    "/api/stats", // Allow stats API
+    "/api/generate", // Allow generate API (handles auth internally)
   ];
 
   // Check if the route is public

@@ -6,6 +6,8 @@ import { auth } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { addToSyncQueue } from "@/lib/sync";
+import { GenerateImageSchema, validate } from "@/lib/validation";
+import { createErrorResponse } from "@/lib/errors";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
   zai: "cogview-3",
@@ -72,20 +74,22 @@ async function saveImageToLocalStorage(
 }
 
 export async function POST(request: NextRequest) {
-  // Get current user session (optional - allows anonymous usage)
-  const session = await auth();
-  const userId = session?.user?.id ? parseInt(session.user.id) : null;
+  try {
+    // Get current user session (optional - allows anonymous usage)
+    const session = await auth();
+    const userId = session?.user?.id ? parseInt(session.user.id) : null;
 
-  const body = await request.json();
-  const { prompt, provider: requestedProvider, model, ar, quality, n, size } = body;
+    // Parse and validate request body
+    const body = await request.json();
+    const validatedData = validate(GenerateImageSchema, body);
+    const { prompt, provider: requestedProvider, model, ar, quality, n, size } = validatedData;
 
-  if (!prompt) {
-    return NextResponse.json({ error: "prompt is required" }, { status: 400 });
-  }
-
-  if (requestedProvider && !VALID_PROVIDERS.includes(requestedProvider)) {
-    return NextResponse.json({ error: `Invalid provider: ${requestedProvider}. Must be one of: ${VALID_PROVIDERS.join(", ")}` }, { status: 400 });
-  }
+    if (requestedProvider && !VALID_PROVIDERS.includes(requestedProvider)) {
+      return NextResponse.json(
+        { error: { code: "INVALID_PROVIDER", message: `Invalid provider: ${requestedProvider}` } },
+        { status: 400 }
+      );
+    }
 
   // Resolve provider: from request > from settings > auto-detect from api_keys
   let providerName = requestedProvider as Provider | undefined;
@@ -116,102 +120,112 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (!apiKey || !providerName) {
-    return NextResponse.json({ error: "No API key configured. Go to Settings to add one." }, { status: 400 });
-  }
-
-  // Resolve model: from request > from settings > from provider default
-  const resolvedModel = model || getSetting(`${providerName}_model`) || DEFAULT_MODELS[providerName];
-
-  // Resolve base URL from settings
-  const baseUrl = getSetting(`${providerName}_base_url`) || undefined;
-
-  const record = addRecord({
-    api_key_id: getKeyIdByProviderAndKey(providerName, apiKey),
-    provider: providerName,
-    model: resolvedModel,
-    prompt,
-    parameters: JSON.stringify({ ar, quality, size, n }),
-    status: "pending",
-  });
-
-  const startTime = Date.now();
-
-  try {
-    const provider = createProvider(providerName, { baseUrl });
-    const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality, n, size });
-
-    const durationMs = Date.now() - startTime;
-    const imageData = `data:image/png;base64,${imageBuffer.toString("base64")}`;
-
-    // Update record with success status
-    updateRecord(record.id, {
-      status: "success",
-      duration_ms: durationMs,
-      image_url: imageData,
-    });
-
-    // If user is logged in, save image to local storage
-    let savedImage = null;
-    if (userId) {
-      try {
-        savedImage = await saveImageToLocalStorage(
-          userId,
-          imageBuffer,
-          providerName,
-          resolvedModel,
-          prompt,
-          record.id
-        );
-
-        // Add to sync queue for GitHub upload (async, non-blocking)
-        if (savedImage) {
-          const db = getDb();
-          const imageRecord = db.prepare(
-            "SELECT id FROM images WHERE local_path = ?"
-          ).get(savedImage.localPath) as { id: number } | undefined;
-
-          if (imageRecord) {
-            addToSyncQueue(
-              userId,
-              imageRecord.id,
-              savedImage.localPath,
-              providerName,
-              resolvedModel,
-              prompt
-            ).catch((syncError) => {
-              console.error("Failed to add to sync queue:", syncError);
-              // Don't fail the request if sync queue fails
-            });
-          }
-        }
-      } catch (saveError) {
-        console.error("Failed to save image to local storage:", saveError);
-        // Don't fail the request if saving fails
-      }
+    if (!apiKey || !providerName) {
+      return NextResponse.json(
+        { error: { code: "NO_API_KEY", message: "No API key configured. Go to Settings to add one." } },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({
-      success: true,
-      image: imageBuffer.toString("base64"),
+    // Resolve model: from request > from settings > from provider default
+    const resolvedModel = model || getSetting(`${providerName}_model`) || DEFAULT_MODELS[providerName];
+
+    // Resolve base URL from settings
+    const baseUrl = getSetting(`${providerName}_base_url`) || undefined;
+
+    const record = addRecord({
+      api_key_id: getKeyIdByProviderAndKey(providerName, apiKey),
       provider: providerName,
       model: resolvedModel,
-      duration_ms: durationMs,
-      savedImage: savedImage ? {
-        localPath: savedImage.localPath,
-        imageUrl: savedImage.imageUrl,
-      } : null,
+      prompt,
+      parameters: JSON.stringify({ ar, quality, size, n }),
+      status: "pending",
     });
+
+    const startTime = Date.now();
+
+    try {
+      const provider = createProvider(providerName, { baseUrl });
+      const imageBuffer = await provider.generateImage(prompt, resolvedModel, apiKey, { aspectRatio: ar, quality, n, size });
+
+      const durationMs = Date.now() - startTime;
+      const imageData = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+
+      // Update record with success status
+      updateRecord(record.id, {
+        status: "success",
+        duration_ms: durationMs,
+        image_url: imageData,
+      });
+
+      // If user is logged in, save image to local storage
+      let savedImage = null;
+      if (userId) {
+        try {
+          savedImage = await saveImageToLocalStorage(
+            userId,
+            imageBuffer,
+            providerName,
+            resolvedModel,
+            prompt,
+            record.id
+          );
+
+          // Add to sync queue for GitHub upload (async, non-blocking)
+          if (savedImage) {
+            const db = getDb();
+            const imageRecord = db.prepare(
+              "SELECT id FROM images WHERE local_path = ?"
+            ).get(savedImage.localPath) as { id: number } | undefined;
+
+            if (imageRecord) {
+              addToSyncQueue(
+                userId,
+                imageRecord.id,
+                savedImage.localPath,
+                providerName,
+                resolvedModel,
+                prompt
+              ).catch((syncError) => {
+                console.error("Failed to add to sync queue:", syncError);
+                // Don't fail the request if sync queue fails
+              });
+            }
+          }
+        } catch (saveError) {
+          console.error("Failed to save image to local storage:", saveError);
+          // Don't fail the request if saving fails
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        image: imageBuffer.toString("base64"),
+        provider: providerName,
+        model: resolvedModel,
+        duration_ms: durationMs,
+        savedImage: savedImage ? {
+          localPath: savedImage.localPath,
+          imageUrl: savedImage.imageUrl,
+        } : null,
+      });
+    } catch (error) {
+      const durationMs = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+      updateRecord(record.id, {
+        status: "failed",
+        error_message: errorMessage,
+        duration_ms: durationMs,
+      });
+
+      // Return sanitized error message
+      return NextResponse.json(
+        { error: { code: "GENERATION_FAILED", message: "图片生成失败，请重试" } },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    const durationMs = Date.now() - startTime;
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-    updateRecord(record.id, {
-      status: "failed",
-      error_message: errorMessage,
-      duration_ms: durationMs,
-    });
-
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return createErrorResponse(error, "GenerateAPI");
   }
 }
