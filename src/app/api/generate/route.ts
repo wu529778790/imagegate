@@ -5,6 +5,7 @@ import type { Provider } from "@/providers";
 import { auth } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { addToSyncQueue } from "@/lib/sync";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
   zai: "cogview-3",
@@ -162,6 +163,28 @@ export async function POST(request: NextRequest) {
           prompt,
           record.id
         );
+
+        // Add to sync queue for GitHub upload (async, non-blocking)
+        if (savedImage) {
+          const db = getDb();
+          const imageRecord = db.prepare(
+            "SELECT id FROM images WHERE local_path = ?"
+          ).get(savedImage.localPath) as { id: number } | undefined;
+
+          if (imageRecord) {
+            addToSyncQueue(
+              userId,
+              imageRecord.id,
+              savedImage.localPath,
+              providerName,
+              resolvedModel,
+              prompt
+            ).catch((syncError) => {
+              console.error("Failed to add to sync queue:", syncError);
+              // Don't fail the request if sync queue fails
+            });
+          }
+        }
       } catch (saveError) {
         console.error("Failed to save image to local storage:", saveError);
         // Don't fail the request if saving fails
