@@ -4,14 +4,12 @@
  * Uses the OpenRouter API with /chat/completions endpoint.
  */
 
-import type {
-  GenerateImageOptions,
-  ImageProvider,
-} from "./types";
+import { BaseProvider } from "./base";
+import type { GenerateImageOptions, Provider } from "./types";
 import { ProviderError } from "./types";
 
 // ---------------------------------------------------------------------------
-// Response handling
+// Types
 // ---------------------------------------------------------------------------
 
 interface OpenRouterImageEntry {
@@ -37,82 +35,28 @@ interface OpenRouterResponse {
   }>;
 }
 
-function extractImageUrl(entry: OpenRouterImageEntry | OpenRouterMessagePart): string | null {
-  const value = "image_url" in entry ? entry.image_url : ("imageUrl" in entry ? entry.imageUrl : null);
-  if (!value) return null;
-  if (typeof value === "string") return value;
-  return value.url ?? null;
-}
-
-function decodeDataUrl(value: string): Buffer | null {
-  const match = value.match(/^data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)$/);
-  if (!match) return null;
-  return Buffer.from(match[1]!, "base64");
-}
-
-async function downloadImage(value: string): Promise<Buffer> {
-  const inline = decodeDataUrl(value);
-  if (inline) return inline;
-
-  if (value.startsWith("http://") || value.startsWith("https://")) {
-    const response = await fetch(value);
-    if (!response.ok) {
-      throw new Error(`Failed to download OpenRouter image: ${response.status}`);
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  }
-
-  return Buffer.from(value, "base64");
-}
-
-async function extractImageFromResponse(result: OpenRouterResponse): Promise<Buffer> {
-  const choice = result.choices?.[0];
-  const message = choice?.message;
-
-  for (const image of message?.images ?? []) {
-    const imageUrl = extractImageUrl(image);
-    if (imageUrl) return downloadImage(imageUrl);
-  }
-
-  if (Array.isArray(message?.content)) {
-    for (const item of message.content) {
-      const imageUrl = extractImageUrl(item);
-      if (imageUrl) return downloadImage(imageUrl);
-
-      if (item.type === "text" && item.text) {
-        const inline = decodeDataUrl(item.text);
-        if (inline) return inline;
-      }
-    }
-  } else if (typeof message?.content === "string") {
-    const inline = decodeDataUrl(message.content);
-    if (inline) return inline;
-  }
-
-  const finishReason =
-    choice?.native_finish_reason || choice?.finish_reason || "unknown";
-  throw new Error(
-    `No image in OpenRouter response (finish_reason=${finishReason})`,
-  );
-}
-
 // ---------------------------------------------------------------------------
-// Provider implementation
+// Provider Implementation
 // ---------------------------------------------------------------------------
 
-export class OpenRouterProvider implements ImageProvider {
-  readonly name = "openrouter" as const;
+export class OpenRouterProvider extends BaseProvider {
+  readonly name: Provider = "openrouter";
   readonly defaultModel = "google/gemini-2.0-flash-preview-image-generation";
 
-  private readonly baseUrl: string;
-
   constructor(baseUrl?: string) {
-    // OpenRouter base URL: https://openrouter.ai/api/v1
-    this.baseUrl = (baseUrl ?? "https://openrouter.ai/api/v1")
-      .replace(/\/+$/g, "");
+    super(baseUrl ?? "https://openrouter.ai/api/v1");
   }
 
+  /**
+   * Override to use OpenRouter's chat completions endpoint.
+   */
+  protected getImageUrl(): string {
+    return `${this.baseUrl}/chat/completions`;
+  }
+
+  /**
+   * Override to handle OpenRouter's specific request format.
+   */
   async generateImage(
     prompt: string,
     model: string,
@@ -120,7 +64,7 @@ export class OpenRouterProvider implements ImageProvider {
     options: GenerateImageOptions = {},
   ): Promise<Buffer> {
     if (!apiKey) {
-      throw new ProviderError("openrouter", undefined, "API key is required for OpenRouter provider.");
+      throw new ProviderError(this.name, undefined, "API key is required");
     }
 
     const resolvedModel = model || this.defaultModel;
@@ -150,24 +94,91 @@ export class OpenRouterProvider implements ImageProvider {
       body.provider = { require_parameters: true };
     }
 
-    const url = `${this.baseUrl}/chat/completions`;
-
-    const response = await fetch(url, {
+    const response = await fetch(this.getImageUrl(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: this.getHeaders(apiKey),
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      throw new ProviderError("openrouter", response.status, `OpenRouter API error (${response.status}): ${errText}`);
+      const errorText = await response.text().catch(() => "Unknown error");
+      throw new ProviderError(
+        this.name,
+        response.status,
+        `OpenRouter API error (${response.status}): ${errorText}`,
+      );
     }
 
     const result = (await response.json()) as OpenRouterResponse;
-    return extractImageFromResponse(result);
+    return this.extractFromOpenRouterResponse(result);
+  }
+
+  private async extractFromOpenRouterResponse(response: OpenRouterResponse): Promise<Buffer> {
+    const choice = response.choices?.[0];
+    const message = choice?.message;
+
+    // Try to extract from images array
+    for (const image of message?.images ?? []) {
+      const imageUrl = this.extractImageUrl(image);
+      if (imageUrl) return this.downloadImage(imageUrl);
+    }
+
+    // Try to extract from content array
+    if (Array.isArray(message?.content)) {
+      for (const item of message.content) {
+        const imageUrl = this.extractImageUrl(item);
+        if (imageUrl) return this.downloadImage(imageUrl);
+
+        if (item.type === "text" && item.text) {
+          const inline = this.decodeDataUrl(item.text);
+          if (inline) return inline;
+        }
+      }
+    } else if (typeof message?.content === "string") {
+      const inline = this.decodeDataUrl(message.content);
+      if (inline) return inline;
+    }
+
+    const finishReason =
+      choice?.native_finish_reason || choice?.finish_reason || "unknown";
+    throw new ProviderError(
+      this.name,
+      undefined,
+      `No image in OpenRouter response (finish_reason=${finishReason})`,
+    );
+  }
+
+  private extractImageUrl(entry: OpenRouterImageEntry | OpenRouterMessagePart): string | null {
+    const value = "image_url" in entry ? entry.image_url : ("imageUrl" in entry ? entry.imageUrl : null);
+    if (!value) return null;
+    if (typeof value === "string") return value;
+    return (value as { url?: string }).url ?? null;
+  }
+
+  private decodeDataUrl(value: string): Buffer | null {
+    const match = value.match(/^data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)$/);
+    if (!match) return null;
+    return Buffer.from(match[1]!, "base64");
+  }
+
+  private async downloadImage(value: string): Promise<Buffer> {
+    const inline = this.decodeDataUrl(value);
+    if (inline) return inline;
+
+    if (value.startsWith("http://") || value.startsWith("https://")) {
+      const response = await fetch(value);
+      if (!response.ok) {
+        throw new ProviderError(
+          this.name,
+          response.status,
+          `Failed to download OpenRouter image: ${response.status}`,
+        );
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    }
+
+    return Buffer.from(value, "base64");
   }
 }
 
