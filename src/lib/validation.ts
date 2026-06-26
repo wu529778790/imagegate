@@ -151,7 +151,9 @@ export class ValidationError extends Error {
   public readonly zodError: z.ZodError;
 
   constructor(errors: z.ZodError) {
-    const message = (errors as any).errors
+    // Handle Zod v4 error structure
+    const errorList = (errors as any).issues || (errors as any).errors || [];
+    const message = errorList
       .map((e: any) => `${e.path.join(".")}: ${e.message}`)
       .join("; ");
     super(message);
@@ -182,9 +184,10 @@ export function validateSafe<T>(
   if (result.success) {
     return { success: true, data: result.data };
   }
+  const errorList = (result.error as any).issues || (result.error as any).errors || [];
   return {
     success: false,
-    errors: (result.error as any).errors.map(
+    errors: errorList.map(
       (e: any) => `${e.path.join(".")}: ${e.message}`
     ),
   };

@@ -93,7 +93,8 @@ function sanitizeErrorMessage(error: Error): string {
 
   // For Zod validation errors, format nicely
   if (error instanceof ZodError) {
-    return (error as any).errors
+    const errorList = (error as any).issues || (error as any).errors || [];
+    return errorList
       .map((e: any) => `${e.path.join(".")}: ${e.message}`)
       .join("; ");
   }
