@@ -2,127 +2,23 @@
  * OpenAI-compatible image generation provider.
  *
  * Supports OpenAI, Azure OpenAI, OpenRouter, and other OpenAI-compatible APIs.
+ * Refactored to use BaseProvider for common functionality.
  */
 
-import type {
-  GenerateImageOptions,
-  ImageProvider,
-  OpenAIImageApiResponse,
-  Provider,
-  Quality,
-} from "./types";
+import { BaseProvider, parseAspectRatio, sizeFromAspectRatio } from "./base";
+import type { ImageRequest } from "./base";
+import type { GenerateImageOptions, Provider } from "./types";
 import { ProviderError } from "./types";
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Constants
 // ---------------------------------------------------------------------------
 
-function parseAspectRatio(ar: string): { width: number; height: number } | null {
-  const match = ar.match(/^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/);
-  if (!match) return null;
-  const w = parseFloat(match[1]!);
-  const h = parseFloat(match[2]!);
-  if (w <= 0 || h <= 0) return null;
-  return { width: w, height: h };
-}
-
-function parsePixelSize(value: string): { width: number; height: number } | null {
-  const match = value.match(/^(\d+)\s*[xX]\s*(\d+)$/);
-  if (!match) return null;
-  const width = parseInt(match[1]!, 10);
-  const height = parseInt(match[2]!, 10);
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return null;
-  }
-  return { width, height };
-}
-
-function roundToMultiple(value: number, multiple: number): number {
-  return Math.max(multiple, Math.round(value / multiple) * multiple);
-}
-
-function buildSizeFromAspectRatio(ar: string | null, quality: Quality): string {
-  const parsed = ar ? parseAspectRatio(ar) : null;
-  const ratio = parsed ? parsed.width / parsed.height : 1;
-
-  if (!parsed || (parsed.width === parsed.height)) {
-    const edge = quality === "2k" ? 2048 : 1024;
-    return `${edge}x${edge}`;
-  }
-
-  const targetLongEdge = quality === "2k" ? 2048 : 1024;
-  let width: number;
-  let height: number;
-
-  if (ratio > 1) {
-    width = targetLongEdge;
-    height = roundToMultiple(width / ratio, 16);
-  } else {
-    height = targetLongEdge;
-    width = roundToMultiple(height * ratio, 16);
-  }
-
-  // Ensure minimum total pixel count
-  while (width * height < 655_360) {
-    if (ratio > 1) {
-      width += 16;
-      height = roundToMultiple(width / ratio, 16);
-    } else {
-      height += 16;
-      width = roundToMultiple(height * ratio, 16);
-    }
-  }
-
-  return `${width}x${height}`;
-}
-
-function resolveSize(options: Pick<GenerateImageOptions, "size" | "aspectRatio" | "quality">): string {
-  if (options.size) {
-    const parsed = parsePixelSize(options.size);
-    if (!parsed) {
-      throw new Error("Size must be in WxH format, for example 1280x1280.");
-    }
-    if (parsed.width % 16 !== 0 || parsed.height % 16 !== 0) {
-      throw new Error("Width and height must both be multiples of 16.");
-    }
-    if (parsed.width * parsed.height < 655_360) {
-      throw new Error("Image must be at least 655,360 pixels (e.g. 816x816).");
-    }
-    return `${parsed.width}x${parsed.height}`;
-  }
-
-  return buildSizeFromAspectRatio(options.aspectRatio ?? null, options.quality ?? "2k");
-}
-
-function resolveQuality(quality: Quality): "standard" | "hd" | undefined {
-  return quality === "2k" ? "hd" : "standard";
-}
+const DALL_E_3_SIZES = ["1024x1024", "1792x1024", "1024x1792"];
+const DALL_E_2_SIZES = ["256x256", "512x512", "1024x1024"];
 
 // ---------------------------------------------------------------------------
-// Response handling
-// ---------------------------------------------------------------------------
-
-async function extractImageFromResponse(result: OpenAIImageApiResponse): Promise<Buffer> {
-  const img = result.data?.[0];
-
-  if (img?.b64_json) {
-    return Buffer.from(img.b64_json, "base64");
-  }
-
-  if (img?.url) {
-    const imgRes = await fetch(img.url);
-    if (!imgRes.ok) {
-      throw new Error(`Failed to download image: ${imgRes.status}`);
-    }
-    const arrayBuffer = await imgRes.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  }
-
-  throw new Error("No image in response");
-}
-
-// ---------------------------------------------------------------------------
-// Provider implementation
+// Provider Configuration
 // ---------------------------------------------------------------------------
 
 export interface OpenAICompatibleConfig {
@@ -136,89 +32,141 @@ export interface OpenAICompatibleConfig {
   extraBody?: Record<string, unknown>;
 }
 
-export class OpenAICompatibleProvider implements ImageProvider {
+// ---------------------------------------------------------------------------
+// Provider Implementation
+// ---------------------------------------------------------------------------
+
+export class OpenAICompatibleProvider extends BaseProvider {
   readonly name: Provider;
   readonly defaultModel: string;
 
-  private readonly baseUrl: string;
-  private readonly headers: Record<string, string>;
+  private readonly customHeaders: Record<string, string>;
   private readonly useChatEndpoint: boolean;
   private readonly extraBody: Record<string, unknown>;
 
   constructor(name: Provider, config: OpenAICompatibleConfig) {
+    super(config.baseUrl);
     this.name = name;
-    this.baseUrl = config.baseUrl.replace(/\/+$/g, "");
     this.defaultModel = config.defaultModel;
-    this.headers = config.headers ?? {};
+    this.customHeaders = config.headers ?? {};
     this.useChatEndpoint = config.useChatEndpoint ?? false;
     this.extraBody = config.extraBody ?? {};
   }
 
-  async generateImage(
+  protected getImageUrl(): string {
+    if (this.useChatEndpoint) {
+      return `${this.baseUrl}/chat/completions`;
+    }
+    return `${this.baseUrl}/images/generations`;
+  }
+
+  protected getHeaders(apiKey: string): Record<string, string> {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      ...this.customHeaders,
+    };
+  }
+
+  protected buildRequestBody(
     prompt: string,
     model: string,
-    apiKey: string,
-    options: GenerateImageOptions = {},
-  ): Promise<Buffer> {
-    if (!apiKey) {
-      throw new ProviderError(this.name, undefined, `API key is required for ${this.name} provider.`);
-    }
-
+    options: GenerateImageOptions,
+  ): ImageRequest {
     const resolvedModel = model || this.defaultModel;
-    const size = resolveSize(options);
-    const quality = resolveQuality(options.quality ?? "2k");
 
-    let url: string;
-    let body: Record<string, unknown>;
+    // Standard OpenAI /images/generations
+    const size = this.resolveSize(options);
+    const quality = this.resolveQuality(options.quality);
 
-    if (this.useChatEndpoint) {
-      // OpenRouter and similar use /chat/completions
-      url = `${this.baseUrl}/chat/completions`;
-      body = {
-        model: resolvedModel,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        ...this.extraBody,
-      };
-    } else {
-      // Standard OpenAI /images/generations
-      url = `${this.baseUrl}/images/generations`;
-      body = {
-        model: resolvedModel,
-        prompt,
-        size,
-        ...this.extraBody,
-      };
+    const body: ImageRequest = {
+      model: resolvedModel,
+      prompt,
+      size,
+      quality,
+      response_format: "b64_json", // Always request base64 for consistency
+      ...this.extraBody,
+    };
 
-      if (quality !== undefined) {
-        body.quality = quality;
-      }
+    // DALL-E 3 only supports n=1
+    if (this.isDallE3(resolvedModel)) {
+      body.n = 1;
+    } else if (options.n && options.n > 1) {
+      body.n = options.n;
+    }
 
-      if (options.n && options.n > 1) {
-        body.n = options.n;
+    return body;
+  }
+
+  private isDallE3(model: string): boolean {
+    return model.includes("dall-e-3") || model.includes("gpt-image");
+  }
+
+  private resolveSize(options: GenerateImageOptions): string {
+    if (options.size) {
+      const normalized = options.size.replace(/[xX*]/g, "x");
+      const validSizes = this.isDallE3(this.defaultModel) ? DALL_E_3_SIZES : DALL_E_2_SIZES;
+
+      if (validSizes.includes(normalized)) {
+        return normalized;
       }
     }
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        ...this.headers,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new ProviderError(this.name, response.status, `${this.name} API error (${response.status}): ${errText}`);
+    if (options.aspectRatio) {
+      const targetPixels = this.isDallE3(this.defaultModel) ? 1024 * 1024 : 512 * 512;
+      const size = sizeFromAspectRatio(options.aspectRatio, targetPixels, 64);
+      if (size) {
+        const validSizes = this.isDallE3(this.defaultModel) ? DALL_E_3_SIZES : DALL_E_2_SIZES;
+        if (validSizes.includes(size)) {
+          return size;
+        }
+      }
     }
 
-    const result = (await response.json()) as OpenAIImageApiResponse;
-    return extractImageFromResponse(result);
+    // Default size
+    return "1024x1024";
+  }
+
+  private resolveQuality(quality?: string): string {
+    if (!quality) {
+      return this.isDallE3(this.defaultModel) ? "hd" : "standard";
+    }
+
+    // Map quality presets
+    if (quality === "normal") return "standard";
+    if (quality === "2k" || quality === "high") return "hd";
+
+    return quality;
+  }
+
+  /**
+   * Override to handle both base64 and URL responses.
+   */
+  protected async extractImageFromResponse(response: { data: Array<{ b64_json?: string; url?: string }> }): Promise<Buffer> {
+    const imageData = response.data?.[0];
+    if (!imageData) {
+      throw new ProviderError(this.name, undefined, "No image data in response");
+    }
+
+    // Handle base64 response (preferred)
+    if (imageData.b64_json) {
+      return Buffer.from(imageData.b64_json, "base64");
+    }
+
+    // Handle URL response (fallback)
+    if (imageData.url) {
+      const imageResponse = await fetch(imageData.url);
+      if (!imageResponse.ok) {
+        throw new ProviderError(
+          this.name,
+          imageResponse.status,
+          `Failed to download image: ${imageResponse.status}`,
+        );
+      }
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    }
+
+    throw new ProviderError(this.name, undefined, "No image URL or base64 data in response");
   }
 }

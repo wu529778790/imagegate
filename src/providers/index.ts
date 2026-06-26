@@ -25,6 +25,7 @@ import { SeedreamProvider } from "./seedream";
 import { AzureProvider } from "./azure";
 
 export type { GenerateImageOptions, ImageProvider, Provider, ProviderError } from "./types";
+export { BaseProvider } from "./base";
 export { ZaiProvider } from "./zai";
 export { OpenAIProvider } from "./openai";
 export { GoogleProvider } from "./google";
