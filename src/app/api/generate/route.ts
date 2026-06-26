@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSetting, getActiveKeyByProvider, getKeyIdByProviderAndKey, addRecord, updateRecord } from "@/lib/db";
+import { getSetting, getActiveKeyByProvider, getKeyIdByProviderAndKey, addRecord, updateRecord, getDb } from "@/lib/db";
 import { createProvider } from "@/providers";
 import type { Provider } from "@/providers";
+import { auth } from "@/lib/auth";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
   zai: "cogview-3",
@@ -29,7 +32,49 @@ const VALID_PROVIDERS: Provider[] = [
   "azure",
 ];
 
+async function saveImageToLocalStorage(
+  userId: number,
+  imageBuffer: Buffer,
+  provider: string,
+  model: string,
+  prompt: string,
+  generationId: number
+): Promise<{ localPath: string; imageUrl: string }> {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const timestamp = Date.now();
+  const filename = `${timestamp}_${provider}_${model.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
+
+  // Create directory structure: data/images/{userId}/{year}/{month}/{day}/
+  const relativePath = path.join("images", String(userId), String(year), month, day, filename);
+  const fullPath = path.join(process.cwd(), "data", relativePath);
+
+  // Ensure directory exists
+  await mkdir(path.dirname(fullPath), { recursive: true });
+
+  // Write file
+  await writeFile(fullPath, imageBuffer);
+
+  // Store metadata in database
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO images (user_id, generation_id, local_path, prompt, provider, model, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+  `).run(userId, generationId, relativePath, prompt, provider, model);
+
+  // Return the API URL for serving the image
+  const imageUrl = `/api/images/${userId}/${year}/${month}/${day}/${filename}`;
+
+  return { localPath: relativePath, imageUrl };
+}
+
 export async function POST(request: NextRequest) {
+  // Get current user session (optional - allows anonymous usage)
+  const session = await auth();
+  const userId = session?.user?.id ? parseInt(session.user.id) : null;
+
   const body = await request.json();
   const { prompt, provider: requestedProvider, model, ar, quality, n, size } = body;
 
@@ -98,11 +143,30 @@ export async function POST(request: NextRequest) {
     const durationMs = Date.now() - startTime;
     const imageData = `data:image/png;base64,${imageBuffer.toString("base64")}`;
 
+    // Update record with success status
     updateRecord(record.id, {
       status: "success",
       duration_ms: durationMs,
       image_url: imageData,
     });
+
+    // If user is logged in, save image to local storage
+    let savedImage = null;
+    if (userId) {
+      try {
+        savedImage = await saveImageToLocalStorage(
+          userId,
+          imageBuffer,
+          providerName,
+          resolvedModel,
+          prompt,
+          record.id
+        );
+      } catch (saveError) {
+        console.error("Failed to save image to local storage:", saveError);
+        // Don't fail the request if saving fails
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -110,6 +174,10 @@ export async function POST(request: NextRequest) {
       provider: providerName,
       model: resolvedModel,
       duration_ms: durationMs,
+      savedImage: savedImage ? {
+        localPath: savedImage.localPath,
+        imageUrl: savedImage.imageUrl,
+      } : null,
     });
   } catch (error) {
     const durationMs = Date.now() - startTime;

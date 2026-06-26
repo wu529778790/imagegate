@@ -52,6 +52,31 @@ function initSchema(db: Database.Database) {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      github_id INTEGER UNIQUE NOT NULL,
+      username TEXT NOT NULL,
+      avatar_url TEXT,
+      access_token TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS images (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      generation_id INTEGER,
+      local_path TEXT,
+      github_path TEXT,
+      github_sha TEXT,
+      repo_name TEXT,
+      prompt TEXT,
+      provider TEXT,
+      model TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (generation_id) REFERENCES generation_records(id)
+    );
   `);
 
   // Clean up records stuck in 'pending' for more than 10 minutes (e.g. from a crash)
