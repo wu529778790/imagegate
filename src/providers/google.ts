@@ -4,14 +4,12 @@
  * Uses the Gemini API with /v1beta/models/{model}:generateContent endpoint.
  */
 
-import type {
-  GenerateImageOptions,
-  ImageProvider,
-} from "./types";
+import { BaseProvider } from "./base";
+import type { GenerateImageOptions, Provider } from "./types";
 import { ProviderError } from "./types";
 
 // ---------------------------------------------------------------------------
-// Response handling
+// Types
 // ---------------------------------------------------------------------------
 
 interface GeminiResponse {
@@ -27,32 +25,16 @@ interface GeminiResponse {
   }>;
 }
 
-async function extractImageFromResponse(result: GeminiResponse): Promise<Buffer> {
-  for (const candidate of result.candidates ?? []) {
-    for (const part of candidate.content?.parts ?? []) {
-      if (part.inlineData?.data) {
-        return Buffer.from(part.inlineData.data, "base64");
-      }
-    }
-  }
-  throw new Error("No image in Gemini response");
-}
-
 // ---------------------------------------------------------------------------
-// Provider implementation
+// Provider Implementation
 // ---------------------------------------------------------------------------
 
-export class GoogleProvider implements ImageProvider {
-  readonly name = "google" as const;
+export class GoogleProvider extends BaseProvider {
+  readonly name: Provider = "google";
   readonly defaultModel = "gemini-2.0-flash-preview-image-generation";
 
-  private readonly baseUrl: string;
-
   constructor(baseUrl?: string) {
-    // Google Gemini base URL: https://generativelanguage.googleapis.com
-    // The API endpoint will be: /v1beta/models/{model}:generateContent
-    this.baseUrl = (baseUrl ?? "https://generativelanguage.googleapis.com")
-      .replace(/\/+$/g, "");
+    super(baseUrl ?? "https://generativelanguage.googleapis.com");
   }
 
   private getModelPath(model: string): string {
@@ -60,6 +42,26 @@ export class GoogleProvider implements ImageProvider {
     return `models/${modelId}`;
   }
 
+  /**
+   * Override to build Gemini-specific URL.
+   */
+  protected getImageUrl(): string {
+    return this.baseUrl; // Will be overridden in generateImage
+  }
+
+  /**
+   * Override to use Gemini's API key header.
+   */
+  protected getHeaders(apiKey: string): Record<string, string> {
+    return {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    };
+  }
+
+  /**
+   * Override to handle Gemini's specific request format.
+   */
   async generateImage(
     prompt: string,
     model: string,
@@ -67,7 +69,7 @@ export class GoogleProvider implements ImageProvider {
     _options: GenerateImageOptions = {},
   ): Promise<Buffer> {
     if (!apiKey) {
-      throw new ProviderError("google", undefined, "API key is required for Google provider.");
+      throw new ProviderError(this.name, undefined, "API key is required");
     }
 
     const resolvedModel = model || this.defaultModel;
@@ -96,20 +98,33 @@ export class GoogleProvider implements ImageProvider {
 
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
+      headers: this.getHeaders(apiKey),
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      throw new ProviderError("google", response.status, `Google API error (${response.status}): ${errText}`);
+      const errorText = await response.text().catch(() => "Unknown error");
+      throw new ProviderError(
+        this.name,
+        response.status,
+        `Google API error (${response.status}): ${errorText}`,
+      );
     }
 
     const result = (await response.json()) as GeminiResponse;
-    return extractImageFromResponse(result);
+    return this.extractFromGeminiResponse(result);
+  }
+
+  private async extractFromGeminiResponse(result: GeminiResponse): Promise<Buffer> {
+    for (const candidate of result.candidates ?? []) {
+      for (const part of candidate.content?.parts ?? []) {
+        if (part.inlineData?.data) {
+          return Buffer.from(part.inlineData.data, "base64");
+        }
+      }
+    }
+
+    throw new ProviderError(this.name, undefined, "No image in Gemini response");
   }
 }
 

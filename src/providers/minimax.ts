@@ -4,50 +4,13 @@
  * Uses the MiniMax API with /v1/image_generation endpoint.
  */
 
-import type {
-  GenerateImageOptions,
-  ImageProvider,
-} from "./types";
+import { BaseProvider, parseAspectRatio, sizeFromAspectRatio } from "./base";
+import type { ImageRequest } from "./base";
+import type { GenerateImageOptions, Provider } from "./types";
 import { ProviderError } from "./types";
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function parsePixelSize(value: string): { width: number; height: number } | null {
-  const match = value.trim().match(/^(\d+)\s*[xX*]\s*(\d+)$/);
-  if (!match) return null;
-  const width = parseInt(match[1]!, 10);
-  const height = parseInt(match[2]!, 10);
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return null;
-  }
-  return { width, height };
-}
-
-function resolveAspectRatio(options: Pick<GenerateImageOptions, "size" | "aspectRatio" | "quality">): string {
-  if (options.size) {
-    const parsed = parsePixelSize(options.size);
-    if (!parsed) {
-      throw new Error("Size must be in WxH format, for example 1024x1024.");
-    }
-    if (parsed.width % 8 !== 0 || parsed.height % 8 !== 0) {
-      throw new Error("Width and height must both be multiples of 8.");
-    }
-    if (parsed.width < 512 || parsed.width > 2048 || parsed.height < 512 || parsed.height > 2048) {
-      throw new Error("Width and height must be between 512 and 2048.");
-    }
-    // Convert to aspect ratio
-    const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-    const g = gcd(parsed.width, parsed.height);
-    return `${parsed.width / g}:${parsed.height / g}`;
-  }
-
-  return options.aspectRatio ?? "1:1";
-}
-
-// ---------------------------------------------------------------------------
-// Response handling
+// Types
 // ---------------------------------------------------------------------------
 
 interface MiniMaxResponse {
@@ -61,48 +24,68 @@ interface MiniMaxResponse {
   };
 }
 
-async function extractImageFromResponse(result: MiniMaxResponse): Promise<Buffer> {
-  if (result.base_resp?.status_code !== 0 && result.base_resp?.status_code !== undefined) {
-    throw new Error(`MiniMax error: ${result.base_resp.status_msg}`);
-  }
-
-  // Try base64 first
-  const base64Image = result.data?.image_base64?.[0];
-  if (base64Image) {
-    return Buffer.from(base64Image, "base64");
-  }
-
-  // Try URL
-  const url = result.data?.image_urls?.[0];
-  if (url) {
-    const imageResponse = await fetch(url);
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to download image: ${imageResponse.status}`);
-    }
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  }
-
-  throw new Error("No image in MiniMax response");
-}
-
 // ---------------------------------------------------------------------------
-// Provider implementation
+// Provider Implementation
 // ---------------------------------------------------------------------------
 
-export class MiniMaxProvider implements ImageProvider {
-  readonly name = "minimax" as const;
+export class MiniMaxProvider extends BaseProvider {
+  readonly name: Provider = "minimax";
   readonly defaultModel = "image-01";
 
-  private readonly baseUrl: string;
-
   constructor(baseUrl?: string) {
-    // MiniMax base URL: https://api.minimaxi.com
-    // The API endpoint will be: /v1/image_generation
-    this.baseUrl = (baseUrl ?? "https://api.minimaxi.com")
-      .replace(/\/+$/g, "");
+    super(baseUrl ?? "https://api.minimaxi.com");
   }
 
+  protected getImageUrl(): string {
+    // Ensure proper path handling
+    let baseUrl = this.baseUrl;
+    if (!baseUrl.endsWith("/v1")) {
+      baseUrl = `${baseUrl}/v1`;
+    }
+    return `${baseUrl}/image_generation`;
+  }
+
+  protected buildRequestBody(
+    prompt: string,
+    model: string,
+    options: GenerateImageOptions,
+  ): ImageRequest {
+    const resolvedModel = model || this.defaultModel;
+    const aspectRatio = this.resolveAspectRatio(options);
+
+    return {
+      model: resolvedModel,
+      prompt,
+      n: options.n,
+      // Store aspect_ratio in extra fields
+      aspect_ratio: aspectRatio,
+    } as ImageRequest;
+  }
+
+  private resolveAspectRatio(options: GenerateImageOptions): string {
+    if (options.size) {
+      const parsed = parseAspectRatio(options.size);
+      if (!parsed) {
+        throw new ProviderError(this.name, undefined, "Size must be in WxH format, for example 1024x1024.");
+      }
+      if (parsed.width % 8 !== 0 || parsed.height % 8 !== 0) {
+        throw new ProviderError(this.name, undefined, "Width and height must both be multiples of 8.");
+      }
+      if (parsed.width < 512 || parsed.width > 2048 || parsed.height < 512 || parsed.height > 2048) {
+        throw new ProviderError(this.name, undefined, "Width and height must be between 512 and 2048.");
+      }
+      // Convert to aspect ratio
+      const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+      const g = gcd(parsed.width, parsed.height);
+      return `${parsed.width / g}:${parsed.height / g}`;
+    }
+
+    return options.aspectRatio ?? "1:1";
+  }
+
+  /**
+   * Override to handle MiniMax's specific request and response format.
+   */
   async generateImage(
     prompt: string,
     model: string,
@@ -110,18 +93,39 @@ export class MiniMaxProvider implements ImageProvider {
     options: GenerateImageOptions = {},
   ): Promise<Buffer> {
     if (!apiKey) {
-      throw new ProviderError("minimax", undefined, "API key is required for MiniMax provider.");
+      throw new ProviderError(this.name, undefined, "API key is required");
     }
 
+    const url = this.getImageUrl();
+    const body = this.buildMiniMaxRequestBody(prompt, model, options);
+    const headers = this.getHeaders(apiKey);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
+      throw new ProviderError(
+        this.name,
+        response.status,
+        `MiniMax API error (${response.status}): ${errorText}`,
+      );
+    }
+
+    const result = (await response.json()) as MiniMaxResponse;
+    return this.extractFromMiniMaxResponse(result);
+  }
+
+  private buildMiniMaxRequestBody(
+    prompt: string,
+    model: string,
+    options: GenerateImageOptions,
+  ): Record<string, unknown> {
     const resolvedModel = model || this.defaultModel;
-    const aspectRatio = resolveAspectRatio(options);
-
-    // Build URL with proper path handling
-    let baseUrl = this.baseUrl;
-    if (!baseUrl.endsWith("/v1")) {
-      baseUrl = `${baseUrl}/v1`;
-    }
-    const url = `${baseUrl}/image_generation`;
+    const aspectRatio = this.resolveAspectRatio(options);
 
     const body: Record<string, unknown> = {
       model: resolvedModel,
@@ -134,22 +138,41 @@ export class MiniMaxProvider implements ImageProvider {
       body.n = options.n;
     }
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-    });
+    return body;
+  }
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new ProviderError("minimax", response.status, `MiniMax API error (${response.status}): ${errText}`);
+  private async extractFromMiniMaxResponse(response: MiniMaxResponse): Promise<Buffer> {
+    // Check for error
+    if (response.base_resp?.status_code !== 0 && response.base_resp?.status_code !== undefined) {
+      throw new ProviderError(
+        this.name,
+        undefined,
+        `MiniMax error: ${response.base_resp.status_msg}`,
+      );
     }
 
-    const result = (await response.json()) as MiniMaxResponse;
-    return extractImageFromResponse(result);
+    // Try base64 first
+    const base64Image = response.data?.image_base64?.[0];
+    if (base64Image) {
+      return Buffer.from(base64Image, "base64");
+    }
+
+    // Try URL
+    const url = response.data?.image_urls?.[0];
+    if (url) {
+      const imageResponse = await fetch(url);
+      if (!imageResponse.ok) {
+        throw new ProviderError(
+          this.name,
+          imageResponse.status,
+          `Failed to download image: ${imageResponse.status}`,
+        );
+      }
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    }
+
+    throw new ProviderError(this.name, undefined, "No image in MiniMax response");
   }
 }
 
