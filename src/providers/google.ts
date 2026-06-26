@@ -2,7 +2,6 @@
  * Google Gemini image generation provider.
  *
  * Uses the Gemini API with /v1beta/models/{model}:generateContent endpoint.
- * Reference: https://github.com/jimliu/baoyu-skills/blob/main/skills/baoyu-image-gen/scripts/providers/google.ts
  */
 
 import type {

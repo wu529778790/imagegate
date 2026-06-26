@@ -2,7 +2,6 @@
  * MiniMax image generation provider.
  *
  * Uses the MiniMax API with /v1/image_generation endpoint.
- * Reference: https://github.com/jimliu/baoyu-skills/blob/main/skills/baoyu-image-gen/scripts/providers/minimax.ts
  */
 
 import type {

@@ -2,14 +2,14 @@
 
 ## Overview
 
-Internal image generation API service with management UI, deployed via Docker. Wraps baoyu-imagine's provider logic (starting with Z.AI/Zhipu and Xiaomi) as HTTP endpoints.
+Internal image generation API service with management UI, deployed via Docker. Wraps multiple image provider APIs as HTTP endpoints.
 
 ## Tech Stack
 
 - **Frontend**: Next.js 14+ (App Router), Ant Design
 - **Backend**: Next.js Route Handlers
 - **Database**: SQLite via better-sqlite3
-- **Providers**: Extracted from baoyu-imagine (Z.AI, Xiaomi initially)
+- **Providers**: Z.AI, Xiaomi and more
 - **Deployment**: Single Docker container
 
 ## Database Schema

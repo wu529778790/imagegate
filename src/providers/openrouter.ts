@@ -2,7 +2,6 @@
  * OpenRouter image generation provider.
  *
  * Uses the OpenRouter API with /chat/completions endpoint.
- * Reference: https://github.com/jimliu/baoyu-skills/blob/main/skills/baoyu-image-gen/scripts/providers/openrouter.ts
  */
 
 import type {

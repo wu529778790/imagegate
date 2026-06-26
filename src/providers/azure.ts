@@ -2,7 +2,6 @@
  * Azure OpenAI image generation provider.
  *
  * Uses the Azure OpenAI API with /openai/deployments/{deployment}/images/generations endpoint.
- * Reference: https://github.com/jimliu/baoyu-skills/blob/main/skills/baoyu-image-gen/scripts/providers/azure.ts
  */
 
 import type {

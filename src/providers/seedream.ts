@@ -2,7 +2,6 @@
  * Seedream (豆包) image generation provider.
  *
  * Uses the Volcengine ARK API with /images/generations endpoint.
- * Reference: https://github.com/jimliu/baoyu-skills/blob/main/skills/baoyu-image-gen/scripts/providers/seedream.ts
  */
 
 import type {

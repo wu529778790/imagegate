@@ -2,7 +2,6 @@
  * Replicate image generation provider.
  *
  * Uses the Replicate API with /v1/predictions endpoint.
- * Reference: https://github.com/jimliu/baoyu-skills/blob/main/skills/baoyu-image-gen/scripts/providers/replicate.ts
  */
 
 import type {

@@ -1,6 +1,6 @@
 # 妙笔 (MagicBrush)
 
-AI 图片生成服务，支持 10+ 服务商、多种风格和布局。参考 [baoyu-skills](https://github.com/jimliu/baoyu-skills) 实现。
+AI 图片生成服务，支持 10+ 服务商、多种风格和布局。
 
 > 妙笔生花，一键生成精美图片
 
@@ -112,7 +112,6 @@ docker run -d \
 
 ## 致谢
 
-- [baoyu-skills](https://github.com/jimliu/baoyu-skills) — 图片生成技能和风格参考
 - [智谱AI](https://open.bigmodel.cn/) — 智谱 API
 - [通义万相](https://dashscope.aliyuncs.com/) — 阿里云图片生成
 

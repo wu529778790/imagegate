@@ -2,7 +2,6 @@
  * DashScope (阿里通义万相) image generation provider.
  *
  * Uses the DashScope multimodal-generation API endpoint.
- * Reference: https://github.com/jimliu/baoyu-skills/blob/main/skills/baoyu-image-gen/scripts/providers/dashscope.ts
  */
 
 import type {

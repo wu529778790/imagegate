@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button, Card, Form, Input, Select, Modal, message, Tooltip } from "antd";
 import { DownloadOutlined, ThunderboltOutlined } from "@ant-design/icons";
 
-// 小红书风格选项（9种，与baoyu-skills一致）
+// 小红书风格选项（9种）
 const XHS_STYLES = [
   { value: "cute", label: "甜美可爱", preview: "/images/xhs-styles/cute.webp", description: "少女风、甜美 aesthetic（默认）" },
   { value: "fresh", label: "清新自然", preview: "/images/xhs-styles/fresh.webp", description: "干净清爽、自然风格" },
