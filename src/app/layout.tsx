@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { ConfigProvider, Layout, Button, Avatar, Dropdown, Space, Drawer } from "antd";
-import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined, MenuOutlined, HomeOutlined, AppstoreOutlined, FileImageOutlined } from "@ant-design/icons";
+import { ConfigProvider, Layout, Button, Avatar, Dropdown, Space } from "antd";
+import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined, AppstoreOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -15,8 +15,9 @@ import { theme } from "antd";
 const { Header, Content } = Layout;
 
 const NAV_ITEMS = [
-  { href: "/", label: "生图", icon: <PictureOutlined /> },
-  { href: "/gallery", label: "图库", icon: <AppstoreOutlined /> },
+  { href: "/", label: "生图" },
+  { href: "/xhs", label: "小红书" },
+  { href: "/gallery", label: "图库" },
 ];
 
 function AppHeader() {
@@ -24,7 +25,6 @@ function AppHeader() {
   const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const user = session?.user as {
     id?: string;
@@ -93,18 +93,14 @@ function AppHeader() {
             </span>
           </Link>
 
-          {/* Desktop nav */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }} className="hidden md:flex">
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`nav-link ${pathname === item.href ? "active" : ""}`}
               >
-                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {item.icon}
-                  {item.label}
-                </span>
+                {item.label}
               </Link>
             ))}
           </div>
@@ -143,47 +139,8 @@ function AppHeader() {
               </Button>
             </Link>
           )}
-
-          {/* Mobile menu toggle */}
-          <Button
-            icon={<MenuOutlined />}
-            type="text"
-            style={{ color: "#71717a" }}
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(true)}
-          />
         </div>
       </Header>
-
-      {/* Mobile drawer */}
-      <Drawer
-        title="导航"
-        placement="right"
-        onClose={() => setMobileMenuOpen(false)}
-        open={mobileMenuOpen}
-        width={240}
-        styles={{ body: { padding: "16px 0" } }}
-      >
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => setMobileMenuOpen(false)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 24px",
-              color: pathname === item.href ? "#e4e4e7" : "#71717a",
-              textDecoration: "none",
-              background: pathname === item.href ? "rgba(99, 102, 241, 0.1)" : "transparent",
-            }}
-          >
-            {item.icon}
-            {item.label}
-          </Link>
-        ))}
-      </Drawer>
 
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />

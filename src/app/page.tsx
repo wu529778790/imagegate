@@ -1,205 +1,397 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Form, Input, Select, Modal, message, Tooltip } from "antd";
-import { DownloadOutlined, ThunderboltOutlined } from "@ant-design/icons";
-import { motion } from "framer-motion";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { Button, Input, Segmented, Tag, message, Empty, Pagination, Image, Popconfirm } from "antd";
+import { DownloadOutlined, ThunderboltOutlined, ClockCircleOutlined, DeleteOutlined, LeftOutlined, RightOutlined, CopyOutlined, ReloadOutlined, PictureOutlined } from "@ant-design/icons";
+import { motion, AnimatePresence } from "framer-motion";
 
-const XHS_STYLES = [
-  { value: "cute", label: "甜美可爱", preview: "/images/xhs-styles/cute.webp", description: "少女风、甜美 aesthetic" },
-  { value: "fresh", label: "清新自然", preview: "/images/xhs-styles/fresh.webp", description: "干净清爽、自然风格" },
-  { value: "warm", label: "温暖舒适", preview: "/images/xhs-styles/warm.webp", description: "温馨友好、亲切感" },
-  { value: "bold", label: "大胆醒目", preview: "/images/xhs-styles/bold.webp", description: "高冲击力、吸引眼球" },
-  { value: "minimal", label: "极简精致", preview: "/images/xhs-styles/minimal.webp", description: "超干净、精致简约" },
-  { value: "retro", label: "复古怀旧", preview: "/images/xhs-styles/retro.webp", description: "复古风、怀旧潮流" },
-  { value: "pop", label: "活力炫彩", preview: "/images/xhs-styles/pop.webp", description: "鲜艳活泼、吸引目光" },
-  { value: "notion", label: "极简手绘", preview: "/images/xhs-styles/notion.webp", description: "极简手绘线条、知识感" },
-  { value: "chalkboard", label: "黑板粉笔", preview: "/images/xhs-styles/chalkboard.webp", description: "彩色粉笔、教育风格" },
-];
+const PROVIDER_COLORS: Record<string, string> = {
+  openai: "#10a37f",
+  anthropic: "#d97706",
+};
 
-const XHS_LAYOUTS = [
-  { value: "sparse", label: "简约", preview: "/images/xhs-layouts/sparse.webp", description: "1-2个要点，最大冲击" },
-  { value: "balanced", label: "均衡", preview: "/images/xhs-layouts/balanced.webp", description: "3-4个要点，标准布局" },
-  { value: "dense", label: "密集", preview: "/images/xhs-layouts/dense.webp", description: "5-8个要点，知识卡片" },
-  { value: "list", label: "列表", preview: "/images/xhs-layouts/list.webp", description: "4-7项，清单/排行榜" },
-  { value: "comparison", label: "对比", preview: "/images/xhs-layouts/comparison.webp", description: "两栏对比，优缺点分析" },
-  { value: "flow", label: "流程", preview: "/images/xhs-layouts/flow.webp", description: "3-6步，流程/时间线" },
-];
+const PROVIDER_LABELS: Record<string, string> = {
+  openai: "OpenAI 兼容",
+  anthropic: "Anthropic",
+};
 
-const XHS_PALETTES = [
-  { value: "", label: "默认配色", description: "使用风格内置配色" },
-  { value: "macaron", label: "马卡龙", description: "柔和、教育感" },
-  { value: "warm", label: "暖色调", description: "大地色系、温馨" },
-  { value: "neon", label: "霓虹", description: "高能量、未来感" },
-];
+interface RecordItem {
+  id: number;
+  provider: string;
+  model: string;
+  prompt: string;
+  status: string;
+  duration_ms: number;
+  created_at: string;
+  image_url?: string;
+}
 
-const gridCardStyle = (selected: boolean): React.CSSProperties => ({
-  border: selected ? "2px solid #6366f1" : "1px solid rgba(255,255,255,0.06)",
-  borderRadius: 10,
-  overflow: "hidden",
-  cursor: "pointer",
-  transition: "all 0.2s",
-  background: selected ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
-  transform: selected ? "scale(1.02)" : "scale(1)",
-  boxShadow: selected ? "0 0 16px rgba(99,102,241,0.2)" : "none",
-});
+interface GenerateResult {
+  image: string;
+  provider: string;
+  model: string;
+  duration_ms: number;
+}
 
-export default function HomePage() {
+export default function GeneratePage() {
+  const [prompt, setPrompt] = useState("");
+  const [provider, setProvider] = useState<string>("openai");
+  const [model, setModel] = useState("");
+  const [ar, setAr] = useState("1:1");
+  const [quality, setQuality] = useState("2k");
   const [loading, setLoading] = useState(false);
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [form] = Form.useForm();
-  const [previewStyle, setPreviewStyle] = useState<string | null>(null);
-  const [previewLayout, setPreviewLayout] = useState<string | null>(null);
+  const [result, setResult] = useState<GenerateResult | null>(null);
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [showParams, setShowParams] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleGenerate = async (values: { content: string; style: string; layout: string; palette?: string }) => {
+  // History
+  const [records, setRecords] = useState<RecordItem[]>([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        setSettings(data);
+        if (data.default_provider) setProvider(data.default_provider);
+        if (data.default_ar) setAr(data.default_ar);
+        if (data.default_quality) setQuality(data.default_quality);
+      });
+  }, []);
+
+  const loadRecords = useCallback(async (p = 1) => {
+    setRecordsLoading(true);
+    try {
+      const res = await fetch(`/api/records?page=${p}&pageSize=20`);
+      const data = await res.json();
+      setRecords(data.records || []);
+      setTotal(data.total || 0);
+    } catch { /* ignore */ } finally {
+      setRecordsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadRecords(page); }, [page, loadRecords]);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) { message.warning("请输入图片描述"); return; }
     setLoading(true);
     try {
-      const styleInfo = XHS_STYLES.find(s => s.value === values.style);
-      const layoutInfo = XHS_LAYOUTS.find(l => l.value === values.layout);
-      const paletteInfo = XHS_PALETTES.find(p => p.value === (values.palette || ""));
-      const prompt = `生成小红书风格的图片卡片。\n\n内容：${values.content}\n\n风格：${styleInfo?.label} (${styleInfo?.description})\n布局：${layoutInfo?.label} (${layoutInfo?.description})\n${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}\n\n要求：\n1. 适合社交媒体分享\n2. 文字清晰可读\n3. 视觉效果吸引人\n4. 符合选择的风格和布局`;
-
+      const body: Record<string, string> = { prompt, provider, ar, quality };
+      if (model) body.model = model;
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, quality: "2k" }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) { message.error(data.error || "生成失败"); return; }
-      setPreviewImage(`data:image/png;base64,${data.image}`);
-      setPreviewVisible(true);
-      message.success(`生成完成，耗时 ${(data.duration_ms / 1000).toFixed(1)}s`);
-    } catch { message.error("网络错误"); } finally { setLoading(false); }
+      if (!res.ok) throw new Error(data.error?.message || "生成失败");
+      setResult(data);
+      message.success(`生成成功 (${(data.duration_ms / 1000).toFixed(1)}s)`);
+      loadRecords(1);
+      setPage(1);
+    } catch (err: unknown) {
+      message.error(err instanceof Error ? err.message : "生成失败");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDownload = () => {
-    if (!previewImage) return;
-    const a = document.createElement("a");
-    a.href = previewImage;
-    a.download = `imagegate-${Date.now()}.png`;
-    a.click();
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      handleGenerate();
+    }
+  };
+
+  const handleDownload = (base64: string) => {
+    const link = document.createElement("a");
+    link.href = `data:image/png;base64,${base64}`;
+    link.download = `imagegate-${Date.now()}.png`;
+    link.click();
+  };
+
+  const handleDelete = async (id: number) => {
+    await fetch(`/api/records?id=${id}`, { method: "DELETE" });
+    loadRecords(page);
   };
 
   return (
-    <div style={{ minHeight: "calc(100vh - 56px)" }}>
-      <div style={{ padding: "32px 24px 100px", maxWidth: 900, margin: "0 auto" }}>
-        <div className="glass" style={{ padding: "32px" }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#e4e4e7", marginBottom: 24, letterSpacing: "-0.02em" }}>
-            📱 小红书卡片
-          </div>
-
-          <Form form={form} layout="vertical" onFinish={handleGenerate} initialValues={{ style: "cute", layout: "balanced" }}>
-            <Form.Item name="content" label={<span style={{ fontWeight: 600, color: "#a1a1aa" }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
-              <Input.TextArea rows={4} placeholder="输入你想生成卡片的内容..." style={{ borderRadius: 10, fontSize: 15, background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }} />
-            </Form.Item>
-
-            <Form.Item name="style" hidden rules={[{ required: true }]}><Input /></Form.Item>
-            <Form.Item name="layout" hidden rules={[{ required: true }]}><Input /></Form.Item>
-
-            <Form.Item label={<span style={{ fontWeight: 600, color: "#a1a1aa" }}>视觉风格</span>}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 10 }}>
-                {XHS_STYLES.map(s => (
-                  <Tooltip key={s.value} title={s.description} placement="top">
-                    <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
-                      <div
-                        style={gridCardStyle(previewStyle === s.value)}
-                        onClick={() => { setPreviewStyle(s.value); form.setFieldValue("style", s.value); }}
-                      >
-                        <img src={s.preview} alt={s.label} style={{ width: "100%", display: "block" }} />
-                        <div style={{ padding: "5px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "#a1a1aa" }}>
-                          {s.label}
-                        </div>
-                      </div>
-                    </motion.div>
-                  </Tooltip>
-                ))}
-              </div>
-            </Form.Item>
-
-            <Form.Item label={<span style={{ fontWeight: 600, color: "#a1a1aa" }}>信息布局</span>}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
-                {XHS_LAYOUTS.map(l => (
-                  <Tooltip key={l.value} title={l.description} placement="top">
-                    <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
-                      <div
-                        style={gridCardStyle(previewLayout === l.value)}
-                        onClick={() => { setPreviewLayout(l.value); form.setFieldValue("layout", l.value); }}
-                      >
-                        <img src={l.preview} alt={l.label} style={{ width: "100%", display: "block" }} />
-                        <div style={{ padding: "5px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "#a1a1aa" }}>
-                          {l.label}
-                        </div>
-                      </div>
-                    </motion.div>
-                  </Tooltip>
-                ))}
-              </div>
-            </Form.Item>
-
-            <Form.Item name="palette" label={<span style={{ fontWeight: 600, color: "#a1a1aa" }}>配色方案</span>}>
-              <Select placeholder="选择配色（可选）" allowClear size="large" style={{ maxWidth: 300 }}>
-                {XHS_PALETTES.map(p => (
-                  <Select.Option key={p.value} value={p.value}>
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{p.label}</div>
-                      <div style={{ fontSize: 12, color: "#71717a" }}>{p.description}</div>
+    <div style={{ display: "flex", height: "calc(100vh - 56px)", overflow: "hidden" }}>
+      {/* Left sidebar — History */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 320, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              borderRight: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(10, 10, 15, 0.95)",
+              display: "flex",
+              flexDirection: "column",
+              flexShrink: 0,
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", fontWeight: 600, fontSize: 14, color: "#e4e4e7" }}>
+              历史记录
+            </div>
+            <div style={{ flex: 1, overflow: "auto", padding: "8px 10px" }}>
+              {recordsLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="shimmer" style={{ height: 80, borderRadius: 10 }} />
+                  ))}
+                </div>
+              ) : records.length === 0 ? (
+                <Empty description="暂无记录" style={{ marginTop: 60 }} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              ) : (
+                records.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: 10,
+                      borderRadius: 10,
+                      border: "1px solid rgba(255,255,255,0.04)",
+                      marginBottom: 6,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      background: "rgba(255,255,255,0.02)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                      e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)";
+                    }}
+                  >
+                    <div style={{ fontSize: 12, color: "#a1a1aa", lineHeight: 1.5, marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                      {item.prompt}
                     </div>
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Form>
-        </div>
-      </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Tag color={PROVIDER_COLORS[item.provider] || "#666"} style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 5px" }}>
+                        {PROVIDER_LABELS[item.provider] || item.provider}
+                      </Tag>
+                      <Tag color={item.status === "success" ? "success" : "error"} style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 5px" }}>
+                        {item.status === "success" ? "✓" : "✗"}
+                      </Tag>
+                      <span style={{ fontSize: 10, color: "#52525b", marginLeft: "auto" }}>
+                        {new Date(item.created_at).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <Popconfirm title="确认删除？" onConfirm={() => handleDelete(item.id)} okText="删除" cancelText="取消">
+                        <DeleteOutlined style={{ fontSize: 10, color: "#52525b", cursor: "pointer" }} onClick={(e) => e.stopPropagation()} />
+                      </Popconfirm>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {total > 20 && (
+              <div style={{ padding: "6px 12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <Pagination size="small" current={page} total={total} pageSize={20} onChange={setPage} showSizeChanger={false} />
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Fixed bottom bar */}
-      <div
+      {/* Toggle sidebar */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "rgba(10, 10, 15, 0.9)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          padding: "14px 24px",
+          position: "absolute",
+          left: sidebarOpen ? 320 : 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 10,
+          width: 20,
+          height: 48,
+          background: "rgba(20, 20, 32, 0.9)",
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderLeft: sidebarOpen ? "1px solid rgba(255,255,255,0.06)" : "none",
+          borderRadius: sidebarOpen ? "0 8px 8px 0" : "0 8px 8px 0",
+          color: "#71717a",
+          cursor: "pointer",
           display: "flex",
+          alignItems: "center",
           justifyContent: "center",
-          zIndex: 100,
+          transition: "left 0.2s ease",
         }}
       >
-        <Button
-          type="primary"
-          onClick={() => form.submit()}
-          loading={loading}
-          size="large"
-          icon={<ThunderboltOutlined />}
-          className={!loading ? "pulse-glow" : ""}
-          style={{ height: 48, borderRadius: 12, fontWeight: 600, fontSize: 15, padding: "0 40px" }}
-        >
-          {loading ? "生成中..." : "生成图片"}
-        </Button>
-      </div>
+        {sidebarOpen ? <LeftOutlined style={{ fontSize: 10 }} /> : <RightOutlined style={{ fontSize: 10 }} />}
+      </button>
 
-      {/* Preview modal */}
-      <Modal
-        open={previewVisible}
-        onCancel={() => setPreviewVisible(false)}
-        footer={[
-          <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownload} size="large" style={{ borderRadius: 10 }}>
-            下载图片
-          </Button>,
-        ]}
-        width={600}
-        centered
-        styles={{ body: { background: "transparent", padding: 0 } }}
-      >
-        {previewImage && (
-          <img src={previewImage} alt="预览" style={{ width: "100%", borderRadius: 12 }} />
-        )}
-      </Modal>
+      {/* Main area */}
+      <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 24px" }}>
+        {/* Prompt hero area */}
+        <div style={{ width: "100%", maxWidth: 720 }}>
+          <div className="gradient-border" style={{ marginBottom: 16 }}>
+            <textarea
+              ref={textareaRef}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="描述你想要生成的图片..."
+              rows={4}
+              maxLength={10000}
+              style={{
+                width: "100%",
+                padding: "16px 20px",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#e4e4e7",
+                fontSize: 15,
+                lineHeight: 1.6,
+                resize: "none",
+                fontFamily: "inherit",
+                borderRadius: 16,
+              }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 16px 12px" }}>
+              <span style={{ fontSize: 11, color: "#52525b" }}>
+                {prompt.length > 0 && `${prompt.length}/10000`}
+                {prompt.length === 0 && "⌘ + Enter 生成"}
+              </span>
+              <Button
+                type="primary"
+                icon={<ThunderboltOutlined />}
+                loading={loading}
+                onClick={handleGenerate}
+                disabled={!prompt.trim()}
+                className={prompt.trim() && !loading ? "pulse-glow" : ""}
+                style={{ borderRadius: 10, fontWeight: 600, height: 38 }}
+              >
+                生成
+              </Button>
+            </div>
+          </div>
+
+          {/* Quick params */}
+          <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
+            <Segmented
+              size="small"
+              value={provider}
+              onChange={(val) => setProvider(val as string)}
+              options={Object.entries(PROVIDER_LABELS).map(([value, label]) => ({
+                value,
+                label: (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: PROVIDER_COLORS[value], display: "inline-block" }} />
+                    {label}
+                  </span>
+                ),
+              }))}
+            />
+            <Segmented
+              size="small"
+              value={ar}
+              onChange={(val) => setAr(val as string)}
+              options={["1:1", "16:9", "9:16", "4:3", "3:4"]}
+            />
+            <Segmented
+              size="small"
+              value={quality}
+              onChange={(val) => setQuality(val as string)}
+              options={[{ label: "标准", value: "normal" }, { label: "高清", value: "2k" }]}
+            />
+            <Button
+              size="small"
+              type="text"
+              icon={<ReloadOutlined />}
+              onClick={() => setShowParams(!showParams)}
+              style={{ color: "#71717a" }}
+            />
+          </div>
+
+          {/* Advanced params */}
+          <AnimatePresence>
+            {showParams && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                style={{ overflow: "hidden", marginBottom: 16 }}
+              >
+                <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ fontSize: 12, color: "#71717a", marginBottom: 8 }}>Model</div>
+                  <Input
+                    size="small"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    placeholder={settings[`${provider}_model`] || "输入模型名称"}
+                    style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Loading shimmer */}
+          {loading && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginBottom: 24 }}>
+              <div className="shimmer" style={{ width: "100%", height: 400, borderRadius: 16 }} />
+              <div style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "#71717a" }}>
+                正在生成中...
+              </div>
+            </motion.div>
+          )}
+
+          {/* Result */}
+          <AnimatePresence>
+            {result && !loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <div className="image-overlay" style={{ borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <img
+                    src={`data:image/png;base64,${result.image}`}
+                    alt="生成结果"
+                    style={{ width: "100%", display: "block" }}
+                  />
+                  <div className="overlay-actions">
+                    <Button icon={<DownloadOutlined />} onClick={() => handleDownload(result.image)} style={{ borderRadius: 8 }}>
+                      下载
+                    </Button>
+                    <Button icon={<CopyOutlined />} onClick={() => { navigator.clipboard.writeText(prompt); message.success("已复制 Prompt"); }} style={{ borderRadius: 8 }}>
+                      复制 Prompt
+                    </Button>
+                    <Button icon={<ReloadOutlined />} onClick={handleGenerate} style={{ borderRadius: 8 }}>
+                      重新生成
+                    </Button>
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                  <Tag color={PROVIDER_COLORS[result.provider]}>{PROVIDER_LABELS[result.provider] || result.provider}</Tag>
+                  <Tag>{result.model}</Tag>
+                  <span style={{ fontSize: 12, color: "#71717a", display: "flex", alignItems: "center", gap: 4 }}>
+                    <ClockCircleOutlined />{(result.duration_ms / 1000).toFixed(1)}s
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Empty state */}
+          {!result && !loading && (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#52525b" }}>
+              <PictureOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }} />
+              <div style={{ fontSize: 14 }}>输入描述，开始创作</div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
