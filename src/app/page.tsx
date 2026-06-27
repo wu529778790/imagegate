@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Form, Input, Select, Modal, message, Tooltip } from "antd";
+import { Button, Form, Input, Select, Modal, message, Tooltip } from "antd";
 import { DownloadOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import { motion } from "framer-motion";
 
-// 小红书风格选项（9种）
 const XHS_STYLES = [
-  { value: "cute", label: "甜美可爱", preview: "/images/xhs-styles/cute.webp", description: "少女风、甜美 aesthetic（默认）" },
+  { value: "cute", label: "甜美可爱", preview: "/images/xhs-styles/cute.webp", description: "少女风、甜美 aesthetic" },
   { value: "fresh", label: "清新自然", preview: "/images/xhs-styles/fresh.webp", description: "干净清爽、自然风格" },
   { value: "warm", label: "温暖舒适", preview: "/images/xhs-styles/warm.webp", description: "温馨友好、亲切感" },
   { value: "bold", label: "大胆醒目", preview: "/images/xhs-styles/bold.webp", description: "高冲击力、吸引眼球" },
@@ -17,11 +17,10 @@ const XHS_STYLES = [
   { value: "chalkboard", label: "黑板粉笔", preview: "/images/xhs-styles/chalkboard.webp", description: "彩色粉笔、教育风格" },
 ];
 
-// 小红书布局选项（6种官方选项）
 const XHS_LAYOUTS = [
-  { value: "sparse", label: "简约", preview: "/images/xhs-layouts/sparse.webp", description: "1-2个要点，最大冲击（封面、金句）" },
-  { value: "balanced", label: "均衡", preview: "/images/xhs-layouts/balanced.webp", description: "3-4个要点，标准布局（常规内容）" },
-  { value: "dense", label: "密集", preview: "/images/xhs-layouts/dense.webp", description: "5-8个要点，知识卡片（总结、干货）" },
+  { value: "sparse", label: "简约", preview: "/images/xhs-layouts/sparse.webp", description: "1-2个要点，最大冲击" },
+  { value: "balanced", label: "均衡", preview: "/images/xhs-layouts/balanced.webp", description: "3-4个要点，标准布局" },
+  { value: "dense", label: "密集", preview: "/images/xhs-layouts/dense.webp", description: "5-8个要点，知识卡片" },
   { value: "list", label: "列表", preview: "/images/xhs-layouts/list.webp", description: "4-7项，清单/排行榜" },
   { value: "comparison", label: "对比", preview: "/images/xhs-layouts/comparison.webp", description: "两栏对比，优缺点分析" },
   { value: "flow", label: "流程", preview: "/images/xhs-layouts/flow.webp", description: "3-6步，流程/时间线" },
@@ -34,6 +33,17 @@ const XHS_PALETTES = [
   { value: "neon", label: "霓虹", description: "高能量、未来感" },
 ];
 
+const gridCardStyle = (selected: boolean): React.CSSProperties => ({
+  border: selected ? "2px solid #6366f1" : "1px solid rgba(255,255,255,0.06)",
+  borderRadius: 10,
+  overflow: "hidden",
+  cursor: "pointer",
+  transition: "all 0.2s",
+  background: selected ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
+  transform: selected ? "scale(1.02)" : "scale(1)",
+  boxShadow: selected ? "0 0 16px rgba(99,102,241,0.2)" : "none",
+});
+
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -42,177 +52,119 @@ export default function HomePage() {
   const [previewStyle, setPreviewStyle] = useState<string | null>(null);
   const [previewLayout, setPreviewLayout] = useState<string | null>(null);
 
-  const handleGenerate = async (values: {
-    content: string;
-    style: string;
-    layout: string;
-    palette?: string;
-  }) => {
+  const handleGenerate = async (values: { content: string; style: string; layout: string; palette?: string }) => {
     setLoading(true);
-
     try {
       const styleInfo = XHS_STYLES.find(s => s.value === values.style);
       const layoutInfo = XHS_LAYOUTS.find(l => l.value === values.layout);
       const paletteInfo = XHS_PALETTES.find(p => p.value === (values.palette || ""));
-
-      const prompt = `生成小红书风格的图片卡片。
-
-内容：${values.content}
-
-风格：${styleInfo?.label} (${styleInfo?.description})
-布局：${layoutInfo?.label} (${layoutInfo?.description})
-${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
-
-要求：
-1. 适合社交媒体分享
-2. 文字清晰可读
-3. 视觉效果吸引人
-4. 符合选择的风格和布局`;
+      const prompt = `生成小红书风格的图片卡片。\n\n内容：${values.content}\n\n风格：${styleInfo?.label} (${styleInfo?.description})\n布局：${layoutInfo?.label} (${layoutInfo?.description})\n${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}\n\n要求：\n1. 适合社交媒体分享\n2. 文字清晰可读\n3. 视觉效果吸引人\n4. 符合选择的风格和布局`;
 
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          quality: "2k",
-        }),
+        body: JSON.stringify({ prompt, quality: "2k" }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        message.error(data.error || "生成失败");
-        return;
-      }
-
+      if (!res.ok) { message.error(data.error || "生成失败"); return; }
       setPreviewImage(`data:image/png;base64,${data.image}`);
       setPreviewVisible(true);
-      message.success(`生成完成，耗时 ${data.duration_ms}ms`);
-    } catch {
-      message.error("网络错误");
-    } finally {
-      setLoading(false);
-    }
+      message.success(`生成完成，耗时 ${(data.duration_ms / 1000).toFixed(1)}s`);
+    } catch { message.error("网络错误"); } finally { setLoading(false); }
   };
 
   const handleDownload = () => {
     if (!previewImage) return;
     const a = document.createElement("a");
     a.href = previewImage;
-    a.download = `image-${Date.now()}.png`;
+    a.download = `imagegate-${Date.now()}.png`;
     a.click();
   };
 
   return (
-    <div style={{ minHeight: "calc(100vh - 64px)", background: "linear-gradient(180deg, #f8fafc 0%, #e0e7ff 100%)" }}>
-      <div style={{ padding: "24px 24px 100px" }}>
-        <Card
-          bordered={false}
-          style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
-          styles={{ body: { padding: 32 } }}
-        >
+    <div style={{ minHeight: "calc(100vh - 56px)" }}>
+      <div style={{ padding: "32px 24px 100px", maxWidth: 900, margin: "0 auto" }}>
+        <div className="glass" style={{ padding: "32px" }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#e4e4e7", marginBottom: 24, letterSpacing: "-0.02em" }}>
+            📱 小红书卡片
+          </div>
+
           <Form form={form} layout="vertical" onFinish={handleGenerate} initialValues={{ style: "cute", layout: "balanced" }}>
-            {/* 内容输入 */}
-            <Form.Item name="content" label={<span style={{ fontWeight: 600, fontSize: 16 }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
-              <Input.TextArea rows={4} placeholder="输入你想生成卡片的内容..." style={{ borderRadius: 8, fontSize: 15 }} />
+            <Form.Item name="content" label={<span style={{ fontWeight: 600, color: "#a1a1aa" }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
+              <Input.TextArea rows={4} placeholder="输入你想生成卡片的内容..." style={{ borderRadius: 10, fontSize: 15, background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }} />
             </Form.Item>
 
-            {/* 隐藏字段确保有值 */}
-            <Form.Item name="style" hidden rules={[{ required: true, message: "请选择视觉风格" }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name="layout" hidden rules={[{ required: true, message: "请选择信息布局" }]}>
-              <Input />
-            </Form.Item>
+            <Form.Item name="style" hidden rules={[{ required: true }]}><Input /></Form.Item>
+            <Form.Item name="layout" hidden rules={[{ required: true }]}><Input /></Form.Item>
 
-            {/* 视觉风格 */}
-            <Form.Item label={<span style={{ fontWeight: 600, fontSize: 16 }}>视觉风格</span>}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(9, 1fr)", gap: 12 }}>
+            <Form.Item label={<span style={{ fontWeight: 600, color: "#a1a1aa" }}>视觉风格</span>}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 10 }}>
                 {XHS_STYLES.map(s => (
                   <Tooltip key={s.value} title={s.description} placement="top">
-                    <div
-                      style={{
-                        border: previewStyle === s.value ? "3px solid #4f46e5" : "2px solid #e5e7eb",
-                        borderRadius: 8,
-                        overflow: "hidden",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        background: "#fff",
-                        transform: previewStyle === s.value ? "scale(1.02)" : "scale(1)",
-                      }}
-                      onClick={() => {
-                        setPreviewStyle(s.value);
-                        form.setFieldValue("style", s.value);
-                      }}
-                    >
-                      <img src={s.preview} alt={s.label} style={{ width: "100%", display: "block" }} />
-                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500 }}>
-                        {s.label}
+                    <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
+                      <div
+                        style={gridCardStyle(previewStyle === s.value)}
+                        onClick={() => { setPreviewStyle(s.value); form.setFieldValue("style", s.value); }}
+                      >
+                        <img src={s.preview} alt={s.label} style={{ width: "100%", display: "block" }} />
+                        <div style={{ padding: "5px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "#a1a1aa" }}>
+                          {s.label}
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
                   </Tooltip>
                 ))}
               </div>
             </Form.Item>
 
-            {/* 信息布局 */}
-            <Form.Item label={<span style={{ fontWeight: 600, fontSize: 16 }}>信息布局</span>}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+            <Form.Item label={<span style={{ fontWeight: 600, color: "#a1a1aa" }}>信息布局</span>}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
                 {XHS_LAYOUTS.map(l => (
                   <Tooltip key={l.value} title={l.description} placement="top">
-                    <div
-                      style={{
-                        border: previewLayout === l.value ? "3px solid #4f46e5" : "2px solid #e5e7eb",
-                        borderRadius: 8,
-                        overflow: "hidden",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        background: "#fff",
-                        transform: previewLayout === l.value ? "scale(1.02)" : "scale(1)",
-                      }}
-                      onClick={() => {
-                        setPreviewLayout(l.value);
-                        form.setFieldValue("layout", l.value);
-                      }}
-                    >
-                      <img src={l.preview} alt={l.label} style={{ width: "100%", display: "block" }} />
-                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500 }}>
-                        {l.label}
+                    <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
+                      <div
+                        style={gridCardStyle(previewLayout === l.value)}
+                        onClick={() => { setPreviewLayout(l.value); form.setFieldValue("layout", l.value); }}
+                      >
+                        <img src={l.preview} alt={l.label} style={{ width: "100%", display: "block" }} />
+                        <div style={{ padding: "5px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "#a1a1aa" }}>
+                          {l.label}
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
                   </Tooltip>
                 ))}
               </div>
             </Form.Item>
 
-            {/* 配色选择 */}
-            <Form.Item name="palette" label={<span style={{ fontWeight: 600 }}>配色方案</span>}>
+            <Form.Item name="palette" label={<span style={{ fontWeight: 600, color: "#a1a1aa" }}>配色方案</span>}>
               <Select placeholder="选择配色（可选）" allowClear size="large" style={{ maxWidth: 300 }}>
                 {XHS_PALETTES.map(p => (
                   <Select.Option key={p.value} value={p.value}>
                     <div>
                       <div style={{ fontWeight: 500 }}>{p.label}</div>
-                      <div style={{ fontSize: 12, color: "#999" }}>{p.description}</div>
+                      <div style={{ fontSize: 12, color: "#71717a" }}>{p.description}</div>
                     </div>
                   </Select.Option>
                 ))}
               </Select>
             </Form.Item>
           </Form>
-        </Card>
+        </div>
       </div>
 
-      {/* 固定底部生成按钮 */}
+      {/* Fixed bottom bar */}
       <div
         style={{
           position: "fixed",
           bottom: 0,
           left: 0,
           right: 0,
-          background: "rgba(255,255,255,0.95)",
-          backdropFilter: "blur(10px)",
-          borderTop: "1px solid #e5e7eb",
-          padding: "16px 24px",
+          background: "rgba(10, 10, 15, 0.9)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          padding: "14px 24px",
           display: "flex",
           justifyContent: "center",
           zIndex: 100,
@@ -224,32 +176,28 @@ ${paletteInfo?.value ? `配色：${paletteInfo.label}` : "配色：默认"}
           loading={loading}
           size="large"
           icon={<ThunderboltOutlined />}
-          style={{
-            height: 56,
-            borderRadius: 12,
-            fontWeight: 600,
-            fontSize: 16,
-            padding: "0 48px",
-          }}
+          className={!loading ? "pulse-glow" : ""}
+          style={{ height: 48, borderRadius: 12, fontWeight: 600, fontSize: 15, padding: "0 40px" }}
         >
           {loading ? "生成中..." : "生成图片"}
         </Button>
       </div>
 
-      {/* 预览弹窗 */}
+      {/* Preview modal */}
       <Modal
         open={previewVisible}
         onCancel={() => setPreviewVisible(false)}
         footer={[
-          <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownload} size="large">
+          <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownload} size="large" style={{ borderRadius: 10 }}>
             下载图片
           </Button>,
         ]}
         width={600}
         centered
+        styles={{ body: { background: "transparent", padding: 0 } }}
       >
         {previewImage && (
-          <img src={previewImage} alt="预览" style={{ width: "100%", borderRadius: 8 }} />
+          <img src={previewImage} alt="预览" style={{ width: "100%", borderRadius: 12 }} />
         )}
       </Modal>
     </div>

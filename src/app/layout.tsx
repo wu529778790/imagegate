@@ -2,23 +2,30 @@
 
 import { useState } from "react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { ConfigProvider, Layout, Button, Typography, Avatar, Dropdown, Space } from "antd";
-import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined } from "@ant-design/icons";
+import { ConfigProvider, Layout, Button, Avatar, Dropdown, Space, Drawer } from "antd";
+import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined, MenuOutlined, HomeOutlined, AppstoreOutlined, FileImageOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import SettingsModal from "@/components/SettingsModal";
 import HistoryModal from "@/components/HistoryModal";
 import SessionProvider from "@/components/SessionProvider";
+import { theme } from "antd";
 
 const { Header, Content } = Layout;
-const { Text } = Typography;
+
+const NAV_ITEMS = [
+  { href: "/", label: "生图", icon: <PictureOutlined /> },
+  { href: "/gallery", label: "图库", icon: <AppstoreOutlined /> },
+];
 
 function AppHeader() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Access custom session properties
   const user = session?.user as {
     id?: string;
     username?: string;
@@ -47,93 +54,174 @@ function AppHeader() {
   ];
 
   return (
-    <Header
-      style={{
-        background: "#fff",
-        borderBottom: "1px solid #e5e7eb",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 32px",
-        height: 64,
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <div
+    <>
+      <Header
+        style={{
+          background: "rgba(10, 10, 15, 0.8)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 24px",
+          height: 56,
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+        }}
+      >
+        {/* Left: Logo + Nav */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", marginRight: 16 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "linear-gradient(135deg, #818cf8 0%, #6366f1 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 0 16px rgba(99, 102, 241, 0.3)",
+              }}
+            >
+              <PictureOutlined style={{ color: "#fff", fontSize: 16 }} />
+            </div>
+            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em", color: "#e4e4e7" }}>
+              ImageGate
+            </span>
+          </Link>
+
+          {/* Desktop nav */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }} className="hidden md:flex">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-link ${pathname === item.href ? "active" : ""}`}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {item.icon}
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <Button
+            icon={<HistoryOutlined />}
+            type="text"
+            style={{ color: "#71717a" }}
+            onClick={() => setHistoryOpen(true)}
+          />
+          <Button
+            icon={<SettingOutlined />}
+            type="text"
+            style={{ color: "#71717a" }}
+            onClick={() => setSettingsOpen(true)}
+          />
+
+          {status === "loading" ? (
+            <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1e1e2e" }} size={32} />
+          ) : session?.user ? (
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Avatar
+                src={user?.avatarUrl}
+                icon={<UserOutlined />}
+                style={{ cursor: "pointer", backgroundColor: "#6366f1" }}
+                size={32}
+              />
+            </Dropdown>
+          ) : (
+            <Link href="/login">
+              <Button type="primary" size="small" style={{ borderRadius: 8 }}>
+                登录
+              </Button>
+            </Link>
+          )}
+
+          {/* Mobile menu toggle */}
+          <Button
+            icon={<MenuOutlined />}
+            type="text"
+            style={{ color: "#71717a" }}
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(true)}
+          />
+        </div>
+      </Header>
+
+      {/* Mobile drawer */}
+      <Drawer
+        title="导航"
+        placement="right"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+        width={240}
+        styles={{ body: { padding: "16px 0" } }}
+      >
+        {NAV_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={() => setMobileMenuOpen(false)}
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              gap: 12,
+              padding: "12px 24px",
+              color: pathname === item.href ? "#e4e4e7" : "#71717a",
+              textDecoration: "none",
+              background: pathname === item.href ? "rgba(99, 102, 241, 0.1)" : "transparent",
             }}
           >
-            <PictureOutlined style={{ color: "#fff", fontSize: 18 }} />
-          </div>
-          <Text strong style={{ fontSize: 20, letterSpacing: -0.5, color: "#1e1b4b" }}>
-            妙笔
-          </Text>
-        </Link>
-        <Link href="/" style={{ color: "#64748b", fontSize: 14 }}>小红书</Link>
-        <Link href="/generate" style={{ color: "#64748b", fontSize: 14 }}>生图</Link>
-        <Link href="/infographic" style={{ color: "#64748b", fontSize: 14 }}>信息图</Link>
-        <Link href="/gallery" style={{ color: "#64748b", fontSize: 14 }}>我的图片</Link>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <Button icon={<HistoryOutlined />} type="text" style={{ color: "#64748b" }} onClick={() => setHistoryOpen(true)}>
-          历史
-        </Button>
-        <Button icon={<SettingOutlined />} type="text" style={{ color: "#64748b" }} onClick={() => setSettingsOpen(true)}>
-          设置
-        </Button>
-        {status === "loading" ? (
-          <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#e5e7eb" }} />
-        ) : session?.user ? (
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-            <Avatar
-              src={user?.avatarUrl}
-              icon={<UserOutlined />}
-              style={{ cursor: "pointer", backgroundColor: "#4f46e5" }}
-            />
-          </Dropdown>
-        ) : (
-          <Link href="/login">
-            <Button type="primary" size="small">
-              登录
-            </Button>
+            {item.icon}
+            {item.label}
           </Link>
-        )}
-      </div>
+        ))}
+      </Drawer>
+
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
-    </Header>
+    </>
   );
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
       <body style={{ margin: 0 }}>
         <SessionProvider>
           <AntdRegistry>
             <ConfigProvider
               theme={{
+                algorithm: theme.darkAlgorithm,
                 token: {
-                  colorPrimary: "#4f46e5",
-                  borderRadius: 10,
-                  colorBgContainer: "#ffffff",
+                  colorPrimary: "#6366f1",
+                  borderRadius: 12,
+                  colorBgContainer: "#141420",
+                  colorBgElevated: "#1e1e2e",
+                  colorBgLayout: "#0a0a0f",
+                  colorBorder: "rgba(255, 255, 255, 0.06)",
+                  colorText: "#e4e4e7",
+                  colorTextSecondary: "#71717a",
+                  fontFamily: "\"Inter\", -apple-system, BlinkMacSystemFont, sans-serif",
                 },
               }}
             >
-              <Layout style={{ minHeight: "100vh", background: "#f8fafc" }}>
+              <Layout style={{ minHeight: "100vh", background: "#0a0a0f" }}>
+                <div className="mesh-bg" />
                 <AppHeader />
-                <Content style={{ padding: 0 }}>
+                <Content style={{ padding: 0, position: "relative", zIndex: 1 }}>
                   {children}
                 </Content>
               </Layout>

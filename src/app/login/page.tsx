@@ -1,61 +1,61 @@
 "use client";
 
-import { Button, Card, Typography } from "antd";
-import { GithubOutlined } from "@ant-design/icons";
+import { Button, Typography } from "antd";
+import { GithubOutlined, PictureOutlined } from "@ant-design/icons";
 import { signIn } from "next-auth/react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export default function LoginPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "calc(100vh - 56px)",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        justifyContent: "center",
+        padding: 24,
       }}
     >
-      <Card
-        style={{
-          width: 400,
-          textAlign: "center",
-          borderRadius: 16,
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-        }}
-      >
-        <div style={{ marginBottom: 32 }}>
-          <Title level={2} style={{ marginBottom: 8 }}>
-            🎨 妙笔
-          </Title>
-          <Text type="secondary">
-            AI 图片生成服务
-          </Text>
+      <div className="glass" style={{ padding: "48px 40px", maxWidth: 400, width: "100%", textAlign: "center" }}>
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 14,
+            background: "linear-gradient(135deg, #818cf8 0%, #6366f1 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 20px",
+            boxShadow: "0 0 30px rgba(99, 102, 241, 0.3)",
+          }}
+        >
+          <PictureOutlined style={{ color: "#fff", fontSize: 24 }} />
         </div>
+
+        <div style={{ fontSize: 22, fontWeight: 700, color: "#e4e4e7", marginBottom: 8, letterSpacing: "-0.02em" }}>
+          ImageGate
+        </div>
+        <Text style={{ color: "#71717a", fontSize: 14, display: "block", marginBottom: 32 }}>
+          AI 图片生成服务
+        </Text>
 
         <Button
           type="primary"
-          size="large"
           icon={<GithubOutlined />}
+          size="large"
+          block
           onClick={() => signIn("github", { callbackUrl: "/" })}
-          style={{
-            width: "100%",
-            height: 48,
-            fontSize: 16,
-            background: "#24292e",
-            borderColor: "#24292e",
-          }}
+          style={{ height: 48, borderRadius: 12, fontWeight: 600, fontSize: 15 }}
         >
           使用 GitHub 登录
         </Button>
 
-        <div style={{ marginTop: 24 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            登录后可保存生成的图片到您的 GitHub 仓库
-          </Text>
-        </div>
-      </Card>
+        <Text style={{ color: "#52525b", fontSize: 12, display: "block", marginTop: 20 }}>
+          登录后可保存生成的图片到您的 GitHub 仓库
+        </Text>
+      </div>
     </div>
   );
 }
