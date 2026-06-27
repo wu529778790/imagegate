@@ -76,15 +76,14 @@ jobs:
             sudo docker pull "$IMAGE"
             sudo docker stop ${CONTAINER_NAME} || true
             sudo docker rm ${CONTAINER_NAME} || true
+            ENV_FILE="$DATA_DIR/.env"
             sudo docker run -d \
               --name ${CONTAINER_NAME} \
               --restart unless-stopped \
               -p 6668:3000 \
               -v "$DATA_DIR":/app/data \
+              --env-file "$ENV_FILE" \
               -e DATABASE_URL=file:/app/data/imagegate.db \
-              -e NEXTAUTH_URL \
-              -e GITHUB_CLIENT_ID \
-              -e GITHUB_CLIENT_SECRET \
               -e AUTH_TRUST_HOST=true \
               "$IMAGE"
             sudo docker image prune -f
