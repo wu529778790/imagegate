@@ -69,8 +69,8 @@ jobs:
           script: |
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
             IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
-            CONTAINER_NAME="magicbrush"
-            DATA_DIR="/opt/1panel/apps/openresty/openresty/www/sites/magicbrush.shenzjd.com/index"
+            CONTAINER_NAME="imagegate"
+            DATA_DIR="/opt/1panel/apps/openresty/openresty/www/sites/imagegate.shenzjd.com/index"
             sudo mkdir -p "$DATA_DIR"
             sudo chmod 700 "$DATA_DIR"
             sudo docker pull "$IMAGE"
@@ -81,7 +81,7 @@ jobs:
               --restart unless-stopped \
               -p 6668:3000 \
               -v "$DATA_DIR":/app/data \
-              -e DATABASE_URL=file:/app/data/magicbrush.db \
+              -e DATABASE_URL=file:/app/data/imagegate.db \
               "$IMAGE"
             sudo docker image prune -f
             echo "=== Container Status ==="

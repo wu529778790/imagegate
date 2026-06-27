@@ -25,6 +25,6 @@ RUN mkdir -p /app/data
 EXPOSE 3000
 
 ENV NODE_ENV=production
-ENV DATABASE_URL=file:/app/data/magicbrush.db
+ENV DATABASE_URL=file:/app/data/imagegate.db
 
 CMD ["node", ".next/standalone/server.js"]

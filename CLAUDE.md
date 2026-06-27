@@ -8,7 +8,7 @@ This project uses Next.js 16, which has breaking changes from earlier versions. 
 
 ## Project Overview
 
-AI image generation service (妙笔 / MagicBrush) with management UI. Wraps 10 AI image providers behind HTTP endpoints, backed by SQLite. Features GitHub OAuth login, encrypted API key storage, background image sync to GitHub, and structured logging. All UI text is in Chinese (zh-CN).
+AI image generation service (ImageGate) with management UI. Wraps 10 AI image providers behind HTTP endpoints, backed by SQLite. Features GitHub OAuth login, encrypted API key storage, background image sync to GitHub, and structured logging. All UI text is in Chinese (zh-CN).
 
 ## Commands
 
@@ -26,7 +26,7 @@ npm run test:coverage # Jest with coverage
 
 **Framework:** Next.js 16 (App Router), React 19, Ant Design 6, Tailwind CSS 4
 
-**Database:** SQLite via `better-sqlite3`. Singleton in `src/lib/db.ts` with WAL mode and foreign keys. Stored at `DATABASE_URL` (format: `file:/path`) or defaults to `data/magicbrush.db`. Five tables: `api_keys`, `generation_records`, `settings`, `users`, `images`. On startup, records stuck in "pending" for >10 minutes are auto-marked "failed".
+**Database:** SQLite via `better-sqlite3`. Singleton in `src/lib/db.ts` with WAL mode and foreign keys. Stored at `DATABASE_URL` (format: `file:/path`) or defaults to `data/imagegate.db`. Five tables: `api_keys`, `generation_records`, `settings`, `users`, `images`. On startup, records stuck in "pending" for >10 minutes are auto-marked "failed".
 
 **Auth:** NextAuth.js v5 beta with GitHub OAuth (`src/lib/auth.ts`). Middleware in `src/middleware.ts` protects routes via session cookie — public routes include `/login`, `/api/auth`, `/api/generate`, and several others; protected routes redirect to `/login` (pages) or return 401 (API).
 
@@ -91,7 +91,7 @@ All client-rendered with `"use client"`. Uses Ant Design components with inline 
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/docker.yml`): builds Docker image, pushes to GHCR on main/tag, auto-deploys to production server via SSH on main push. Production runs on port 6668 with container name `magicbrush`.
+GitHub Actions (`.github/workflows/docker.yml`): builds Docker image, pushes to GHCR on main/tag, auto-deploys to production server via SSH on main push. Production runs on port 6668 with container name `imagegate`.
 
 ## Adding a New Provider
 

@@ -135,7 +135,7 @@ imagegate/
 │       └── openrouter.ts     # OpenRouter
 ├── data/                      # 数据目录
 │   ├── images/               # 本地图片存储
-│   └── magicbrush.db         # SQLite 数据库
+│   └── imagegate.db          # SQLite 数据库
 └── public/                    # 静态资源
 ```
 
@@ -143,7 +143,7 @@ imagegate/
 
 | 变量 | 说明 | 必填 | 默认值 |
 |------|------|------|--------|
-| `DATABASE_URL` | SQLite 文件路径 | 否 | `data/magicbrush.db` |
+| `DATABASE_URL` | SQLite 文件路径 | 否 | `data/imagegate.db` |
 | `NEXTAUTH_URL` | NextAuth URL | 是 | `http://localhost:3000` |
 | `NEXTAUTH_SECRET` | NextAuth 密钥 | 是 | - |
 | `GITHUB_CLIENT_ID` | GitHub OAuth Client ID | 是 | - |
