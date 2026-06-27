@@ -28,5 +28,6 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 ENV DATABASE_URL=file:/app/data/imagegate.db
+ENV AUTH_TRUST_HOST=true
 
 CMD ["node", "server.js"]
