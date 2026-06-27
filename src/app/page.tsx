@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
-import { Button, Input, Segmented, Tag, message, Empty, Pagination, Popconfirm, Tooltip } from "antd";
-import { DownloadOutlined, ThunderboltOutlined, ClockCircleOutlined, DeleteOutlined, LeftOutlined, RightOutlined, CopyOutlined, ReloadOutlined, PictureOutlined, EditOutlined, SwapOutlined } from "@ant-design/icons";
+import { Button, Input, Segmented, Tag, message, Empty, Pagination, Popconfirm, Tooltip, Progress } from "antd";
+import { DownloadOutlined, ThunderboltOutlined, ClockCircleOutlined, DeleteOutlined, LeftOutlined, RightOutlined, CopyOutlined, ReloadOutlined, PictureOutlined, EditOutlined, SwapOutlined, StopOutlined, CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { PROMPT_TEMPLATES, TEMPLATE_CATEGORIES, type PromptTemplate } from "@/lib/prompts";
 
@@ -10,22 +10,9 @@ const PROVIDER_COLORS: Record<string, string> = { openai: "#10a37f", anthropic: 
 const PROVIDER_LABELS: Record<string, string> = { openai: "OpenAI 兼容", anthropic: "Anthropic" };
 const AR_OPTIONS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 
-interface RecordItem {
-  id: number;
-  provider: string;
-  model: string;
-  prompt: string;
-  status: string;
-  duration_ms: number;
-  created_at: string;
-}
-
-interface GenerateResult {
-  image: string;
-  provider: string;
-  model: string;
-  duration_ms: number;
-}
+interface RecordItem { id: number; provider: string; model: string; prompt: string; status: string; duration_ms: number; created_at: string; }
+interface GenerateResult { image: string; provider: string; model: string; duration_ms: number; }
+interface BatchItem { prompt: string; status: "pending" | "running" | "success" | "error"; result?: GenerateResult; error?: string; }
 
 export default function HomePage() {
   const [prompt, setPrompt] = useState("");
@@ -39,6 +26,12 @@ export default function HomePage() {
   const [showParams, setShowParams] = useState(false);
   const [templateCategory, setTemplateCategory] = useState<string>("product");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Batch
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
+  const [batchRunning, setBatchRunning] = useState(false);
+  const batchAbortRef = useRef(false);
 
   // History
   const [records, setRecords] = useState<RecordItem[]>([]);
@@ -58,82 +51,87 @@ export default function HomePage() {
 
   const loadRecords = useCallback(async (p = 1) => {
     setRecordsLoading(true);
-    try {
-      const res = await fetch(`/api/records?page=${p}&pageSize=20`);
-      const data = await res.json();
-      setRecords(data.records || []);
-      setTotal(data.total || 0);
-    } catch { /* */ } finally { setRecordsLoading(false); }
+    try { const res = await fetch(`/api/records?page=${p}&pageSize=20`); const data = await res.json(); setRecords(data.records || []); setTotal(data.total || 0); } catch { /* */ } finally { setRecordsLoading(false); }
   }, []);
 
   useEffect(() => { loadRecords(page); }, [page, loadRecords]);
 
   const doGenerate = async (p?: string, prov?: string, ratio?: string, q?: string) => {
-    const usePrompt = p ?? prompt;
-    const useProvider = prov ?? provider;
-    const useAr = ratio ?? ar;
-    const useQuality = q ?? quality;
+    const usePrompt = p ?? prompt; const useProvider = prov ?? provider; const useAr = ratio ?? ar; const useQuality = q ?? quality;
     if (!usePrompt.trim()) { message.warning("请输入图片描述"); return; }
     setLoading(true);
     try {
       const body: Record<string, string> = { prompt: usePrompt, provider: useProvider, ar: useAr, quality: useQuality };
       if (model) body.model = model;
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error?.message || "生成失败");
-      setResult(data);
-      message.success(`生成成功 (${(data.duration_ms / 1000).toFixed(1)}s)`);
+      setResult(data); message.success(`生成成功 (${(data.duration_ms / 1000).toFixed(1)}s)`);
       loadRecords(1); setPage(1);
-    } catch (err: unknown) {
-      message.error(err instanceof Error ? err.message : "生成失败");
-    } finally { setLoading(false); }
+    } catch (err: unknown) { message.error(err instanceof Error ? err.message : "生成失败"); } finally { setLoading(false); }
   };
+
+  // Batch generation
+  const startBatch = async () => {
+    const lines = prompt.split("\n").map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) { message.warning("请输入至少一个 Prompt（每行一个）"); return; }
+    const items: BatchItem[] = lines.map((p) => ({ prompt: p, status: "pending" as const }));
+    setBatchItems(items);
+    setBatchRunning(true);
+    batchAbortRef.current = false;
+
+    for (let i = 0; i < items.length; i++) {
+      if (batchAbortRef.current) break;
+      setBatchItems((prev) => prev.map((item, idx) => idx === i ? { ...item, status: "running" } : item));
+
+      try {
+        const body: Record<string, string> = { prompt: lines[i], provider, ar, quality };
+        if (model) body.model = model;
+        const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || "失败");
+        setBatchItems((prev) => prev.map((item, idx) => idx === i ? { ...item, status: "success", result: data } : item));
+      } catch (err: unknown) {
+        setBatchItems((prev) => prev.map((item, idx) => idx === i ? { ...item, status: "error", error: err instanceof Error ? err.message : "失败" } : item));
+      }
+    }
+    setBatchRunning(false);
+    loadRecords(1); setPage(1);
+  };
+
+  const stopBatch = () => { batchAbortRef.current = true; setBatchRunning(false); };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); doGenerate(); }
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); batchMode ? startBatch() : doGenerate(); }
   };
 
-  const handleDownload = (base64: string) => {
-    const link = document.createElement("a");
-    link.href = `data:image/png;base64,${base64}`;
-    link.download = `imagegate-${Date.now()}.png`;
-    link.click();
+  const handleDownload = (base64: string, name?: string) => {
+    const link = document.createElement("a"); link.href = `data:image/png;base64,${base64}`; link.download = name || `imagegate-${Date.now()}.png`; link.click();
   };
 
-  const handleDelete = async (id: number) => {
-    await fetch(`/api/records?id=${id}`, { method: "DELETE" });
-    loadRecords(page);
-  };
+  const handleDelete = async (id: number) => { await fetch(`/api/records?id=${id}`, { method: "DELETE" }); loadRecords(page); };
 
   const applyTemplate = (t: PromptTemplate) => {
-    setPrompt(t.prompt);
+    if (batchMode) { setPrompt((prev) => prev ? prev + "\n" + t.prompt : t.prompt); }
+    else { setPrompt(t.prompt); }
     textareaRef.current?.focus();
   };
 
   const filteredTemplates = PROMPT_TEMPLATES.filter((t) => t.category === templateCategory);
+  const batchDone = batchItems.filter((i) => i.status === "success" || i.status === "error").length;
+  const batchTotal = batchItems.length;
 
   return (
     <div style={{ display: "flex", height: "calc(100vh - 56px)", overflow: "hidden" }}>
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{ borderRight: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.95)", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}
-          >
+          <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 320, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.2 }}
+            style={{ borderRight: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.95)", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
             <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", fontWeight: 600, fontSize: 14, color: "#e4e4e7" }}>历史记录</div>
             <div style={{ flex: 1, overflow: "auto", padding: "8px 10px" }}>
               {recordsLoading ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[1, 2, 3, 4, 5].map((i) => <div key={i} className="shimmer" style={{ height: 80, borderRadius: 10 }} />)}
-                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{[1, 2, 3, 4, 5].map((i) => <div key={i} className="shimmer" style={{ height: 80, borderRadius: 10 }} />)}</div>
               ) : records.length === 0 ? (
                 <Empty description="暂无记录" style={{ marginTop: 60 }} image={Empty.PRESENTED_IMAGE_SIMPLE} />
               ) : (
@@ -141,8 +139,7 @@ export default function HomePage() {
                   <div key={item.id} style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)", marginBottom: 6, cursor: "pointer", transition: "all 0.15s", background: "rgba(255,255,255,0.02)" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)"; }}
-                    onClick={() => setPrompt(item.prompt)}
-                  >
+                    onClick={() => setPrompt(item.prompt)}>
                     <div style={{ fontSize: 12, color: "#a1a1aa", lineHeight: 1.5, marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{item.prompt}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <Tag color={PROVIDER_COLORS[item.provider] || "#666"} style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 5px" }}>{PROVIDER_LABELS[item.provider] || item.provider}</Tag>
@@ -161,7 +158,6 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* Toggle */}
       <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ position: "absolute", left: sidebarOpen ? 320 : 0, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 20, height: 48, background: "rgba(20,20,32,0.9)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0 8px 8px 0", color: "#71717a", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "left 0.2s" }}>
         {sidebarOpen ? <LeftOutlined style={{ fontSize: 10 }} /> : <RightOutlined style={{ fontSize: 10 }} />}
       </button>
@@ -179,6 +175,12 @@ export default function HomePage() {
                   {cat.icon} {cat.label}
                 </button>
               ))}
+              <div style={{ marginLeft: "auto" }}>
+                <button onClick={() => { setBatchMode(!batchMode); setBatchItems([]); }}
+                  style={{ padding: "4px 10px", borderRadius: 6, border: batchMode ? "1px solid rgba(234,179,8,0.4)" : "1px solid rgba(255,255,255,0.06)", background: batchMode ? "rgba(234,179,8,0.12)" : "rgba(255,255,255,0.02)", color: batchMode ? "#eab308" : "#71717a", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
+                  📦 {batchMode ? "批量模式" : "单条模式"}
+                </button>
+              </div>
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {filteredTemplates.map((t) => (
@@ -197,13 +199,28 @@ export default function HomePage() {
           {/* Prompt input */}
           <div className="gradient-border" style={{ marginBottom: 16 }}>
             <textarea ref={textareaRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={handleKeyDown}
-              placeholder="描述你想要生成的图片...&#10;&#10;试试点击上方的模板快速开始"
-              rows={4} maxLength={10000}
+              placeholder={batchMode ? "输入多个 Prompt，每行一个：\n一只橘猫在窗台晒太阳\n赛博朋克风格的城市夜景\n水彩风格的山水画" : "描述你想要生成的图片...\n\n试试点击上方的模板快速开始"}
+              rows={batchMode ? 6 : 4} maxLength={50000}
               style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", outline: "none", color: "#e4e4e7", fontSize: 15, lineHeight: 1.6, resize: "none", fontFamily: "inherit", borderRadius: 16 }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 16px 12px" }}>
-              <span style={{ fontSize: 11, color: "#52525b" }}>{prompt.length > 0 ? `${prompt.length}/10000` : "⌘ + Enter 生成"}</span>
-              <Button type="primary" icon={<ThunderboltOutlined />} loading={loading} onClick={() => doGenerate()} disabled={!prompt.trim()}
-                className={prompt.trim() && !loading ? "pulse-glow" : ""} style={{ borderRadius: 10, fontWeight: 600, height: 38 }}>生成</Button>
+              <span style={{ fontSize: 11, color: "#52525b" }}>
+                {batchMode ? (
+                  batchRunning ? `批量生成中 ${batchDone}/${batchTotal}` : `${prompt.split("\n").filter((l) => l.trim()).length} 条 · ⌘ + Enter 开始`
+                ) : (
+                  prompt.length > 0 ? `${prompt.length}/10000` : "⌘ + Enter 生成"
+                )}
+              </span>
+              {batchMode ? (
+                batchRunning ? (
+                  <Button danger icon={<StopOutlined />} onClick={stopBatch} style={{ borderRadius: 10, fontWeight: 600, height: 38 }}>停止</Button>
+                ) : (
+                  <Button type="primary" icon={<ThunderboltOutlined />} onClick={startBatch} disabled={!prompt.trim()}
+                    className={prompt.trim() ? "pulse-glow" : ""} style={{ borderRadius: 10, fontWeight: 600, height: 38 }}>批量生成</Button>
+                )
+              ) : (
+                <Button type="primary" icon={<ThunderboltOutlined />} loading={loading} onClick={() => doGenerate()} disabled={!prompt.trim()}
+                  className={prompt.trim() && !loading ? "pulse-glow" : ""} style={{ borderRadius: 10, fontWeight: 600, height: 38 }}>生成</Button>
+              )}
             </div>
           </div>
 
@@ -228,71 +245,91 @@ export default function HomePage() {
             )}
           </AnimatePresence>
 
-          {/* Loading */}
-          {loading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginBottom: 24 }}>
-              <div className="shimmer" style={{ width: "100%", height: 400, borderRadius: 16 }} />
-              <div style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "#71717a" }}>正在生成中...</div>
-            </motion.div>
+          {/* ============ BATCH MODE RESULTS ============ */}
+          {batchItems.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              {batchRunning && (
+                <div style={{ marginBottom: 16 }}>
+                  <Progress percent={Math.round((batchDone / batchTotal) * 100)} strokeColor="#6366f1" />
+                  <div style={{ textAlign: "center", fontSize: 13, color: "#71717a", marginTop: 4 }}>{batchDone}/{batchTotal} 完成</div>
+                </div>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+                {batchItems.map((item, idx) => (
+                  <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
+                    <div style={{ borderRadius: 12, overflow: "hidden", border: item.status === "success" ? "1px solid rgba(34,197,94,0.3)" : item.status === "error" ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(255,255,255,0.06)", background: "#141420" }}>
+                      {/* Image or status */}
+                      {item.status === "success" && item.result ? (
+                        <div className="image-overlay" style={{ position: "relative" }}>
+                          <img src={`data:image/png;base64,${item.result.image}`} alt={item.prompt} style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} />
+                          <div className="overlay-actions">
+                            <Button type="primary" shape="circle" icon={<DownloadOutlined />} size="small" onClick={() => handleDownload(item.result!.image, `batch-${idx + 1}.png`)} />
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.02)" }}>
+                          {item.status === "pending" && <span style={{ color: "#52525b", fontSize: 12 }}>等待中</span>}
+                          {item.status === "running" && <LoadingOutlined style={{ color: "#6366f1", fontSize: 24 }} />}
+                          {item.status === "error" && <CloseCircleOutlined style={{ color: "#ef4444", fontSize: 24 }} />}
+                        </div>
+                      )}
+                      {/* Info */}
+                      <div style={{ padding: "8px 10px" }}>
+                        <div style={{ fontSize: 11, color: "#a1a1aa", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", marginBottom: 4 }}>{item.prompt}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          {item.status === "success" && <CheckCircleOutlined style={{ color: "#22c55e", fontSize: 10 }} />}
+                          {item.status === "error" && <span style={{ fontSize: 10, color: "#ef4444" }}>{item.error}</span>}
+                          {item.status === "success" && item.result && <span style={{ fontSize: 10, color: "#52525b", marginLeft: "auto" }}>{(item.result.duration_ms / 1000).toFixed(1)}s</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           )}
 
-          {/* Result + Remix */}
-          <AnimatePresence>
-            {result && !loading && (
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: "easeOut" }}>
-                {/* Remix bar */}
-                <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                  <Tooltip title="编辑 Prompt 重新生成">
-                    <Button size="small" icon={<EditOutlined />} onClick={() => textareaRef.current?.focus()} style={{ borderRadius: 8 }}>编辑 Prompt</Button>
-                  </Tooltip>
-                  <Tooltip title="换个比例再试">
-                    <Button size="small" icon={<SwapOutlined />} onClick={() => {
-                      const idx = AR_OPTIONS.indexOf(ar);
-                      const next = AR_OPTIONS[(idx + 1) % AR_OPTIONS.length];
-                      setAr(next);
-                      doGenerate(prompt, provider, next, quality);
-                    }} style={{ borderRadius: 8 }}>换比例 ({AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length]})</Button>
-                  </Tooltip>
-                  <Tooltip title="换 Provider 再试">
-                    <Button size="small" icon={<SwapOutlined />} onClick={() => {
-                      const next = provider === "openai" ? "anthropic" : "openai";
-                      setProvider(next);
-                      doGenerate(prompt, next, ar, quality);
-                    }} style={{ borderRadius: 8 }}>换 Provider ({provider === "openai" ? "Anthropic" : "OpenAI"})</Button>
-                  </Tooltip>
-                  <Tooltip title="换质量再试">
-                    <Button size="small" icon={<SwapOutlined />} onClick={() => {
-                      const next = quality === "2k" ? "normal" : "2k";
-                      setQuality(next);
-                      doGenerate(prompt, provider, ar, next);
-                    }} style={{ borderRadius: 8 }}>换质量 ({quality === "2k" ? "标准" : "高清"})</Button>
-                  </Tooltip>
+          {/* ============ SINGLE MODE RESULT ============ */}
+          {!batchMode && (
+            <>
+              {loading && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginBottom: 24 }}>
+                  <div className="shimmer" style={{ width: "100%", height: 400, borderRadius: 16 }} />
+                  <div style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "#71717a" }}>正在生成中...</div>
+                </motion.div>
+              )}
+              <AnimatePresence>
+                {result && !loading && (
+                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: "easeOut" }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                      <Tooltip title="编辑 Prompt 重新生成"><Button size="small" icon={<EditOutlined />} onClick={() => textareaRef.current?.focus()} style={{ borderRadius: 8 }}>编辑 Prompt</Button></Tooltip>
+                      <Tooltip title="换个比例再试"><Button size="small" icon={<SwapOutlined />} onClick={() => { const next = AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length]; setAr(next); doGenerate(prompt, provider, next, quality); }} style={{ borderRadius: 8 }}>换比例 ({AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length]})</Button></Tooltip>
+                      <Tooltip title="换 Provider 再试"><Button size="small" icon={<SwapOutlined />} onClick={() => { const next = provider === "openai" ? "anthropic" : "openai"; setProvider(next); doGenerate(prompt, next, ar, quality); }} style={{ borderRadius: 8 }}>换 Provider ({provider === "openai" ? "Anthropic" : "OpenAI"})</Button></Tooltip>
+                      <Tooltip title="换质量再试"><Button size="small" icon={<SwapOutlined />} onClick={() => { const next = quality === "2k" ? "normal" : "2k"; setQuality(next); doGenerate(prompt, provider, ar, next); }} style={{ borderRadius: 8 }}>换质量 ({quality === "2k" ? "标准" : "高清"})</Button></Tooltip>
+                    </div>
+                    <div className="image-overlay" style={{ borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <img src={`data:image/png;base64,${result.image}`} alt="生成结果" style={{ width: "100%", display: "block" }} />
+                      <div className="overlay-actions">
+                        <Button icon={<DownloadOutlined />} onClick={() => handleDownload(result.image)} style={{ borderRadius: 8 }}>下载</Button>
+                        <Button icon={<CopyOutlined />} onClick={() => { navigator.clipboard.writeText(prompt); message.success("已复制 Prompt"); }} style={{ borderRadius: 8 }}>复制 Prompt</Button>
+                        <Button icon={<ReloadOutlined />} onClick={() => doGenerate()} style={{ borderRadius: 8 }}>重新生成</Button>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                      <Tag color={PROVIDER_COLORS[result.provider]}>{PROVIDER_LABELS[result.provider] || result.provider}</Tag>
+                      <Tag>{result.model}</Tag>
+                      <span style={{ fontSize: 12, color: "#71717a", display: "flex", alignItems: "center", gap: 4 }}><ClockCircleOutlined />{(result.duration_ms / 1000).toFixed(1)}s</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              {!result && !loading && (
+                <div style={{ textAlign: "center", padding: "60px 0", color: "#52525b" }}>
+                  <PictureOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }} />
+                  <div style={{ fontSize: 14 }}>选择模板或输入描述，开始创作</div>
                 </div>
-
-                {/* Image */}
-                <div className="image-overlay" style={{ borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <img src={`data:image/png;base64,${result.image}`} alt="生成结果" style={{ width: "100%", display: "block" }} />
-                  <div className="overlay-actions">
-                    <Button icon={<DownloadOutlined />} onClick={() => handleDownload(result.image)} style={{ borderRadius: 8 }}>下载</Button>
-                    <Button icon={<CopyOutlined />} onClick={() => { navigator.clipboard.writeText(prompt); message.success("已复制 Prompt"); }} style={{ borderRadius: 8 }}>复制 Prompt</Button>
-                    <Button icon={<ReloadOutlined />} onClick={() => doGenerate()} style={{ borderRadius: 8 }}>重新生成</Button>
-                  </div>
-                </div>
-                <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-                  <Tag color={PROVIDER_COLORS[result.provider]}>{PROVIDER_LABELS[result.provider] || result.provider}</Tag>
-                  <Tag>{result.model}</Tag>
-                  <span style={{ fontSize: 12, color: "#71717a", display: "flex", alignItems: "center", gap: 4 }}><ClockCircleOutlined />{(result.duration_ms / 1000).toFixed(1)}s</span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Empty */}
-          {!result && !loading && (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#52525b" }}>
-              <PictureOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }} />
-              <div style={{ fontSize: 14 }}>选择模板或输入描述，开始创作</div>
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
