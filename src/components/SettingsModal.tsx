@@ -11,118 +11,33 @@ interface ProviderConfig {
   label: string;
   color: string;
   developerUrl: string;
+  description: string;
   fields: { key: string; label: string; placeholder: string; type?: "password" | "text" }[];
 }
 
 const PROVIDERS: ProviderConfig[] = [
   {
-    name: "zai",
-    label: "Z.AI (智谱)",
-    color: "#4f46e5",
-    developerUrl: "https://open.bigmodel.cn/usercenter/apikeys",
-    fields: [
-      { key: "zai_api_key", label: "API Key", placeholder: "输入智谱 API Key", type: "password" },
-      { key: "zai_base_url", label: "Base URL", placeholder: "https://open.bigmodel.cn/api/paas/v4" },
-      { key: "zai_model", label: "模型", placeholder: "cogview-3" },
-    ],
-  },
-  {
     name: "openai",
-    label: "OpenAI",
+    label: "OpenAI 兼容",
     color: "#10a37f",
     developerUrl: "https://platform.openai.com/api-keys",
+    description: "支持 OpenAI、通义、智谱、豆包、Google 等所有兼容 OpenAI 格式的服务",
     fields: [
-      { key: "openai_api_key", label: "API Key", placeholder: "输入 OpenAI API Key", type: "password" },
+      { key: "openai_api_key", label: "API Key", placeholder: "输入 API Key", type: "password" },
       { key: "openai_base_url", label: "Base URL", placeholder: "https://api.openai.com/v1" },
       { key: "openai_model", label: "模型", placeholder: "gpt-image-2" },
     ],
   },
   {
-    name: "google",
-    label: "Google (Gemini)",
-    color: "#4285f4",
-    developerUrl: "https://aistudio.google.com/apikey",
+    name: "anthropic",
+    label: "Anthropic",
+    color: "#d97706",
+    developerUrl: "https://console.anthropic.com/settings/keys",
+    description: "Claude 系列模型，支持图片生成",
     fields: [
-      { key: "google_api_key", label: "API Key", placeholder: "输入 Google API Key", type: "password" },
-      { key: "google_base_url", label: "Base URL", placeholder: "https://generativelanguage.googleapis.com/v1beta" },
-      { key: "google_model", label: "模型", placeholder: "gemini-2.0-flash-preview-image-generation" },
-    ],
-  },
-  {
-    name: "openrouter",
-    label: "OpenRouter",
-    color: "#ff6b35",
-    developerUrl: "https://openrouter.ai/keys",
-    fields: [
-      { key: "openrouter_api_key", label: "API Key", placeholder: "输入 OpenRouter API Key", type: "password" },
-      { key: "openrouter_base_url", label: "Base URL", placeholder: "https://openrouter.ai/api/v1" },
-      { key: "openrouter_model", label: "模型", placeholder: "google/gemini-2.0-flash-preview-image-generation" },
-    ],
-  },
-  {
-    name: "dashscope",
-    label: "DashScope (通义万相)",
-    color: "#ff6a00",
-    developerUrl: "https://dashscope.console.aliyun.com/apiKey",
-    fields: [
-      { key: "dashscope_api_key", label: "API Key", placeholder: "输入 DashScope API Key", type: "password" },
-      { key: "dashscope_base_url", label: "Base URL (可选)", placeholder: "https://dashscope.aliyuncs.com" },
-      { key: "dashscope_model", label: "模型", placeholder: "qwen-image-2.0-pro" },
-    ],
-  },
-  {
-    name: "minimax",
-    label: "MiniMax",
-    color: "#6366f1",
-    developerUrl: "https://platform.minimaxi.com/user-center/api-keys",
-    fields: [
-      { key: "minimax_api_key", label: "API Key", placeholder: "输入 MiniMax API Key", type: "password" },
-      { key: "minimax_base_url", label: "Base URL", placeholder: "https://api.minimaxi.com" },
-      { key: "minimax_model", label: "模型", placeholder: "image-01" },
-    ],
-  },
-  {
-    name: "replicate",
-    label: "Replicate",
-    color: "#000000",
-    developerUrl: "https://replicate.com/account/api-tokens",
-    fields: [
-      { key: "replicate_api_key", label: "API Token", placeholder: "输入 Replicate API Token", type: "password" },
-      { key: "replicate_base_url", label: "Base URL", placeholder: "https://api.replicate.com" },
-      { key: "replicate_model", label: "模型", placeholder: "google/nano-banana-2" },
-    ],
-  },
-  {
-    name: "jimeng",
-    label: "即梦 (Jimeng)",
-    color: "#3b82f6",
-    developerUrl: "https://console.volcengine.com/iam/keymanage/",
-    fields: [
-      { key: "jimeng_api_key", label: "API Key (AccessKey:SecretKey)", placeholder: "输入即梦 AccessKey:SecretKey", type: "password" },
-      { key: "jimeng_base_url", label: "Base URL", placeholder: "https://visual.volcengineapi.com" },
-      { key: "jimeng_model", label: "模型", placeholder: "jimeng_t2i_v40" },
-    ],
-  },
-  {
-    name: "seedream",
-    label: "豆包 Seedream",
-    color: "#00d4aa",
-    developerUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
-    fields: [
-      { key: "seedream_api_key", label: "API Key", placeholder: "输入豆包 ARK API Key", type: "password" },
-      { key: "seedream_base_url", label: "Base URL", placeholder: "https://ark.cn-beijing.volces.com/api/v3" },
-      { key: "seedream_model", label: "模型", placeholder: "doubao-seedream-5-0-260128" },
-    ],
-  },
-  {
-    name: "azure",
-    label: "Azure OpenAI",
-    color: "#0078d4",
-    developerUrl: "https://portal.azure.com/#view/Microsoft_Azure_AI/OpenAI/azureopenai",
-    fields: [
-      { key: "azure_api_key", label: "API Key", placeholder: "输入 Azure OpenAI API Key", type: "password" },
-      { key: "azure_base_url", label: "Endpoint", placeholder: "https://your-resource.openai.azure.com" },
-      { key: "azure_model", label: "Deployment", placeholder: "gpt-image-2" },
+      { key: "anthropic_api_key", label: "API Key", placeholder: "输入 Anthropic API Key", type: "password" },
+      { key: "anthropic_base_url", label: "Base URL", placeholder: "https://api.anthropic.com" },
+      { key: "anthropic_model", label: "模型", placeholder: "claude-sonnet-4-20250514" },
     ],
   },
 ];
@@ -132,7 +47,6 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-// 创建一个子组件来渲染单个服务商配置
 function ProviderForm({ provider, loading, onSave }: { provider: ProviderConfig; loading: boolean; onSave: (provider: ProviderConfig, values: Record<string, string>) => Promise<void> }) {
   const [form] = Form.useForm();
 
@@ -256,11 +170,11 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
             </Form.Item>
             <Form.Item name="default_quality" label="默认质量" style={{ flex: 1 }}>
               <Select allowClear placeholder="2k">
-                <Select.Option value="normal">普通</Select.Option>
-                <Select.Option value="2k">2K</Select.Option>
+                <Select.Option value="normal">标准</Select.Option>
+                <Select.Option value="2k">高清</Select.Option>
               </Select>
             </Form.Item>
-            <Form.Item name="default_ar" label="默认宽高比" style={{ flex: 1 }}>
+            <Form.Item name="default_ar" label="默认比例" style={{ flex: 1 }}>
               <Select allowClear placeholder="1:1">
                 <Select.Option value="1:1">1:1</Select.Option>
                 <Select.Option value="16:9">16:9</Select.Option>
@@ -292,12 +206,17 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                 onClick={(e) => e.stopPropagation()}
                 style={{ fontSize: 12, color: "#64748b" }}
               >
-                <LinkOutlined /> 开发者中心
+                <LinkOutlined /> 获取 API Key
               </a>
             </Space>
           ),
           children: (
-            <ProviderForm provider={provider} loading={loading} onSave={handleSaveProvider} />
+            <div>
+              <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 12 }}>
+                {provider.description}
+              </Text>
+              <ProviderForm provider={provider} loading={loading} onSave={handleSaveProvider} />
+            </div>
           ),
         }))}
       />

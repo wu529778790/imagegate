@@ -361,16 +361,8 @@ export function getStats(): Stats {
 
 // Settings
 const ENCRYPTED_SETTINGS_KEYS = [
-  "zai_api_key",
   "openai_api_key",
-  "google_api_key",
-  "openrouter_api_key",
-  "dashscope_api_key",
-  "minimax_api_key",
-  "replicate_api_key",
-  "jimeng_api_key",
-  "seedream_api_key",
-  "azure_api_key",
+  "anthropic_api_key",
 ];
 
 /**

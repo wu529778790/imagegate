@@ -9,18 +9,7 @@ import { z } from "zod";
 // Common schemas
 // ---------------------------------------------------------------------------
 
-export const ProviderSchema = z.enum([
-  "zai",
-  "openai",
-  "google",
-  "openrouter",
-  "dashscope",
-  "minimax",
-  "replicate",
-  "jimeng",
-  "seedream",
-  "azure",
-]);
+export const ProviderSchema = z.enum(["openai", "anthropic"]);
 
 export const QualitySchema = z.enum(["normal", "2k"]);
 
@@ -86,36 +75,12 @@ const SETTINGS_KEYS = [
   "default_provider",
   "default_quality",
   "default_ar",
-  "zai_api_key",
-  "zai_base_url",
-  "zai_model",
   "openai_api_key",
   "openai_base_url",
   "openai_model",
-  "google_api_key",
-  "google_base_url",
-  "google_model",
-  "openrouter_api_key",
-  "openrouter_base_url",
-  "openrouter_model",
-  "dashscope_api_key",
-  "dashscope_base_url",
-  "dashscope_model",
-  "minimax_api_key",
-  "minimax_base_url",
-  "minimax_model",
-  "replicate_api_key",
-  "replicate_base_url",
-  "replicate_model",
-  "jimeng_api_key",
-  "jimeng_base_url",
-  "jimeng_model",
-  "seedream_api_key",
-  "seedream_base_url",
-  "seedream_model",
-  "azure_api_key",
-  "azure_base_url",
-  "azure_model",
+  "anthropic_api_key",
+  "anthropic_base_url",
+  "anthropic_model",
 ] as const;
 
 export const SettingsSchema = z.record(

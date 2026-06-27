@@ -13,30 +13,11 @@ import { generateRequestId, createRequestLogger } from "@/lib/logger";
 import { withTimeout, TIMEOUT_CONFIG, TimeoutError, createTimeoutResponse } from "@/lib/timeout";
 
 const DEFAULT_MODELS: Record<Provider, string> = {
-  zai: "cogview-3",
   openai: "gpt-image-2",
-  google: "gemini-2.0-flash-preview-image-generation",
-  openrouter: "google/gemini-2.0-flash-preview-image-generation",
-  dashscope: "qwen-image-2.0-pro",
-  minimax: "image-01",
-  replicate: "google/nano-banana-2",
-  jimeng: "jimeng_t2i_v40",
-  seedream: "doubao-seedream-5-0-260128",
-  azure: "gpt-image-2",
+  anthropic: "claude-sonnet-4-20250514",
 };
 
-const VALID_PROVIDERS: Provider[] = [
-  "zai",
-  "openai",
-  "google",
-  "openrouter",
-  "dashscope",
-  "minimax",
-  "replicate",
-  "jimeng",
-  "seedream",
-  "azure",
-];
+const VALID_PROVIDERS: Provider[] = ["openai", "anthropic"];
 
 async function saveImageToLocalStorage(
   userId: number,
@@ -121,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
   } else {
     // Auto-detect: check settings first, then api_keys
-    const defaultProvider = (getSetting("default_provider") ?? "zai") as Provider;
+    const defaultProvider = (getSetting("default_provider") ?? "openai") as Provider;
     apiKey = getSetting(`${defaultProvider}_api_key`) ?? undefined;
     if (apiKey) {
       providerName = defaultProvider;

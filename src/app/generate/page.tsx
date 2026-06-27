@@ -6,29 +6,13 @@ import { DownloadOutlined, ThunderboltOutlined, ClockCircleOutlined, DeleteOutli
 
 // Provider 品牌色
 const PROVIDER_COLORS: Record<string, string> = {
-  zai: "#4f46e5",
   openai: "#10a37f",
-  google: "#4285f4",
-  openrouter: "#ff6b35",
-  dashscope: "#ff6a00",
-  minimax: "#6366f1",
-  replicate: "#000000",
-  jimeng: "#3b82f6",
-  seedream: "#00d4aa",
-  azure: "#0078d4",
+  anthropic: "#d97706",
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
-  zai: "智谱",
-  openai: "OpenAI",
-  google: "Google",
-  openrouter: "OpenRouter",
-  dashscope: "通义万相",
-  minimax: "MiniMax",
-  replicate: "Replicate",
-  jimeng: "即梦",
-  seedream: "豆包",
-  azure: "Azure",
+  openai: "OpenAI 兼容",
+  anthropic: "Anthropic",
 };
 
 interface RecordItem {

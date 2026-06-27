@@ -1,41 +1,23 @@
 /**
  * Provider registry for image generation.
  *
+ * Two simplified providers:
+ *   - openai: OpenAI-compatible API (covers OpenAI, 通义, 智谱, 豆包, Google, etc.)
+ *   - anthropic: Anthropic Messages API
+ *
  * Usage:
- *   import { generateImage, createProvider } from "./providers/index.js";
- *
- *   // Direct call with provider name
- *   const buf = await generateImage("zai", "a cat", "cogview-3", "your-api-key");
- *
- *   // Or use a provider instance for multiple calls
- *   const provider = createProvider("zai", { baseUrl: "https://open.bigmodel.cn/api/paas/v4" });
- *   const buf = await provider.generateImage("a cat", "cogview-3", "your-api-key");
+ *   const provider = createProvider("openai", { baseUrl: "https://api.openai.com/v1" });
+ *   const buf = await provider.generateImage("a cat", "gpt-image-2", "your-api-key");
  */
 
 import type { GenerateImageOptions, ImageProvider, Provider } from "./types";
-import { ZaiProvider } from "./zai";
 import { OpenAIProvider } from "./openai";
-import { GoogleProvider } from "./google";
-import { OpenRouterProvider } from "./openrouter";
-import { DashScopeProvider } from "./dashscope";
-import { MiniMaxProvider } from "./minimax";
-import { ReplicateProvider } from "./replicate";
-import { JimengProvider } from "./jimeng";
-import { SeedreamProvider } from "./seedream";
-import { AzureProvider } from "./azure";
+import { AnthropicProvider } from "./anthropic";
 
 export type { GenerateImageOptions, ImageProvider, Provider, ProviderError } from "./types";
 export { BaseProvider } from "./base";
-export { ZaiProvider } from "./zai";
 export { OpenAIProvider } from "./openai";
-export { GoogleProvider } from "./google";
-export { OpenRouterProvider } from "./openrouter";
-export { DashScopeProvider } from "./dashscope";
-export { MiniMaxProvider } from "./minimax";
-export { ReplicateProvider } from "./replicate";
-export { JimengProvider } from "./jimeng";
-export { SeedreamProvider } from "./seedream";
-export { AzureProvider } from "./azure";
+export { AnthropicProvider } from "./anthropic";
 
 // ---------------------------------------------------------------------------
 // Provider factory
@@ -48,26 +30,13 @@ export interface ProviderConfig {
   defaultModel?: string;
 }
 
-/** Single source of truth for all provider constructors. Each factory creates a provider from config. */
 const PROVIDER_REGISTRY: Record<Provider, (config?: ProviderConfig) => ImageProvider> = {
-  zai: (config) => new ZaiProvider(config?.baseUrl),
-  openai: (config) => new OpenAIProvider(config?.baseUrl),
-  google: (config) => new GoogleProvider(config?.baseUrl),
-  openrouter: (config) => new OpenRouterProvider(config?.baseUrl),
-  dashscope: (config) => new DashScopeProvider(config?.baseUrl),
-  minimax: (config) => new MiniMaxProvider(config?.baseUrl),
-  replicate: (config) => new ReplicateProvider(config?.baseUrl),
-  jimeng: (config) => new JimengProvider({ baseUrl: config?.baseUrl }),
-  seedream: (config) => new SeedreamProvider(config?.baseUrl),
-  azure: (config) => new AzureProvider({ baseUrl: config?.baseUrl }),
+  openai: (config) => new OpenAIProvider(config?.baseUrl, config?.defaultModel),
+  anthropic: (config) => new AnthropicProvider(config?.baseUrl, config?.defaultModel),
 };
 
 /**
  * Create a provider instance by name.
- *
- * @param name - The provider identifier.
- * @param config - Optional configuration overrides.
- * @returns An ImageProvider instance.
  */
 export function createProvider(name: Provider, config?: ProviderConfig): ImageProvider {
   const factory = PROVIDER_REGISTRY[name];
@@ -76,16 +45,7 @@ export function createProvider(name: Provider, config?: ProviderConfig): ImagePr
 }
 
 /**
- * Generate an image using a named provider. This is a convenience wrapper
- * that creates a provider, calls generateImage, and returns the result.
- *
- * @param providerName - Which provider to use.
- * @param prompt - Text prompt describing the image.
- * @param model - Model identifier for the provider.
- * @param apiKey - API key for authentication.
- * @param options - Generation options (aspect ratio, quality, etc.).
- * @param config - Optional provider configuration overrides.
- * @returns A Buffer containing the image bytes.
+ * Generate an image using a named provider.
  */
 export async function generateImage(
   providerName: Provider,

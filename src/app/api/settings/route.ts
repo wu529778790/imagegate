@@ -5,46 +5,14 @@ const SETTINGS_KEYS = [
   "default_provider",
   "default_quality",
   "default_ar",
-  // Z.AI (智谱)
-  "zai_api_key",
-  "zai_base_url",
-  "zai_model",
-  // OpenAI
+  // OpenAI 兼容 (OpenAI, 通义, 智谱, 豆包, Google 等)
   "openai_api_key",
   "openai_base_url",
   "openai_model",
-  // Google (Gemini)
-  "google_api_key",
-  "google_base_url",
-  "google_model",
-  // OpenRouter
-  "openrouter_api_key",
-  "openrouter_base_url",
-  "openrouter_model",
-  // DashScope (通义万相)
-  "dashscope_api_key",
-  "dashscope_base_url",
-  "dashscope_model",
-  // MiniMax
-  "minimax_api_key",
-  "minimax_base_url",
-  "minimax_model",
-  // Replicate
-  "replicate_api_key",
-  "replicate_base_url",
-  "replicate_model",
-  // Jimeng (即梦)
-  "jimeng_api_key",
-  "jimeng_base_url",
-  "jimeng_model",
-  // Seedream (豆包)
-  "seedream_api_key",
-  "seedream_base_url",
-  "seedream_model",
-  // Azure OpenAI
-  "azure_api_key",
-  "azure_base_url",
-  "azure_model",
+  // Anthropic (Claude)
+  "anthropic_api_key",
+  "anthropic_base_url",
+  "anthropic_model",
 ];
 
 export async function GET() {

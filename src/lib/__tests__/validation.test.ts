@@ -12,7 +12,7 @@ describe("Validation Library", () => {
     it("should validate valid input", () => {
       const input = {
         prompt: "a cute cat",
-        provider: "zai",
+        provider: "openai",
         quality: "2k",
         ar: "16:9",
       };
@@ -23,7 +23,7 @@ describe("Validation Library", () => {
 
     it("should require prompt", () => {
       const input = {
-        provider: "zai",
+        provider: "openai",
       };
 
       const result = GenerateImageSchema.safeParse(input);
@@ -108,7 +108,7 @@ describe("Validation Library", () => {
     it("should validate valid input", () => {
       const input = {
         name: "My Z.AI Key",
-        provider: "zai",
+        provider: "openai",
         api_key: "sk-1234567890",
       };
 
@@ -118,7 +118,7 @@ describe("Validation Library", () => {
 
     it("should require name", () => {
       const input = {
-        provider: "zai",
+        provider: "openai",
         api_key: "sk-1234567890",
       };
 
@@ -139,7 +139,7 @@ describe("Validation Library", () => {
     it("should require api_key", () => {
       const input = {
         name: "My Key",
-        provider: "zai",
+        provider: "openai",
       };
 
       const result = AddKeySchema.safeParse(input);
@@ -149,7 +149,7 @@ describe("Validation Library", () => {
     it("should reject name that is too long", () => {
       const input = {
         name: "a".repeat(101),
-        provider: "zai",
+        provider: "openai",
         api_key: "sk-1234567890",
       };
 
@@ -172,7 +172,7 @@ describe("Validation Library", () => {
 
     it("should validate with custom values", () => {
       const input = {
-        provider: "zai",
+        provider: "openai",
         status: "success",
         page: 2,
         pageSize: 10,
@@ -214,17 +214,17 @@ describe("Validation Library", () => {
     it("should return validated data", () => {
       const input = {
         prompt: "a cute cat",
-        provider: "zai",
+        provider: "openai",
       };
 
       const result = validate(GenerateImageSchema, input);
       expect(result.prompt).toBe("a cute cat");
-      expect(result.provider).toBe("zai");
+      expect(result.provider).toBe("openai");
     });
 
     it("should throw ValidationError for invalid input", () => {
       const input = {
-        provider: "zai",
+        provider: "openai",
       };
 
       expect(() => validate(GenerateImageSchema, input)).toThrow(ValidationError);
@@ -243,7 +243,7 @@ describe("Validation Library", () => {
 
     it("should return errors for invalid input", () => {
       const input = {
-        provider: "zai",
+        provider: "openai",
       };
 
       const result = validateSafe(GenerateImageSchema, input);

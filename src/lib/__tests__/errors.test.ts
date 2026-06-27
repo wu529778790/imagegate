@@ -100,12 +100,12 @@ describe("Errors Library", () => {
 
   describe("ProviderError", () => {
     it("should create a provider error", () => {
-      const error = new ProviderError("zai", "API key invalid", 401);
+      const error = new ProviderError("openai", "API key invalid", 401);
 
       expect(error.message).toBe("API key invalid");
       expect(error.statusCode).toBe(401);
       expect(error.code).toBe("PROVIDER_ERROR");
-      expect(error.provider).toBe("zai");
+      expect(error.provider).toBe("openai");
     });
   });
 
