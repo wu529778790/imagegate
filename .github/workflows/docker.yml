@@ -82,6 +82,10 @@ jobs:
               -p 6668:3000 \
               -v "$DATA_DIR":/app/data \
               -e DATABASE_URL=file:/app/data/imagegate.db \
+              -e NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} \
+              -e GITHUB_CLIENT_ID=${{ secrets.GITHUB_CLIENT_ID }} \
+              -e GITHUB_CLIENT_SECRET=${{ secrets.GITHUB_CLIENT_SECRET }} \
+              -e AUTH_TRUST_HOST=true \
               "$IMAGE"
             sudo docker image prune -f
             echo "=== Container Status ==="
