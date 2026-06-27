@@ -26,7 +26,10 @@ export function middleware(request: NextRequest) {
   }
 
   // For protected routes, check for session cookie
-  const sessionCookie = request.cookies.get("next-auth.session-token") ||
+  // NextAuth v5 uses "authjs.session-token" (was "next-auth.session-token" in v4)
+  const sessionCookie = request.cookies.get("authjs.session-token") ||
+                        request.cookies.get("__Secure-authjs.session-token") ||
+                        request.cookies.get("next-auth.session-token") ||
                         request.cookies.get("__Secure-next-auth.session-token");
 
   // For API routes, return 401 if no session
