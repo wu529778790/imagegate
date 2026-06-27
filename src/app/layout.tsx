@@ -81,6 +81,7 @@ function AppHeader() {
           </Text>
         </Link>
         <Link href="/" style={{ color: "#64748b", fontSize: 14 }}>小红书</Link>
+        <Link href="/generate" style={{ color: "#64748b", fontSize: 14 }}>生图</Link>
         <Link href="/infographic" style={{ color: "#64748b", fontSize: 14 }}>信息图</Link>
         <Link href="/gallery" style={{ color: "#64748b", fontSize: 14 }}>我的图片</Link>
       </div>
