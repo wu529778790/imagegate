@@ -1,8 +1,23 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
-import { getDb } from "./db";
+import crypto from "crypto";
+import { getDb, getSetting, setSetting } from "./db";
+
+// Auto-generate NEXTAUTH_SECRET if not set — stored in SQLite so it persists across restarts
+function getAuthSecret(): string {
+  if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
+
+  const db = getDb();
+  let secret = getSetting("nextauth_secret");
+  if (!secret) {
+    secret = crypto.randomBytes(32).toString("hex");
+    setSetting("nextauth_secret", secret);
+  }
+  return secret;
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: getAuthSecret(),
   providers: [
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,

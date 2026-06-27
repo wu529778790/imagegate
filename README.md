@@ -143,12 +143,12 @@ imagegate/
 
 | 变量 | 说明 | 必填 | 默认值 |
 |------|------|------|--------|
-| `DATABASE_URL` | SQLite 文件路径 | 否 | `data/imagegate.db` |
 | `NEXTAUTH_URL` | NextAuth URL | 是 | `http://localhost:3000` |
-| `NEXTAUTH_SECRET` | NextAuth 密钥 | 是 | - |
 | `GITHUB_CLIENT_ID` | GitHub OAuth Client ID | 是 | - |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth Client Secret | 是 | - |
 | `ENCRYPTION_SECRET` | 加密密钥 | 否 | 自动生成 |
+
+> `NEXTAUTH_SECRET` 无需配置，首次启动时自动生成并存入 SQLite，重启后自动读取。
 
 ## 📖 API 文档
 

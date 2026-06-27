@@ -5,6 +5,4 @@ services:
       - "${PORT:-3000}:3000"
     volumes:
       - ./data:/app/data
-    environment:
-      - DATABASE_URL=file:/app/data/imagegate.db
     restart: unless-stopped
