@@ -9,6 +9,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+RUN mkdir -p data
 RUN npm run build
 RUN npm prune --production
 
