@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Card, Form, Input, Row, Col, Select, Modal, message, Tooltip } from "antd";
+import { useState, useEffect } from "react";
+import { Button, Form, Input, Row, Col, Select, Modal, message, Tooltip } from "antd";
 import { DownloadOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import { HeaderSection } from "@/components/ui/HeaderSection";
+import { ActionButtons } from "@/components/ui/ActionButtons";
 
 // 信息图布局选项（21种）
 const INFOGRAPHIC_LAYOUTS = [
@@ -55,9 +57,14 @@ const INFOGRAPHIC_STYLES = [
   { value: "retro-popup-pop", label: "复古弹出流行", preview: "/images/infographic-styles/bold-graphic.webp", description: "复古弹出拼贴、粗轮廓" },
 ];
 
-interface ImageResult {
-  url: string;
-}
+// Responsive grid breakpoints
+const RESPONSIVE_GRID = {
+  xs: { cols: 1, minColWidth: 140 },
+  sm: { cols: 2, minColWidth: 160 },
+  md: { cols: 3, minColWidth: 180 },
+  lg: { cols: 4, minColWidth: 200 },
+  xl: { cols: 5, minColWidth: 220 },
+};
 
 export default function InfographicPage() {
   const [loading, setLoading] = useState(false);
@@ -66,6 +73,22 @@ export default function InfographicPage() {
   const [form] = Form.useForm();
   const [previewLayout, setPreviewLayout] = useState<string | null>(null);
   const [previewStyle, setPreviewStyle] = useState<string | null>(null);
+  const [viewportWidth, setViewportWidth] = useState(1024);
+
+  // Track viewport width for responsive layout
+  useEffect(() => {
+    const updateWidth = () => setViewportWidth(window.innerWidth);
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  const getGridCols = (totalItems: number) => {
+    const breakpoint = viewportWidth < 640 ? 'xs' : viewportWidth < 768 ? 'sm' : viewportWidth < 1024 ? 'md' : viewportWidth < 1280 ? 'lg' : 'xl';
+    const config = RESPONSIVE_GRID[breakpoint];
+    const cols = Math.min(config.cols, Math.ceil(totalItems / 2));
+    return cols;
+  };
 
   const handleGenerate = async (values: {
     content: string;
@@ -130,18 +153,41 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
     a.click();
   };
 
+  const cardStyle = (selected: boolean): React.CSSProperties => ({
+    border: selected ? "2px solid var(--accent, #6366f1)" : "1px solid rgba(255,255,255,0.06)",
+    borderRadius: 12,
+    overflow: "hidden",
+    cursor: "pointer",
+    transition: "all 0.2s",
+    background: selected ? "rgba(99,102,241,0.08)" : "var(--bg-elevated, #141420)",
+    transform: selected ? "scale(1.02)" : "scale(1)",
+    boxShadow: selected ? "0 0 16px rgba(99,102,241,0.2)" : "none",
+  });
+
   return (
-    <div style={{ minHeight: "calc(100vh - 64px)", background: "linear-gradient(180deg, #f8fafc 0%, #e0e7ff 100%)" }}>
-      <div style={{ padding: "24px 24px 100px" }}>
-        <Card
-          bordered={false}
-          style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
-          styles={{ body: { padding: 32 } }}
-        >
+    <div style={{ minHeight: "calc(100vh - 64px)", background: "var(--bg-primary, #0a0a0f)" }}>
+      <div style={{ padding: "24px 24px 100px", maxWidth: 1400, margin: "0 auto" }}>
+        <HeaderSection
+          title="信息图生成"
+          subtitle="专业信息图创作，支持21种布局 × 22种风格"
+          marginBottom={24}
+        />
+
+        <div className="glass" style={{ padding: "32px" }}>
           <Form form={form} layout="vertical" onFinish={handleGenerate} initialValues={{ layout: "bento-grid", style: "craft-handmade", aspect: "16:9", lang: "zh" }}>
             {/* 内容输入 */}
             <Form.Item name="content" label={<span style={{ fontWeight: 600, fontSize: 16 }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
-              <Input.TextArea rows={4} placeholder="输入你想生成信息图的内容..." style={{ borderRadius: 8, fontSize: 15 }} />
+              <Input.TextArea
+                rows={4}
+                placeholder="输入你想生成信息图的内容..."
+                style={{
+                  borderRadius: 12,
+                  fontSize: 15,
+                  background: "rgba(255,255,255,0.04)",
+                  borderColor: "rgba(255,255,255,0.06)",
+                  color: "var(--text-primary, #e4e4e7)",
+                }}
+              />
             </Form.Item>
 
             {/* 隐藏字段确保有值 */}
@@ -154,26 +200,18 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
 
             {/* 布局选择 */}
             <Form.Item label={<span style={{ fontWeight: 600, fontSize: 16 }}>信息布局（21种）</span>}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${getGridCols(INFOGRAPHIC_LAYOUTS.length)}, 1fr)`, gap: 12 }}>
                 {INFOGRAPHIC_LAYOUTS.map(l => (
                   <Tooltip key={l.value} title={l.description} placement="top">
                     <div
-                      style={{
-                        border: previewLayout === l.value ? "3px solid #4f46e5" : "2px solid #e5e7eb",
-                        borderRadius: 8,
-                        overflow: "hidden",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        background: "#fff",
-                        transform: previewLayout === l.value ? "scale(1.02)" : "scale(1)",
-                      }}
+                      style={cardStyle(previewLayout === l.value)}
                       onClick={() => {
                         setPreviewLayout(l.value);
                         form.setFieldValue("layout", l.value);
                       }}
                     >
                       <img src={l.preview} alt={l.label} style={{ width: "100%", display: "block" }} />
-                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500 }}>
+                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--text-secondary, #71717a)" }}>
                         {l.label}
                       </div>
                     </div>
@@ -184,26 +222,18 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
 
             {/* 风格选择 */}
             <Form.Item label={<span style={{ fontWeight: 600, fontSize: 16 }}>视觉风格（22种）</span>}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${getGridCols(INFOGRAPHIC_STYLES.length)}, 1fr)`, gap: 12 }}>
                 {INFOGRAPHIC_STYLES.map(s => (
                   <Tooltip key={s.value} title={s.description} placement="top">
                     <div
-                      style={{
-                        border: previewStyle === s.value ? "3px solid #4f46e5" : "2px solid #e5e7eb",
-                        borderRadius: 8,
-                        overflow: "hidden",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        background: "#fff",
-                        transform: previewStyle === s.value ? "scale(1.02)" : "scale(1)",
-                      }}
+                      style={cardStyle(previewStyle === s.value)}
                       onClick={() => {
                         setPreviewStyle(s.value);
                         form.setFieldValue("style", s.value);
                       }}
                     >
                       <img src={s.preview} alt={s.label} style={{ width: "100%", display: "block" }} />
-                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500 }}>
+                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--text-secondary, #71717a)" }}>
                         {s.label}
                       </div>
                     </div>
@@ -216,7 +246,10 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
             <Row gutter={16}>
               <Col span={8}>
                 <Form.Item name="aspect" label={<span style={{ fontWeight: 600 }}>比例</span>}>
-                  <Select size="large">
+                  <Select
+                    size="large"
+                    style={{ background: "rgba(255,255,255,0.04)" }}
+                  >
                     <Select.Option value="16:9">16:9 横版</Select.Option>
                     <Select.Option value="9:16">9:16 竖版</Select.Option>
                     <Select.Option value="1:1">1:1 方形</Select.Option>
@@ -227,7 +260,10 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
               </Col>
               <Col span={8}>
                 <Form.Item name="lang" label={<span style={{ fontWeight: 600 }}>语言</span>}>
-                  <Select size="large">
+                  <Select
+                    size="large"
+                    style={{ background: "rgba(255,255,255,0.04)" }}
+                  >
                     <Select.Option value="zh">中文</Select.Option>
                     <Select.Option value="en">English</Select.Option>
                     <Select.Option value="ja">日本語</Select.Option>
@@ -236,7 +272,7 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
               </Col>
             </Row>
           </Form>
-        </Card>
+        </div>
       </div>
 
       {/* 固定底部生成按钮 */}
@@ -246,31 +282,25 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
           bottom: 0,
           left: 0,
           right: 0,
-          background: "rgba(255,255,255,0.95)",
-          backdropFilter: "blur(10px)",
-          borderTop: "1px solid #e5e7eb",
+          background: "rgba(10, 10, 15, 0.9)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.06)",
           padding: "16px 24px",
           display: "flex",
           justifyContent: "center",
           zIndex: 100,
         }}
       >
-        <Button
-          type="primary"
-          onClick={() => form.submit()}
-          loading={loading}
-          size="large"
-          icon={<ThunderboltOutlined />}
-          style={{
-            height: 56,
-            borderRadius: 12,
-            fontWeight: 600,
-            fontSize: 16,
-            padding: "0 48px",
+        <ActionButtons
+          primary={{
+            label: loading ? "生成中..." : "生成信息图",
+            onClick: () => form.submit(),
+            loading,
+            icon: <ThunderboltOutlined />,
           }}
-        >
-          {loading ? "生成中..." : "生成信息图"}
-        </Button>
+          fullWidthOnMobile={true}
+        />
       </div>
 
       {/* 预览弹窗 */}
@@ -278,15 +308,19 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
         open={previewVisible}
         onCancel={() => setPreviewVisible(false)}
         footer={[
-          <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownload} size="large">
+          <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownload} size="large" style={{ borderRadius: 10 }}>
             下载图片
           </Button>,
         ]}
         width={900}
         centered
+        styles={{
+          body: { background: "var(--bg-primary, #0a0a0f)", padding: 16 },
+        }}
+        style={{ backgroundColor: "var(--bg-elevated, #141420)" }}
       >
         {previewImage && (
-          <img src={previewImage} alt="预览" style={{ width: "100%", borderRadius: 8 }} />
+          <img src={previewImage} alt="预览" style={{ width: "100%", borderRadius: 12 }} />
         )}
       </Modal>
     </div>

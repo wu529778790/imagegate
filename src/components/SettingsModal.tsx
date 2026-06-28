@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button, Form, Input, Modal, Select, Space, message, Collapse, Typography } from "antd";
 import { SaveOutlined, LinkOutlined } from "@ant-design/icons";
+import { ProviderForm } from "./ProviderForm";
 
 const { Text } = Typography;
 
@@ -45,48 +46,6 @@ const PROVIDERS: ProviderConfig[] = [
 interface SettingsModalProps {
   open: boolean;
   onClose: () => void;
-}
-
-function ProviderForm({ provider, loading, onSave }: { provider: ProviderConfig; loading: boolean; onSave: (provider: ProviderConfig, values: Record<string, string>) => Promise<void> }) {
-  const [form] = Form.useForm();
-
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        const values: Record<string, string> = {};
-        for (const field of provider.fields) {
-          values[field.key] = data[field.key] ?? "";
-        }
-        form.setFieldsValue(values);
-      });
-  }, [form, provider.fields]);
-
-  return (
-    <Form form={form} layout="vertical" style={{ marginBottom: 0 }}>
-      <Space size={16} style={{ width: "100%" }}>
-        {provider.fields.map((field) => (
-          <Form.Item key={field.key} name={field.key} label={field.label} style={{ flex: 1 }}>
-            {field.type === "password" ? (
-              <Input.Password placeholder={field.placeholder} />
-            ) : (
-              <Input placeholder={field.placeholder} />
-            )}
-          </Form.Item>
-        ))}
-      </Space>
-      <Form.Item style={{ marginBottom: 0 }}>
-        <Button type="primary" loading={loading} onClick={async () => {
-          const values = await form.validateFields().catch(() => null);
-          if (values) {
-            await onSave(provider, values);
-          }
-        }} icon={<SaveOutlined />} size="small">
-          保存
-        </Button>
-      </Form.Item>
-    </Form>
-  );
 }
 
 export default function SettingsModal({ open, onClose }: SettingsModalProps) {
@@ -154,27 +113,33 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
       onCancel={onClose}
       footer={null}
       width={700}
-      styles={{ body: { maxHeight: "calc(100vh - 200px)", overflowY: "auto" } }}
+      styles={{
+        body: { maxHeight: "calc(100vh - 200px)", overflowY: "auto", background: "var(--bg-primary, #0a0a0f)" },
+        header: { background: "var(--bg-elevated, #141420)", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+      }}
+      style={{ backgroundColor: "var(--bg-elevated, #141420)" }}
     >
       {/* 全局默认设置 */}
       <div style={{ marginBottom: 24 }}>
-        <Text strong style={{ fontSize: 14, marginBottom: 12, display: "block" }}>全局默认</Text>
+        <Text strong style={{ fontSize: 14, marginBottom: 12, display: "block", color: "var(--text-primary, #e4e4e7)" }}>
+          全局默认
+        </Text>
         <Form form={globalForm} layout="vertical" onFinish={handleSaveGlobal}>
           <Space size={16} style={{ width: "100%" }}>
-            <Form.Item name="default_provider" label="默认服务商" style={{ flex: 1 }}>
+            <Form.Item name="default_provider" label={<span style={{ color: "var(--text-secondary, #a1a1aa)" }}>默认服务商</span>} style={{ flex: 1 }}>
               <Select allowClear placeholder="自动检测">
                 {PROVIDERS.map((p) => (
                   <Select.Option key={p.name} value={p.name}>{p.label}</Select.Option>
                 ))}
               </Select>
             </Form.Item>
-            <Form.Item name="default_quality" label="默认质量" style={{ flex: 1 }}>
+            <Form.Item name="default_quality" label={<span style={{ color: "var(--text-secondary, #a1a1aa)" }}>默认质量</span>} style={{ flex: 1 }}>
               <Select allowClear placeholder="2k">
                 <Select.Option value="normal">标准</Select.Option>
                 <Select.Option value="2k">高清</Select.Option>
               </Select>
             </Form.Item>
-            <Form.Item name="default_ar" label="默认比例" style={{ flex: 1 }}>
+            <Form.Item name="default_ar" label={<span style={{ color: "var(--text-secondary, #a1a1aa)" }}>默认比例</span>} style={{ flex: 1 }}>
               <Select allowClear placeholder="1:1">
                 <Select.Option value="1:1">1:1</Select.Option>
                 <Select.Option value="16:9">16:9</Select.Option>
@@ -184,7 +149,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
             </Form.Item>
           </Space>
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />} size="small">
+            <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />} size="small" style={{ borderRadius: 8 }}>
               保存全局设置
             </Button>
           </Form.Item>
@@ -198,13 +163,13 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
           label: (
             <Space>
               <div style={{ width: 6, height: 16, borderRadius: 3, background: provider.color }} />
-              <Text strong>{provider.label}</Text>
+              <Text strong style={{ color: "var(--text-primary, #e4e4e7)" }}>{provider.label}</Text>
               <a
                 href={provider.developerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                style={{ fontSize: 12, color: "#64748b" }}
+                style={{ fontSize: 12, color: "var(--accent-primary, #6366f1)" }}
               >
                 <LinkOutlined /> 获取 API Key
               </a>
@@ -212,7 +177,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
           ),
           children: (
             <div>
-              <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 12 }}>
+              <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 12, color: "var(--text-secondary, #a1a1aa)" }}>
                 {provider.description}
               </Text>
               <ProviderForm provider={provider} loading={loading} onSave={handleSaveProvider} />

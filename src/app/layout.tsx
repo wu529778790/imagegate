@@ -11,6 +11,7 @@ import SettingsModal from "@/components/SettingsModal";
 import HistoryModal from "@/components/HistoryModal";
 import SessionProvider from "@/components/SessionProvider";
 import { theme } from "antd";
+import { SkipLink } from "@/components/ui/SkipLink";
 
 const { Header, Content } = Layout;
 
@@ -152,6 +153,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh-CN">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="theme-color" content="#0a0a0f" />
+        <meta name="description" content="ImageGate - AI 图片生成服务" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -175,10 +183,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 },
               }}
             >
+              <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-100%' }}>
+                跳到主要内容
+              </a>
               <Layout style={{ minHeight: "100vh", background: "#0a0a0f" }}>
                 <div className="mesh-bg" />
                 <AppHeader />
-                <Content style={{ padding: 0, position: "relative", zIndex: 1 }}>
+                <Content id="main-content" style={{ padding: 0, position: "relative", zIndex: 1 }} tabIndex={-1}>
                   {children}
                 </Content>
               </Layout>

@@ -1,10 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
-import { Button, Input, Segmented, Tag, message, Empty, Pagination, Popconfirm, Tooltip, Progress } from "antd";
+import { Button, Input, Segmented, Tag, message, Pagination, Popconfirm, Tooltip, Progress } from "antd";
 import { DownloadOutlined, ThunderboltOutlined, ClockCircleOutlined, DeleteOutlined, LeftOutlined, RightOutlined, CopyOutlined, ReloadOutlined, PictureOutlined, EditOutlined, SwapOutlined, StopOutlined, CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { PROMPT_TEMPLATES, TEMPLATE_CATEGORIES, type PromptTemplate } from "@/lib/prompts";
+import { ImageCard } from "@/components/ui/ImageCard";
+import { EmptyState, EmptyStates } from "@/components/ui/EmptyState";
+import { LoadingCard } from "@/components/ui/LoadingCard";
+import { StatusBadge, ProviderBadge } from "@/components/ui/TagBadge";
+import { cn, formatDuration } from "@/lib/ui";
 
 const PROVIDER_COLORS: Record<string, string> = { openai: "#10a37f", anthropic: "#d97706" };
 const PROVIDER_LABELS: Record<string, string> = { openai: "OpenAI 兼容", anthropic: "Anthropic" };
@@ -131,22 +136,22 @@ export default function HomePage() {
             <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", fontWeight: 600, fontSize: 14, color: "#e4e4e7" }}>历史记录</div>
             <div style={{ flex: 1, overflow: "auto", padding: "8px 10px" }}>
               {recordsLoading ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{[1, 2, 3, 4, 5].map((i) => <div key={i} className="shimmer" style={{ height: 80, borderRadius: 10 }} />)}</div>
+                <LoadingCard count={5} height={80} />
               ) : records.length === 0 ? (
-                <Empty description="暂无记录" style={{ marginTop: 60 }} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <EmptyState {...EmptyStates.noRecords.props} style={{ marginTop: 60 }} />
               ) : (
                 records.map((item) => (
                   <div key={item.id} style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)", marginBottom: 6, cursor: "pointer", transition: "all 0.15s", background: "rgba(255,255,255,0.02)" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)"; }}
                     onClick={() => setPrompt(item.prompt)}>
-                    <div style={{ fontSize: 12, color: "#a1a1aa", lineHeight: 1.5, marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{item.prompt}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary, #a1a1aa)", lineHeight: 1.5, marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{item.prompt}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <Tag color={PROVIDER_COLORS[item.provider] || "#666"} style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 5px" }}>{PROVIDER_LABELS[item.provider] || item.provider}</Tag>
-                      <Tag color={item.status === "success" ? "success" : "error"} style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 5px" }}>{item.status === "success" ? "✓" : "✗"}</Tag>
-                      <span style={{ fontSize: 10, color: "#52525b", marginLeft: "auto" }}>{new Date(item.created_at).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                      <ProviderBadge provider={item.provider} size="small" />
+                      <StatusBadge status={item.status === "success" ? "success" : "failed"} />
+                      <span style={{ fontSize: 10, color: "var(--text-muted, #52525b)", marginLeft: "auto" }}>{new Date(item.created_at).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                       <Popconfirm title="确认删除？" onConfirm={() => handleDelete(item.id)} okText="删除" cancelText="取消">
-                        <DeleteOutlined style={{ fontSize: 10, color: "#52525b", cursor: "pointer" }} onClick={(e) => e.stopPropagation()} />
+                        <DeleteOutlined style={{ fontSize: 10, color: "var(--text-muted, #52525b)", cursor: "pointer" }} onClick={(e) => e.stopPropagation()} />
                       </Popconfirm>
                     </div>
                   </div>
@@ -250,39 +255,30 @@ export default function HomePage() {
             <div style={{ marginBottom: 24 }}>
               {batchRunning && (
                 <div style={{ marginBottom: 16 }}>
-                  <Progress percent={Math.round((batchDone / batchTotal) * 100)} strokeColor="#6366f1" />
-                  <div style={{ textAlign: "center", fontSize: 13, color: "#71717a", marginTop: 4 }}>{batchDone}/{batchTotal} 完成</div>
+                  <Progress percent={Math.round((batchDone / batchTotal) * 100)} strokeColor="var(--accent-primary, #6366f1)" />
+                  <div style={{ textAlign: "center", fontSize: 13, color: "var(--text-secondary, #71717a)", marginTop: 4 }}>{batchDone}/{batchTotal} 完成</div>
                 </div>
               )}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
                 {batchItems.map((item, idx) => (
                   <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
-                    <div style={{ borderRadius: 12, overflow: "hidden", border: item.status === "success" ? "1px solid rgba(34,197,94,0.3)" : item.status === "error" ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(255,255,255,0.06)", background: "#141420" }}>
-                      {/* Image or status */}
-                      {item.status === "success" && item.result ? (
-                        <div className="image-overlay" style={{ position: "relative" }}>
-                          <img src={`data:image/png;base64,${item.result.image}`} alt={item.prompt} style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} />
-                          <div className="overlay-actions">
-                            <Button type="primary" shape="circle" icon={<DownloadOutlined />} size="small" onClick={() => handleDownload(item.result!.image, `batch-${idx + 1}.png`)} />
+                    <ImageCard
+                      src={item.status === "success" && item.result ? `data:image/png;base64,${item.result.image}` : undefined}
+                      alt={item.prompt}
+                      height={200}
+                      showDownload={item.status === "success"}
+                      onDownload={item.status === "success" && item.result ? () => handleDownload(item.result!.image, `batch-${idx + 1}.png`) : undefined}
+                      metadata={
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary, #a1a1aa)", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", marginBottom: 4 }}>{item.prompt}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            {item.status === "success" && <CheckCircleOutlined style={{ color: "var(--color-success, #22c55e)", fontSize: 10 }} />}
+                            {item.status === "error" && <span style={{ fontSize: 10, color: "var(--color-error, #ef4444)" }}>{item.error}</span>}
+                            {item.status === "success" && item.result && <span style={{ fontSize: 10, color: "var(--text-muted, #52525b)", marginLeft: "auto" }}>{(item.result.duration_ms / 1000).toFixed(1)}s</span>}
                           </div>
                         </div>
-                      ) : (
-                        <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.02)" }}>
-                          {item.status === "pending" && <span style={{ color: "#52525b", fontSize: 12 }}>等待中</span>}
-                          {item.status === "running" && <LoadingOutlined style={{ color: "#6366f1", fontSize: 24 }} />}
-                          {item.status === "error" && <CloseCircleOutlined style={{ color: "#ef4444", fontSize: 24 }} />}
-                        </div>
-                      )}
-                      {/* Info */}
-                      <div style={{ padding: "8px 10px" }}>
-                        <div style={{ fontSize: 11, color: "#a1a1aa", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", marginBottom: 4 }}>{item.prompt}</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          {item.status === "success" && <CheckCircleOutlined style={{ color: "#22c55e", fontSize: 10 }} />}
-                          {item.status === "error" && <span style={{ fontSize: 10, color: "#ef4444" }}>{item.error}</span>}
-                          {item.status === "success" && item.result && <span style={{ fontSize: 10, color: "#52525b", marginLeft: "auto" }}>{(item.result.duration_ms / 1000).toFixed(1)}s</span>}
-                        </div>
-                      </div>
-                    </div>
+                      }
+                    />
                   </motion.div>
                 ))}
               </div>
@@ -294,8 +290,8 @@ export default function HomePage() {
             <>
               {loading && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginBottom: 24 }}>
-                  <div className="shimmer" style={{ width: "100%", height: 400, borderRadius: 16 }} />
-                  <div style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "#71717a" }}>正在生成中...</div>
+                  <LoadingCard height={400} />
+                  <div style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "var(--text-secondary, #71717a)" }}>正在生成中...</div>
                 </motion.div>
               )}
               <AnimatePresence>
@@ -307,27 +303,36 @@ export default function HomePage() {
                       <Tooltip title="换 Provider 再试"><Button size="small" icon={<SwapOutlined />} onClick={() => { const next = provider === "openai" ? "anthropic" : "openai"; setProvider(next); doGenerate(prompt, next, ar, quality); }} style={{ borderRadius: 8 }}>换 Provider ({provider === "openai" ? "Anthropic" : "OpenAI"})</Button></Tooltip>
                       <Tooltip title="换质量再试"><Button size="small" icon={<SwapOutlined />} onClick={() => { const next = quality === "2k" ? "normal" : "2k"; setQuality(next); doGenerate(prompt, provider, ar, next); }} style={{ borderRadius: 8 }}>换质量 ({quality === "2k" ? "标准" : "高清"})</Button></Tooltip>
                     </div>
-                    <div className="image-overlay" style={{ borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <img src={`data:image/png;base64,${result.image}`} alt="生成结果" style={{ width: "100%", display: "block" }} />
-                      <div className="overlay-actions">
-                        <Button icon={<DownloadOutlined />} onClick={() => handleDownload(result.image)} style={{ borderRadius: 8 }}>下载</Button>
-                        <Button icon={<CopyOutlined />} onClick={() => { navigator.clipboard.writeText(prompt); message.success("已复制 Prompt"); }} style={{ borderRadius: 8 }}>复制 Prompt</Button>
-                        <Button icon={<ReloadOutlined />} onClick={() => doGenerate()} style={{ borderRadius: 8 }}>重新生成</Button>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-                      <Tag color={PROVIDER_COLORS[result.provider]}>{PROVIDER_LABELS[result.provider] || result.provider}</Tag>
-                      <Tag>{result.model}</Tag>
-                      <span style={{ fontSize: 12, color: "#71717a", display: "flex", alignItems: "center", gap: 4 }}><ClockCircleOutlined />{(result.duration_ms / 1000).toFixed(1)}s</span>
-                    </div>
+                    <ImageCard
+                      src={`data:image/png;base64,${result.image}`}
+                      alt="生成结果"
+                      showDownload
+                      onDownload={() => handleDownload(result.image)}
+                      actions={
+                        <>
+                          <Button icon={<CopyOutlined />} onClick={() => { navigator.clipboard.writeText(prompt); message.success("已复制 Prompt"); }} style={{ borderRadius: 8 }}>复制 Prompt</Button>
+                          <Button icon={<ReloadOutlined />} onClick={() => doGenerate()} style={{ borderRadius: 8 }}>重新生成</Button>
+                        </>
+                      }
+                      metadata={
+                        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", padding: "8px 12px" }}>
+                          <ProviderBadge provider={result.provider} />
+                          <Tag style={{ margin: 0, fontSize: 10, background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }}>{result.model}</Tag>
+                          <span style={{ fontSize: 12, color: "var(--text-secondary, #71717a)", display: "flex", alignItems: "center", gap: 4 }}><ClockCircleOutlined />{(result.duration_ms / 1000).toFixed(1)}s</span>
+                        </div>
+                      }
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
               {!result && !loading && (
-                <div style={{ textAlign: "center", padding: "60px 0", color: "#52525b" }}>
-                  <PictureOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }} />
-                  <div style={{ fontSize: 14 }}>选择模板或输入描述，开始创作</div>
-                </div>
+                <EmptyState
+                  {...EmptyStates.noRecords.props}
+                  description="选择模板或输入描述，开始创作"
+                  icon={<PictureOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }} />}
+                  center={false}
+                  style={{ padding: "60px 0" }}
+                />
               )}
             </>
           )}
