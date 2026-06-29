@@ -80,7 +80,7 @@ export default function RecordsPage() {
   ];
 
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: "0 auto" }}>
+    <div style={{ padding: "20px 20px", maxWidth: 1400, margin: "0 auto" }}>
       <HeaderSection
         title="生成记录"
         subtitle="查看所有历史生成记录"

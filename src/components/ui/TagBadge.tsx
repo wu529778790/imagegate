@@ -72,15 +72,15 @@ export function ProviderBadge({
   const providerColors: Record<string, string> = {
     openai: '#10a37f',
     anthropic: '#d97706',
-    zai: '#6366f1',
+    zai: '#8b5cf6',
     google: '#4285f4',
-    dashscope: '#6366f1',
-    minimax: '#6366f1',
-    replicate: '#6366f1',
+    dashscope: '#8b5cf6',
+    minimax: '#8b5cf6',
+    replicate: '#8b5cf6',
     jimeng: '#ec4899',
-    seedream: '#6366f1',
-    azure: '#6366f1',
-    openrouter: '#6366f1',
+    seedream: '#8b5cf6',
+    azure: '#8b5cf6',
+    openrouter: '#8b5cf6',
   };
 
   const color = providerColors[provider] || '#71717a';
@@ -108,7 +108,7 @@ export function StatusBadge({
     success: { color: '#22c55e', label: labels.success },
     failed: { color: '#ef4444', label: labels.failed },
     pending: { color: '#eab308', label: labels.pending },
-    running: { color: '#6366f1', label: labels.running },
+    running: { color: '#8b5cf6', label: labels.running },
   };
 
   const config = statusConfig[status];

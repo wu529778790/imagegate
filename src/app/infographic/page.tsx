@@ -167,21 +167,21 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
     overflow: "hidden",
     cursor: "pointer",
     transition: "all 0.2s",
-    background: selected ? "rgba(99,102,241,0.08)" : "var(--bg-elevated)",
+    background: selected ? "rgba(139,92,246,0.08)" : "var(--bg-elevated)",
     transform: selected ? "scale(1.02)" : "scale(1)",
-    boxShadow: selected ? "0 0 16px rgba(99,102,241,0.2)" : "none",
+    boxShadow: selected ? "0 0 16px rgba(139,92,246,0.2)" : "none",
   });
 
   return (
     <div style={{ minHeight: "calc(100vh - 64px)", background: "var(--bg-primary)" }}>
-      <div style={{ padding: "24px 24px 100px", maxWidth: 1400, margin: "0 auto" }}>
+      <div style={{ padding: "20px 20px 100px", maxWidth: 1400, margin: "0 auto" }}>
         <HeaderSection
           title="信息图生成"
           subtitle="专业信息图创作，支持21种布局 × 22种风格"
           marginBottom={24}
         />
 
-        <div className="glass" style={{ padding: "32px" }}>
+        <div className="glass" style={{ padding: "24px" }}>
           <Form form={form} layout="vertical" onFinish={handleGenerate} initialValues={{ layout: "bento-grid", style: "craft-handmade", aspect: "16:9", lang: "zh" }}>
             {/* 内容输入 */}
             <Form.Item name="content" label={<span style={{ fontWeight: 600, fontSize: 16 }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>

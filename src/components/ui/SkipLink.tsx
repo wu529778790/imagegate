@@ -25,7 +25,7 @@ export function SkipLink({ targetId, text = '跳到主要内容', className }: S
         left: '50%',
         transform: 'translateX(-50%)',
         padding: '12px 24px',
-        background: 'var(--accent-primary, #6366f1)',
+        background: 'var(--accent-primary, #8b5cf6)',
         color: '#fff',
         borderRadius: 8,
         zIndex: 9999,

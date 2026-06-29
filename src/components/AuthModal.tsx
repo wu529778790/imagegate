@@ -161,12 +161,12 @@ export default function AuthModal({ open, onClose, action, onSuccess }: AuthModa
                 width: 64,
                 height: 64,
                 borderRadius: 16,
-                background: "linear-gradient(135deg, #818cf8 0%, #6366f1 100%)",
+                background: "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 margin: "0 auto 20px",
-                boxShadow: "0 0 30px rgba(99, 102, 241, 0.3)",
+                boxShadow: "0 0 24px rgba(139, 92, 246, 0.2)",
               }}
             >
               <GithubOutlined style={{ color: "#fff", fontSize: 28 }} />
@@ -260,13 +260,13 @@ export default function AuthModal({ open, onClose, action, onSuccess }: AuthModa
             <div
               style={{
                 padding: 16,
-                background: "rgba(99, 102, 241, 0.08)",
-                border: "1px solid rgba(99, 102, 241, 0.2)",
+                background: "rgba(139, 92, 246, 0.08)",
+                border: "1px solid rgba(139, 92, 246, 0.2)",
                 borderRadius: 12,
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <ExclamationCircleOutlined style={{ color: "#818cf8" }} />
+                <ExclamationCircleOutlined style={{ color: "#a78bfa" }} />
                 <Text strong style={{ color: "var(--text-primary)" }}>
                   支持的配置
                 </Text>

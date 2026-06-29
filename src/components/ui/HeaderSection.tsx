@@ -52,12 +52,12 @@ export function HeaderSection({
           }}
         >
           {icon && (
-            <span style={{ fontSize: 20, color: 'var(--accent)' }}>{icon}</span>
+            <span style={{ fontSize: 18, color: 'var(--accent-primary)' }}>{icon}</span>
           )}
           <div>
             <h1
               style={{
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: 700,
                 color: 'var(--text-primary)',
                 letterSpacing: '-0.02em',

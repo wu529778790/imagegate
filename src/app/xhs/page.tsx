@@ -38,14 +38,14 @@ const XHS_PALETTES = [
 ];
 
 const gridCardStyle = (selected: boolean): React.CSSProperties => ({
-  border: selected ? "2px solid var(--accent-primary, #6366f1)" : "1px solid var(--border-subtle)",
+  border: selected ? "2px solid var(--accent-primary, #8b5cf6)" : "1px solid var(--border-subtle)",
   borderRadius: 12,
   overflow: "hidden",
   cursor: "pointer",
   transition: "all 0.2s",
-  background: selected ? "rgba(99,102,241,0.08)" : "var(--bg-elevated)",
+  background: selected ? "rgba(139,92,246,0.08)" : "var(--bg-elevated)",
   transform: selected ? "scale(1.02)" : "scale(1)",
-  boxShadow: selected ? "0 0 16px rgba(99,102,241,0.2)" : "none",
+  boxShadow: selected ? "0 0 16px rgba(139,92,246,0.2)" : "none",
 });
 
 export default function HomePage() {
@@ -93,8 +93,8 @@ export default function HomePage() {
   };
 
   return (
-    <div style={{ minHeight: "calc(100vh - 56px)" }}>
-      <div style={{ padding: "32px 24px 100px", maxWidth: 900, margin: "0 auto" }}>
+    <div style={{ minHeight: "calc(100vh - 52px)" }}>
+      <div style={{ padding: "24px 20px 100px", maxWidth: 900, margin: "0 auto" }}>
         <HeaderSection
           title="小红书卡片"
           subtitle="快速生成吸引眼球的小红书风格图片"
@@ -102,7 +102,7 @@ export default function HomePage() {
           marginBottom={24}
         />
 
-        <div className="glass" style={{ padding: "32px" }}>
+        <div className="glass" style={{ padding: "24px" }}>
           <Form form={form} layout="vertical" onFinish={handleGenerate} initialValues={{ style: "cute", layout: "balanced" }}>
             <Form.Item name="content" label={<span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>内容</span>} rules={[{ required: true, message: "请输入内容" }]}>
               <Input.TextArea rows={4} placeholder="输入你想生成卡片的内容..." style={{ borderRadius: 12, fontSize: 15, background: "var(--bg-elevated)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }} />

@@ -13,25 +13,27 @@ export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // 如果已登录，重定向到首页
   useEffect(() => {
     if (status === "authenticated") {
       router.push("/");
     }
   }, [status, router]);
 
-  // 如果正在检查状态，显示加载中
   if (status === "loading") {
     return (
-      <div style={{ minHeight: "calc(100vh - 56px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 14, color: "var(--text-muted)" }}>加载中...</div>
-        </div>
+      <div
+        style={{
+          minHeight: "calc(100vh - 52px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ fontSize: 13, color: "var(--text-muted)" }}>加载中...</div>
       </div>
     );
   }
 
-  // 如果已登录，不显示内容（正在重定向）
   if (status === "authenticated") {
     return null;
   }
@@ -39,34 +41,56 @@ export default function LoginPage() {
   return (
     <div
       style={{
-        minHeight: "calc(100vh - 56px)",
+        minHeight: "calc(100vh - 52px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 24,
+        padding: 20,
       }}
     >
-      <div className="glass" style={{ padding: "48px 40px", maxWidth: 400, width: "100%", textAlign: "center" }}>
+      <div
+        className="glass"
+        style={{
+          padding: "40px 36px",
+          maxWidth: 380,
+          width: "100%",
+          textAlign: "center",
+        }}
+      >
         <div
           style={{
-            width: 56,
-            height: 56,
-            borderRadius: 14,
-            background: "linear-gradient(135deg, #818cf8 0%, #6366f1 100%)",
+            width: 48,
+            height: 48,
+            borderRadius: 12,
+            background: "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            margin: "0 auto 20px",
-            boxShadow: "0 0 30px rgba(99, 102, 241, 0.3)",
+            margin: "0 auto 16px",
           }}
         >
-          <PictureOutlined style={{ color: "#fff", fontSize: 24 }} />
+          <PictureOutlined style={{ color: "#fff", fontSize: 22 }} />
         </div>
 
-        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, letterSpacing: "-0.02em" }}>
+        <div
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            marginBottom: 6,
+            letterSpacing: "-0.03em",
+          }}
+        >
           ImageGate
         </div>
-        <Text style={{ color: "var(--text-muted)", fontSize: 14, display: "block", marginBottom: 32 }}>
+        <Text
+          style={{
+            color: "var(--text-muted)",
+            fontSize: 13,
+            display: "block",
+            marginBottom: 28,
+          }}
+        >
           AI 图片生成服务
         </Text>
 
@@ -76,12 +100,19 @@ export default function LoginPage() {
           size="large"
           block
           onClick={() => signIn("github", { callbackUrl: "/" })}
-          style={{ height: 48, borderRadius: 12, fontWeight: 600, fontSize: 15 }}
+          style={{ height: 44, borderRadius: 10, fontWeight: 600, fontSize: 14 }}
         >
           使用 GitHub 登录
         </Button>
 
-        <Text style={{ color: "var(--text-muted)", fontSize: 12, display: "block", marginTop: 20 }}>
+        <Text
+          style={{
+            color: "var(--text-muted)",
+            fontSize: 12,
+            display: "block",
+            marginTop: 16,
+          }}
+        >
           登录后可保存生成的图片到您的 GitHub 仓库
         </Text>
       </div>

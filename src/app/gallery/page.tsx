@@ -125,7 +125,7 @@ export default function GalleryPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: "0 auto" }}>
+    <div style={{ padding: "20px 20px", maxWidth: 1400, margin: "0 auto" }}>
       {/* Header */}
       <HeaderSection
         title="我的图片"

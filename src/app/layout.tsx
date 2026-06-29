@@ -3,7 +3,19 @@
 import { useState } from "react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ConfigProvider, Layout, Button, Avatar, Dropdown, Space, Tooltip } from "antd";
-import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined, SunOutlined, MoonOutlined } from "@ant-design/icons";
+import {
+  SettingOutlined,
+  PictureOutlined,
+  HistoryOutlined,
+  UserOutlined,
+  LogoutOutlined,
+  GithubOutlined,
+  SunOutlined,
+  MoonOutlined,
+  AppstoreOutlined,
+  BarChartOutlined,
+  FileImageOutlined,
+} from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -14,12 +26,14 @@ import { AuthProvider } from "@/components/AuthContext";
 import { ThemeProvider, useTheme } from "@/components/ThemeContext";
 import { theme as antTheme } from "antd";
 
-const { Header, Content } = Layout;
+const { Content } = Layout;
 
 const NAV_ITEMS = [
-  { href: "/", label: "生图" },
-  { href: "/xhs", label: "小红书" },
-  { href: "/gallery", label: "图库" },
+  { href: "/", label: "生图", icon: <PictureOutlined /> },
+  { href: "/xhs", label: "小红书", icon: <AppstoreOutlined /> },
+  { href: "/infographic", label: "信息图", icon: <BarChartOutlined /> },
+  { href: "/gallery", label: "图库", icon: <FileImageOutlined /> },
+  { href: "/records", label: "记录", icon: <HistoryOutlined /> },
 ];
 
 function AppHeader() {
@@ -56,50 +70,62 @@ function AppHeader() {
     },
   ];
 
-  const themeIcon = theme === "dark" ? <SunOutlined /> : <MoonOutlined />;
-  const themeTooltip = theme === "dark" ? "切换到浅色模式" : "切换到深色模式";
-
   return (
     <>
-      <Header
+      <header
         style={{
           background: "var(--glass-bg)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
+          backdropFilter: "blur(20px) saturate(1.2)",
+          WebkitBackdropFilter: "blur(20px) saturate(1.2)",
           borderBottom: "1px solid var(--border-subtle)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0 24px",
-          height: 56,
+          padding: "0 20px",
+          height: 52,
           position: "sticky",
           top: 0,
           zIndex: 100,
         }}
       >
         {/* Left: Logo + Nav */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", marginRight: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Link
+            href="/"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              textDecoration: "none",
+              marginRight: 12,
+            }}
+          >
             <div
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "linear-gradient(135deg, #818cf8 0%, #6366f1 100%)",
+                width: 28,
+                height: 28,
+                borderRadius: 7,
+                background: "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 0 16px rgba(99, 102, 241, 0.3)",
               }}
             >
-              <PictureOutlined style={{ color: "#fff", fontSize: 16 }} />
+              <PictureOutlined style={{ color: "#fff", fontSize: 14 }} />
             </div>
-            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
+            <span
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                letterSpacing: "-0.03em",
+                color: "var(--text-primary)",
+              }}
+            >
               ImageGate
             </span>
           </Link>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <nav style={{ display: "flex", alignItems: "center", gap: 2 }}>
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
@@ -109,52 +135,71 @@ function AppHeader() {
                 {item.label}
               </Link>
             ))}
-          </div>
+          </nav>
         </div>
 
         {/* Right: Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Tooltip title={themeTooltip}>
+        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Tooltip title={theme === "dark" ? "浅色模式" : "深色模式"}>
             <Button
-              icon={themeIcon}
+              icon={theme === "dark" ? <SunOutlined /> : <MoonOutlined />}
               type="text"
+              size="small"
               style={{ color: "var(--text-muted)" }}
               onClick={toggleTheme}
             />
           </Tooltip>
-          <Button
-            icon={<HistoryOutlined />}
-            type="text"
-            style={{ color: "var(--text-muted)" }}
-            onClick={() => setHistoryOpen(true)}
-          />
-          <Button
-            icon={<SettingOutlined />}
-            type="text"
-            style={{ color: "var(--text-muted)" }}
-            onClick={() => setSettingsOpen(true)}
-          />
+          <Tooltip title="历史记录">
+            <Button
+              icon={<HistoryOutlined />}
+              type="text"
+              size="small"
+              style={{ color: "var(--text-muted)" }}
+              onClick={() => setHistoryOpen(true)}
+            />
+          </Tooltip>
+          <Tooltip title="设置">
+            <Button
+              icon={<SettingOutlined />}
+              type="text"
+              size="small"
+              style={{ color: "var(--text-muted)" }}
+              onClick={() => setSettingsOpen(true)}
+            />
+          </Tooltip>
 
           {status === "loading" ? (
-            <Avatar icon={<UserOutlined />} style={{ backgroundColor: "var(--bg-elevated)" }} size={32} />
+            <Avatar
+              icon={<UserOutlined />}
+              style={{ backgroundColor: "var(--bg-elevated)" }}
+              size={28}
+            />
           ) : session?.user ? (
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Avatar
                 src={user?.avatarUrl}
                 icon={<UserOutlined />}
-                style={{ cursor: "pointer", backgroundColor: "#6366f1" }}
-                size={32}
+                style={{
+                  cursor: "pointer",
+                  backgroundColor: "var(--accent-primary)",
+                  marginLeft: 4,
+                }}
+                size={28}
               />
             </Dropdown>
           ) : (
             <Link href="/login">
-              <Button type="primary" size="small" style={{ borderRadius: 8 }}>
+              <Button
+                type="primary"
+                size="small"
+                style={{ borderRadius: 7, marginLeft: 4, fontSize: 13 }}
+              >
                 登录
               </Button>
             </Link>
           )}
         </div>
-      </Header>
+      </header>
 
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
@@ -163,26 +208,26 @@ function AppHeader() {
 }
 
 const DARK_TOKENS = {
-  colorPrimary: "#6366f1",
-  borderRadius: 12,
-  colorBgContainer: "#141420",
-  colorBgElevated: "#1e1e2e",
-  colorBgLayout: "#0a0a0f",
+  colorPrimary: "#8b5cf6",
+  borderRadius: 10,
+  colorBgContainer: "#13131f",
+  colorBgElevated: "#1a1a2e",
+  colorBgLayout: "#0c0c14",
   colorBorder: "rgba(255, 255, 255, 0.06)",
-  colorText: "#e4e4e7",
-  colorTextSecondary: "#71717a",
+  colorText: "#eaeaef",
+  colorTextSecondary: "#9898a8",
   fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
 };
 
 const LIGHT_TOKENS = {
-  colorPrimary: "#6366f1",
-  borderRadius: 12,
+  colorPrimary: "#8b5cf6",
+  borderRadius: 10,
   colorBgContainer: "#ffffff",
-  colorBgElevated: "#f1f5f9",
-  colorBgLayout: "#f8fafc",
-  colorBorder: "rgba(0, 0, 0, 0.08)",
-  colorText: "#0f172a",
-  colorTextSecondary: "#475569",
+  colorBgElevated: "#f3f4f6",
+  colorBgLayout: "#f9fafb",
+  colorBorder: "rgba(0, 0, 0, 0.06)",
+  colorText: "#111827",
+  colorTextSecondary: "#6b7280",
   fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
 };
 
@@ -198,13 +243,21 @@ function ThemeAwareProviders({ children }: { children: React.ReactNode }) {
       }}
     >
       <AuthProvider>
-        <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-100%' }}>
+        <a
+          href="#main-content"
+          className="sr-only"
+          style={{ position: "absolute", top: "-100%" }}
+        >
           跳到主要内容
         </a>
         <Layout style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
           <div className="mesh-bg" />
           <AppHeader />
-          <Content id="main-content" style={{ padding: 0, position: "relative", zIndex: 1 }} tabIndex={-1}>
+          <Content
+            id="main-content"
+            style={{ padding: 0, position: "relative", zIndex: 1 }}
+            tabIndex={-1}
+          >
             {children}
           </Content>
         </Layout>
@@ -231,23 +284,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: ANTI_FOUC_SCRIPT }} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0a0a0f" />
+        <meta name="theme-color" content="#0c0c14" />
         <meta name="description" content="ImageGate - AI 图片生成服务" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
         <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body style={{ margin: 0 }}>
         <SessionProvider>
           <ThemeProvider>
             <AntdRegistry>
-              <ThemeAwareProviders>
-                {children}
-              </ThemeAwareProviders>
+              <ThemeAwareProviders>{children}</ThemeAwareProviders>
             </AntdRegistry>
           </ThemeProvider>
         </SessionProvider>
