@@ -69,16 +69,8 @@ export default function RecordsPage() {
   }, [page, providerFilter, statusFilter]);
 
   const providerOptions = [
-    { value: "zai", label: "Z.AI" },
-    { value: "openai", label: "OpenAI" },
-    { value: "google", label: "Google" },
-    { value: "openrouter", label: "OpenRouter" },
-    { value: "dashscope", label: "DashScope" },
-    { value: "minimax", label: "MiniMax" },
-    { value: "replicate", label: "Replicate" },
-    { value: "jimeng", label: "即梦" },
-    { value: "seedream", label: "豆包" },
-    { value: "azure", label: "Azure" },
+    { value: "openai", label: "OpenAI 兼容" },
+    { value: "anthropic", label: "Anthropic" },
   ];
 
   const statusOptions = [
@@ -108,32 +100,32 @@ export default function RecordsPage() {
           title="总记录"
           value={computedStats.total}
           icon={<ClockCircleOutlined />}
-          color="var(--accent-primary, #6366f1)"
+          color="var(--accent-primary)"
         />
         <StatsCard
           title="成功"
           value={computedStats.success}
           icon={<CheckCircleOutlined />}
-          color="var(--color-success, #22c55e)"
+          color="var(--color-success)"
           trend={{ value: computedStats.total > 0 ? Math.round((computedStats.success / computedStats.total) * 100) : 0, isPositive: true }}
         />
         <StatsCard
           title="失败"
           value={computedStats.failed}
           icon={<CloseCircleOutlined />}
-          color="var(--color-error, #ef4444)"
+          color="var(--color-error)"
           trend={{ value: computedStats.total > 0 ? Math.round((computedStats.failed / computedStats.total) * 100) : 0, isPositive: false }}
         />
         <StatsCard
           title="平均耗时"
           value={`${computedStats.avgDuration}s`}
           icon={<ReloadOutlined />}
-          color="var(--color-info, #3b82f6)"
+          color="var(--color-info)"
         />
       </div>
 
       {/* Filters */}
-      <Card bordered={false} style={{ borderRadius: 12, marginBottom: 16, background: "var(--bg-elevated, #141420)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <Card bordered={false} style={{ borderRadius: 12, marginBottom: 16, background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}>
         <Space wrap>
           <Select
             allowClear
@@ -158,7 +150,7 @@ export default function RecordsPage() {
                 setProviderFilter(undefined);
                 setStatusFilter(undefined);
               }}
-              style={{ color: "var(--text-secondary, #71717a)" }}
+              style={{ color: "var(--text-secondary)" }}
             >
               清除筛选
             </Button>
@@ -209,16 +201,16 @@ function RecordCard({ record, index }: { record: GenerationRecordItem; index: nu
   const [showFullPrompt, setShowFullPrompt] = useState(false);
 
   const statusConfig = {
-    success: { color: "var(--color-success, #22c55e)", label: "成功" },
-    failed: { color: "var(--color-error, #ef4444)", label: "失败" },
-    pending: { color: "var(--color-warning, #eab308)", label: "进行中" },
+    success: { color: "var(--color-success)", label: "成功" },
+    failed: { color: "var(--color-error)", label: "失败" },
+    pending: { color: "var(--color-warning)", label: "进行中" },
   };
 
   const config = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.pending;
 
   const cardStyle: React.CSSProperties = {
-    background: "var(--bg-elevated, #141420)",
-    border: "1px solid rgba(255,255,255,0.06)",
+    background: "var(--bg-elevated)",
+    border: "1px solid var(--border-subtle)",
     borderRadius: 12,
     padding: 16,
     transition: "all 0.2s",
@@ -236,7 +228,7 @@ function RecordCard({ record, index }: { record: GenerationRecordItem; index: nu
           <StatusBadge status={record.status as "success" | "failed" | "pending" | "running"} />
         </div>
         {record.duration_ms && (
-          <Text style={{ fontSize: 11, color: "var(--text-muted, #52525b)" }}>
+          <Text style={{ fontSize: 11, color: "var(--text-muted)" }}>
             {formatDuration(record.duration_ms)}
           </Text>
         )}
@@ -248,7 +240,7 @@ function RecordCard({ record, index }: { record: GenerationRecordItem; index: nu
           ellipsis={!showFullPrompt}
           style={{
             fontSize: 13,
-            color: "var(--text-secondary, #a1a1aa)",
+            color: "var(--text-secondary)",
             lineHeight: 1.6,
             display: "block",
           }}
@@ -261,7 +253,7 @@ function RecordCard({ record, index }: { record: GenerationRecordItem; index: nu
             type="link"
             size="small"
             onClick={() => setShowFullPrompt(!showFullPrompt)}
-            style={{ padding: 0, height: "auto", fontSize: 11, color: "var(--accent-primary, #6366f1)" }}
+            style={{ padding: 0, height: "auto", fontSize: 11, color: "var(--accent-primary)" }}
           >
             {showFullPrompt ? "收起" : "展开"}
           </Button>
@@ -269,9 +261,9 @@ function RecordCard({ record, index }: { record: GenerationRecordItem; index: nu
       </div>
 
       {/* Metadata */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", fontSize: 11, color: "var(--text-muted, #52525b)" }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", fontSize: 11, color: "var(--text-muted)" }}>
         {record.model && (
-          <Tag style={{ margin: 0, fontSize: 10, background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }}>
+          <Tag style={{ margin: 0, fontSize: 10, background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>
             {record.model}
           </Tag>
         )}
@@ -285,11 +277,11 @@ function RecordCard({ record, index }: { record: GenerationRecordItem; index: nu
           style={{
             marginTop: 12,
             padding: "8px 12px",
-            background: "rgba(239, 68, 68, 0.1)",
-            border: "1px solid rgba(239, 68, 68, 0.2)",
+            background: "color-mix(in srgb, var(--color-error) 10%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-error) 20%, transparent)",
             borderRadius: 8,
             fontSize: 12,
-            color: "var(--color-error, #ef4444)",
+            color: "var(--color-error)",
           }}
         >
           {record.error_message}

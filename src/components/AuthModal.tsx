@@ -172,7 +172,7 @@ export default function AuthModal({ open, onClose, action, onSuccess }: AuthModa
               <GithubOutlined style={{ color: "#fff", fontSize: 28 }} />
             </div>
 
-            <Title level={3} style={{ color: "#e4e4e7", marginBottom: 8 }}>
+            <Title level={3} style={{ color: "var(--text-primary)", marginBottom: 8 }}>
               登录以继续
             </Title>
             <Paragraph type="secondary" style={{ marginBottom: 0 }}>
@@ -238,7 +238,7 @@ export default function AuthModal({ open, onClose, action, onSuccess }: AuthModa
               <SettingOutlined style={{ color: "#fff", fontSize: 28 }} />
             </div>
 
-            <Title level={3} style={{ color: "#e4e4e7", marginBottom: 8 }}>
+            <Title level={3} style={{ color: "var(--text-primary)", marginBottom: 8 }}>
               需要配置 API
             </Title>
             <Paragraph type="secondary" style={{ marginBottom: 0 }}>
@@ -267,11 +267,11 @@ export default function AuthModal({ open, onClose, action, onSuccess }: AuthModa
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <ExclamationCircleOutlined style={{ color: "#818cf8" }} />
-                <Text strong style={{ color: "#e4e4e7" }}>
+                <Text strong style={{ color: "var(--text-primary)" }}>
                   支持的配置
                 </Text>
               </div>
-              <ul style={{ color: "#71717a", fontSize: 14, margin: 0, paddingLeft: 20 }}>
+              <ul style={{ color: "var(--text-muted)", fontSize: 14, margin: 0, paddingLeft: 20 }}>
                 <li>OpenAI 兼容（支持 OpenAI、通义、智谱、豆包、Google 等）</li>
                 <li>Anthropic（Claude 系列模型）</li>
               </ul>
@@ -311,7 +311,7 @@ export default function AuthModal({ open, onClose, action, onSuccess }: AuthModa
     return (
       <div style={{ textAlign: "center", padding: "40px 0" }}>
         <CheckCircleOutlined style={{ fontSize: 48, color: "#22c55e", marginBottom: 16 }} />
-        <Title level={4} style={{ color: "#e4e4e7" }}>
+        <Title level={4} style={{ color: "var(--text-primary)" }}>
           您已准备就绪
         </Title>
         <Button onClick={handleClose}>关闭</Button>
@@ -327,8 +327,8 @@ export default function AuthModal({ open, onClose, action, onSuccess }: AuthModa
       width={420}
       centered
       closable={!loading}
-      maskClosable={!loading}
-      destroyOnClose
+      mask={{ closable: !loading }}
+      destroyOnHidden
       styles={{
         body: { padding: "32px 24px" },
         mask: { backdropFilter: "blur(8px)" },

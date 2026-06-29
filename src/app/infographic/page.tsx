@@ -162,18 +162,18 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
   };
 
   const cardStyle = (selected: boolean): React.CSSProperties => ({
-    border: selected ? "2px solid var(--accent, #6366f1)" : "1px solid rgba(255,255,255,0.06)",
+    border: selected ? "2px solid var(--accent-primary)" : "1px solid var(--border-subtle)",
     borderRadius: 12,
     overflow: "hidden",
     cursor: "pointer",
     transition: "all 0.2s",
-    background: selected ? "rgba(99,102,241,0.08)" : "var(--bg-elevated, #141420)",
+    background: selected ? "rgba(99,102,241,0.08)" : "var(--bg-elevated)",
     transform: selected ? "scale(1.02)" : "scale(1)",
     boxShadow: selected ? "0 0 16px rgba(99,102,241,0.2)" : "none",
   });
 
   return (
-    <div style={{ minHeight: "calc(100vh - 64px)", background: "var(--bg-primary, #0a0a0f)" }}>
+    <div style={{ minHeight: "calc(100vh - 64px)", background: "var(--bg-primary)" }}>
       <div style={{ padding: "24px 24px 100px", maxWidth: 1400, margin: "0 auto" }}>
         <HeaderSection
           title="信息图生成"
@@ -191,9 +191,9 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
                 style={{
                   borderRadius: 12,
                   fontSize: 15,
-                  background: "rgba(255,255,255,0.04)",
-                  borderColor: "rgba(255,255,255,0.06)",
-                  color: "var(--text-primary, #e4e4e7)",
+                  background: "var(--bg-elevated)",
+                  borderColor: "var(--border-subtle)",
+                  color: "var(--text-primary)",
                 }}
               />
             </Form.Item>
@@ -219,7 +219,7 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
                       }}
                     >
                       <img src={l.preview} alt={l.label} style={{ width: "100%", display: "block" }} />
-                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--text-secondary, #71717a)" }}>
+                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--text-secondary)" }}>
                         {l.label}
                       </div>
                     </div>
@@ -241,7 +241,7 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
                       }}
                     >
                       <img src={s.preview} alt={s.label} style={{ width: "100%", display: "block" }} />
-                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--text-secondary, #71717a)" }}>
+                      <div style={{ padding: "4px 0", textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--text-secondary)" }}>
                         {s.label}
                       </div>
                     </div>
@@ -256,7 +256,7 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
                 <Form.Item name="aspect" label={<span style={{ fontWeight: 600 }}>比例</span>}>
                   <Select
                     size="large"
-                    style={{ background: "rgba(255,255,255,0.04)" }}
+                    style={{ background: "var(--bg-elevated)" }}
                   >
                     <Select.Option value="16:9">16:9 横版</Select.Option>
                     <Select.Option value="9:16">9:16 竖版</Select.Option>
@@ -270,7 +270,7 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
                 <Form.Item name="lang" label={<span style={{ fontWeight: 600 }}>语言</span>}>
                   <Select
                     size="large"
-                    style={{ background: "rgba(255,255,255,0.04)" }}
+                    style={{ background: "var(--bg-elevated)" }}
                   >
                     <Select.Option value="zh">中文</Select.Option>
                     <Select.Option value="en">English</Select.Option>
@@ -290,10 +290,10 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
           bottom: 0,
           left: 0,
           right: 0,
-          background: "rgba(10, 10, 15, 0.9)",
+          background: "var(--glass-bg)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
-          borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+          borderTop: "1px solid var(--border-subtle)",
           padding: "16px 24px",
           display: "flex",
           justifyContent: "center",
@@ -323,9 +323,9 @@ ${values.lang ? `语言：${values.lang}` : "语言：中文"}
         width={900}
         centered
         styles={{
-          body: { background: "var(--bg-primary, #0a0a0f)", padding: 16 },
+          body: { background: "var(--bg-primary)", padding: 16 },
         }}
-        style={{ backgroundColor: "var(--bg-elevated, #141420)" }}
+        style={{ backgroundColor: "var(--bg-elevated)" }}
       >
         {previewImage && (
           <img src={previewImage} alt="预览" style={{ width: "100%", borderRadius: 12 }} />

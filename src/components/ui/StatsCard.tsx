@@ -31,7 +31,7 @@ export function StatsCard({
   value,
   subtext,
   icon,
-  color = 'var(--accent, #6366f1)',
+  color = 'var(--accent)',
   trend,
   loading = false,
   ...cardProps
@@ -42,8 +42,8 @@ export function StatsCard({
       size="small"
       {...cardProps}
       style={{
-        background: 'var(--bg-elevated, #141420)',
-        border: '1px solid rgba(255, 255, 255, 0.06)',
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border-subtle)',
         borderRadius: 12,
         ...cardProps.style,
       }}
@@ -59,7 +59,7 @@ export function StatsCard({
           <span
             style={{
               fontSize: 12,
-              color: 'var(--text-secondary, #71717a)',
+              color: 'var(--text-secondary)',
               fontWeight: 500,
             }}
           >
@@ -75,7 +75,7 @@ export function StatsCard({
           style={{
             fontSize: 28,
             fontWeight: 700,
-            color: 'var(--text-primary, #e4e4e7)',
+            color: 'var(--text-primary)',
             letterSpacing: '-0.02em',
             lineHeight: 1,
           }}
@@ -94,7 +94,7 @@ export function StatsCard({
         {(subtext || trend) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {subtext && (
-              <span style={{ fontSize: 12, color: 'var(--text-muted, #52525b)' }}>{subtext}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{subtext}</span>
             )}
             {trend && (
               <span

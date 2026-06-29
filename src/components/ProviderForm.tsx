@@ -53,7 +53,7 @@ export function ProviderForm({ provider, loading, onSave }: ProviderFormProps) {
           <Form.Item
             key={field.key}
             name={field.key}
-            label={<span style={{ color: "var(--text-secondary, #a1a1aa)" }}>{field.label}</span>}
+            label={<span style={{ color: "var(--text-secondary)" }}>{field.label}</span>}
             style={{ flex: 1, minWidth: 200, marginBottom: 16 }}
             rules={field.type === "password" ? [{ required: true, message: `请输入${field.label}` }] : undefined}
           >
@@ -61,8 +61,8 @@ export function ProviderForm({ provider, loading, onSave }: ProviderFormProps) {
               <Input.Password
                 placeholder={field.placeholder}
                 style={{
-                  background: "rgba(255,255,255,0.04)",
-                  borderColor: "rgba(255,255,255,0.06)",
+                  background: "var(--bg-elevated)",
+                  borderColor: "var(--border-subtle)",
                   borderRadius: 8,
                 }}
               />
@@ -70,8 +70,8 @@ export function ProviderForm({ provider, loading, onSave }: ProviderFormProps) {
               <Input
                 placeholder={field.placeholder}
                 style={{
-                  background: "rgba(255,255,255,0.04)",
-                  borderColor: "rgba(255,255,255,0.06)",
+                  background: "var(--bg-elevated)",
+                  borderColor: "var(--border-subtle)",
                   borderRadius: 8,
                 }}
               />

@@ -25,7 +25,7 @@ export default function LoginPage() {
     return (
       <div style={{ minHeight: "calc(100vh - 56px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 14, color: "#71717a" }}>加载中...</div>
+          <div style={{ fontSize: 14, color: "var(--text-muted)" }}>加载中...</div>
         </div>
       </div>
     );
@@ -63,10 +63,10 @@ export default function LoginPage() {
           <PictureOutlined style={{ color: "#fff", fontSize: 24 }} />
         </div>
 
-        <div style={{ fontSize: 22, fontWeight: 700, color: "#e4e4e7", marginBottom: 8, letterSpacing: "-0.02em" }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, letterSpacing: "-0.02em" }}>
           ImageGate
         </div>
-        <Text style={{ color: "#71717a", fontSize: 14, display: "block", marginBottom: 32 }}>
+        <Text style={{ color: "var(--text-muted)", fontSize: 14, display: "block", marginBottom: 32 }}>
           AI 图片生成服务
         </Text>
 
@@ -81,7 +81,7 @@ export default function LoginPage() {
           使用 GitHub 登录
         </Button>
 
-        <Text style={{ color: "#52525b", fontSize: 12, display: "block", marginTop: 20 }}>
+        <Text style={{ color: "var(--text-muted)", fontSize: 12, display: "block", marginTop: 20 }}>
           登录后可保存生成的图片到您的 GitHub 仓库
         </Text>
       </div>

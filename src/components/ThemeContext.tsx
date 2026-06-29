@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light";
 
@@ -43,6 +43,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.classList.remove("light");
     }
     localStorage.setItem("theme", theme);
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute("content", theme === "dark" ? "#0a0a0f" : "#f8fafc");
+    }
   }, [theme, mounted]);
 
   const setTheme = (newTheme: Theme) => {

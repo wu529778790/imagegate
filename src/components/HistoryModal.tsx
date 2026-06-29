@@ -87,10 +87,10 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
         footer={null}
         width={900}
         styles={{
-          body: { maxHeight: "calc(100vh - 200px)", overflowY: "auto", background: "var(--bg-primary, #0a0a0f)" },
-          header: { background: "var(--bg-elevated, #141420)", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+          body: { maxHeight: "calc(100vh - 200px)", overflowY: "auto", background: "var(--bg-primary)" },
+          header: { background: "var(--bg-elevated)", borderBottom: "1px solid var(--border-subtle)" },
         }}
-        style={{ backgroundColor: "var(--bg-elevated, #141420)" }}
+        style={{ backgroundColor: "var(--bg-elevated)" }}
       >
         {loading ? (
           <LoadingGrid cols={{ xs: 1, sm: 2, md: 3, lg: 3 }} count={6} />
@@ -112,7 +112,7 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
                 <div>
                   <div style={{
                     fontSize: 12,
-                    color: "var(--text-primary, #e4e4e7)",
+                    color: "var(--text-primary)",
                     fontWeight: 500,
                     marginBottom: 4,
                     overflow: "hidden",
@@ -122,7 +122,7 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
                     {item.prompt?.substring(0, 40) || "无提示词"}
                     {item.prompt && item.prompt.length > 40 && "..."}
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted, #71717a)" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
                     {new Date(item.created_at).toLocaleString("zh-CN")}
                   </div>
                 </div>

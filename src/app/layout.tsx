@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ConfigProvider, Layout, Button, Avatar, Dropdown, Space, Tooltip } from "antd";
-import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined, AppstoreOutlined, SunOutlined, MoonOutlined } from "@ant-design/icons";
+import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined, SunOutlined, MoonOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -12,8 +12,7 @@ import HistoryModal from "@/components/HistoryModal";
 import SessionProvider from "@/components/SessionProvider";
 import { AuthProvider } from "@/components/AuthContext";
 import { ThemeProvider, useTheme } from "@/components/ThemeContext";
-import { theme } from "antd";
-import { SkipLink } from "@/components/ui/SkipLink";
+import { theme as antTheme } from "antd";
 
 const { Header, Content } = Layout;
 
@@ -57,7 +56,6 @@ function AppHeader() {
     },
   ];
 
-  // Theme toggle button
   const themeIcon = theme === "dark" ? <SunOutlined /> : <MoonOutlined />;
   const themeTooltip = theme === "dark" ? "切换到浅色模式" : "切换到深色模式";
 
@@ -65,10 +63,10 @@ function AppHeader() {
     <>
       <Header
         style={{
-          background: "rgba(10, 10, 15, 0.8)",
+          background: "var(--glass-bg)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+          borderBottom: "1px solid var(--border-subtle)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -96,7 +94,7 @@ function AppHeader() {
             >
               <PictureOutlined style={{ color: "#fff", fontSize: 16 }} />
             </div>
-            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em", color: "#e4e4e7" }}>
+            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
               ImageGate
             </span>
           </Link>
@@ -120,25 +118,25 @@ function AppHeader() {
             <Button
               icon={themeIcon}
               type="text"
-              style={{ color: "#71717a" }}
+              style={{ color: "var(--text-muted)" }}
               onClick={toggleTheme}
             />
           </Tooltip>
           <Button
             icon={<HistoryOutlined />}
             type="text"
-            style={{ color: "#71717a" }}
+            style={{ color: "var(--text-muted)" }}
             onClick={() => setHistoryOpen(true)}
           />
           <Button
             icon={<SettingOutlined />}
             type="text"
-            style={{ color: "#71717a" }}
+            style={{ color: "var(--text-muted)" }}
             onClick={() => setSettingsOpen(true)}
           />
 
           {status === "loading" ? (
-            <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1e1e2e" }} size={32} />
+            <Avatar icon={<UserOutlined />} style={{ backgroundColor: "var(--bg-elevated)" }} size={32} />
           ) : session?.user ? (
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Avatar
@@ -164,11 +162,75 @@ function AppHeader() {
   );
 }
 
+const DARK_TOKENS = {
+  colorPrimary: "#6366f1",
+  borderRadius: 12,
+  colorBgContainer: "#141420",
+  colorBgElevated: "#1e1e2e",
+  colorBgLayout: "#0a0a0f",
+  colorBorder: "rgba(255, 255, 255, 0.06)",
+  colorText: "#e4e4e7",
+  colorTextSecondary: "#71717a",
+  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+};
+
+const LIGHT_TOKENS = {
+  colorPrimary: "#6366f1",
+  borderRadius: 12,
+  colorBgContainer: "#ffffff",
+  colorBgElevated: "#f1f5f9",
+  colorBgLayout: "#f8fafc",
+  colorBorder: "rgba(0, 0, 0, 0.08)",
+  colorText: "#0f172a",
+  colorTextSecondary: "#475569",
+  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+};
+
+function ThemeAwareProviders({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
+        token: isDark ? DARK_TOKENS : LIGHT_TOKENS,
+      }}
+    >
+      <AuthProvider>
+        <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-100%' }}>
+          跳到主要内容
+        </a>
+        <Layout style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
+          <div className="mesh-bg" />
+          <AppHeader />
+          <Content id="main-content" style={{ padding: 0, position: "relative", zIndex: 1 }} tabIndex={-1}>
+            {children}
+          </Content>
+        </Layout>
+      </AuthProvider>
+    </ConfigProvider>
+  );
+}
+
+const ANTI_FOUC_SCRIPT = `
+(function(){
+  try {
+    var t = localStorage.getItem('theme');
+    if (t === 'light') document.documentElement.classList.add('light');
+    else if (t === 'dark') document.documentElement.classList.add('dark');
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.classList.add('light');
+    else document.documentElement.classList.add('dark');
+  } catch(e) { document.documentElement.classList.add('dark'); }
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <script dangerouslySetInnerHTML={{ __html: ANTI_FOUC_SCRIPT }} />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#0a0a0f" />
         <meta name="description" content="ImageGate - AI 图片生成服务" />
         <meta name="format-detection" content="telephone=no" />
@@ -183,35 +245,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProvider>
           <ThemeProvider>
             <AntdRegistry>
-              <ConfigProvider
-                theme={{
-                  algorithm: theme.darkAlgorithm,
-                  token: {
-                    colorPrimary: "#6366f1",
-                    borderRadius: 12,
-                    colorBgContainer: "#141420",
-                    colorBgElevated: "#1e1e2e",
-                    colorBgLayout: "#0a0a0f",
-                    colorBorder: "rgba(255, 255, 255, 0.06)",
-                    colorText: "#e4e4e7",
-                    colorTextSecondary: "#71717a",
-                    fontFamily: "\"Inter\", -apple-system, BlinkMacSystemFont, sans-serif",
-                  },
-                }}
-              >
-                <AuthProvider>
-                  <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-100%' }}>
-                    跳到主要内容
-                  </a>
-                  <Layout style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
-                    <div className="mesh-bg" />
-                    <AppHeader />
-                    <Content id="main-content" style={{ padding: 0, position: "relative", zIndex: 1 }} tabIndex={-1}>
-                      {children}
-                    </Content>
-                  </Layout>
-                </AuthProvider>
-              </ConfigProvider>
+              <ThemeAwareProviders>
+                {children}
+              </ThemeAwareProviders>
             </AntdRegistry>
           </ThemeProvider>
         </SessionProvider>

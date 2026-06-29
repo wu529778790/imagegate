@@ -68,7 +68,7 @@ export function LazyImage({
             inset: 0,
             background: blurDataURL
               ? `url(${blurDataURL})`
-              : 'var(--bg-surface, #141420)',
+              : 'var(--bg-surface)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             filter: blurDataURL ? 'blur(20px)' : 'none',
@@ -106,8 +106,8 @@ export function LazyImage({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'var(--bg-surface, #141420)',
-            color: 'var(--text-muted, #71717a)',
+            background: 'var(--bg-surface)',
+            color: 'var(--text-muted)',
             fontSize: 12,
             aspectRatio,
           }}

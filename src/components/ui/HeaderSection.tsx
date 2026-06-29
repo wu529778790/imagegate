@@ -52,14 +52,14 @@ export function HeaderSection({
           }}
         >
           {icon && (
-            <span style={{ fontSize: 20, color: 'var(--accent, #6366f1)' }}>{icon}</span>
+            <span style={{ fontSize: 20, color: 'var(--accent)' }}>{icon}</span>
           )}
           <div>
             <h1
               style={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: 'var(--text-primary, #e4e4e7)',
+                color: 'var(--text-primary)',
                 letterSpacing: '-0.02em',
                 margin: 0,
                 lineHeight: 1.3,
@@ -71,7 +71,7 @@ export function HeaderSection({
               <p
                 style={{
                   fontSize: 13,
-                  color: 'var(--text-secondary, #71717a)',
+                  color: 'var(--text-secondary)',
                   margin: '4px 0 0',
                   lineHeight: 1.4,
                 }}
@@ -110,7 +110,7 @@ export function SectionTitle({
         style={{
           fontSize: level === 1 ? 24 : level === 2 ? 20 : level === 3 ? 18 : 16,
           fontWeight: 700,
-          color: 'var(--text-primary, #e4e4e7)',
+          color: 'var(--text-primary)',
           letterSpacing: '-0.02em',
           margin: 0,
         }}
@@ -121,7 +121,7 @@ export function SectionTitle({
         <p
           style={{
             fontSize: 13,
-            color: 'var(--text-secondary, #71717a)',
+            color: 'var(--text-secondary)',
             margin: '4px 0 0',
           }}
         >

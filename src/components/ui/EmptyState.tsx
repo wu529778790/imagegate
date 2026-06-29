@@ -41,7 +41,7 @@ export function EmptyState({
       <Empty
         image={image}
         description={
-          <span style={{ color: 'var(--text-secondary, #71717a)' }}>{description}</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{description}</span>
         }
       >
         {action && action}

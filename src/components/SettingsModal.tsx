@@ -114,32 +114,32 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
       footer={null}
       width={700}
       styles={{
-        body: { maxHeight: "calc(100vh - 200px)", overflowY: "auto", background: "var(--bg-primary, #0a0a0f)" },
-        header: { background: "var(--bg-elevated, #141420)", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+        body: { maxHeight: "calc(100vh - 200px)", overflowY: "auto", background: "var(--bg-primary)" },
+        header: { background: "var(--bg-elevated)", borderBottom: "1px solid var(--border-subtle)" },
       }}
-      style={{ backgroundColor: "var(--bg-elevated, #141420)" }}
+      style={{ backgroundColor: "var(--bg-elevated)" }}
     >
       {/* 全局默认设置 */}
       <div style={{ marginBottom: 24 }}>
-        <Text strong style={{ fontSize: 14, marginBottom: 12, display: "block", color: "var(--text-primary, #e4e4e7)" }}>
+        <Text strong style={{ fontSize: 14, marginBottom: 12, display: "block", color: "var(--text-primary)" }}>
           全局默认
         </Text>
         <Form form={globalForm} layout="vertical" onFinish={handleSaveGlobal}>
           <Space size={16} style={{ width: "100%" }}>
-            <Form.Item name="default_provider" label={<span style={{ color: "var(--text-secondary, #a1a1aa)" }}>默认服务商</span>} style={{ flex: 1 }}>
+            <Form.Item name="default_provider" label={<span style={{ color: "var(--text-secondary)" }}>默认服务商</span>} style={{ flex: 1 }}>
               <Select allowClear placeholder="自动检测">
                 {PROVIDERS.map((p) => (
                   <Select.Option key={p.name} value={p.name}>{p.label}</Select.Option>
                 ))}
               </Select>
             </Form.Item>
-            <Form.Item name="default_quality" label={<span style={{ color: "var(--text-secondary, #a1a1aa)" }}>默认质量</span>} style={{ flex: 1 }}>
+            <Form.Item name="default_quality" label={<span style={{ color: "var(--text-secondary)" }}>默认质量</span>} style={{ flex: 1 }}>
               <Select allowClear placeholder="2k">
                 <Select.Option value="normal">标准</Select.Option>
                 <Select.Option value="2k">高清</Select.Option>
               </Select>
             </Form.Item>
-            <Form.Item name="default_ar" label={<span style={{ color: "var(--text-secondary, #a1a1aa)" }}>默认比例</span>} style={{ flex: 1 }}>
+            <Form.Item name="default_ar" label={<span style={{ color: "var(--text-secondary)" }}>默认比例</span>} style={{ flex: 1 }}>
               <Select allowClear placeholder="1:1">
                 <Select.Option value="1:1">1:1</Select.Option>
                 <Select.Option value="16:9">16:9</Select.Option>
@@ -163,13 +163,13 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
           label: (
             <Space>
               <div style={{ width: 6, height: 16, borderRadius: 3, background: provider.color }} />
-              <Text strong style={{ color: "var(--text-primary, #e4e4e7)" }}>{provider.label}</Text>
+              <Text strong style={{ color: "var(--text-primary)" }}>{provider.label}</Text>
               <a
                 href={provider.developerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                style={{ fontSize: 12, color: "var(--accent-primary, #6366f1)" }}
+                style={{ fontSize: 12, color: "var(--accent-primary)" }}
               >
                 <LinkOutlined /> 获取 API Key
               </a>
@@ -177,7 +177,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
           ),
           children: (
             <div>
-              <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 12, color: "var(--text-secondary, #a1a1aa)" }}>
+              <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 12, color: "var(--text-secondary)" }}>
                 {provider.description}
               </Text>
               <ProviderForm provider={provider} loading={loading} onSave={handleSaveProvider} />

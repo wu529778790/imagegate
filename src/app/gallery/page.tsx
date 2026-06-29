@@ -107,7 +107,7 @@ export default function GalleryPage() {
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
-            <span style={{ color: "#71717a" }}>
+            <span style={{ color: "var(--text-muted)" }}>
               登录后查看您保存的图片
             </span>
           }
@@ -135,7 +135,7 @@ export default function GalleryPage() {
           syncStatus && (
             <Space>
               <Tooltip title={`${syncStatus.user.syncedImages} 已同步 / ${syncStatus.user.pendingImages} 待同步`}>
-                <Tag icon={<GithubOutlined />} style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }}>
+                <Tag icon={<GithubOutlined />} style={{ background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>
                   {syncStatus.user.syncedImages} / {syncStatus.user.totalImages}
                 </Tag>
               </Tooltip>
@@ -174,14 +174,14 @@ export default function GalleryPage() {
               onSync: img.githubPath ? undefined : (e) => { e.stopPropagation(); handleSyncImage(img.id); },
               metadata: (
                 <>
-                  <Typography.Text ellipsis={{ tooltip: img.prompt }} style={{ fontSize: 13, color: "var(--text-secondary, #a1a1aa)", display: "block", marginBottom: 6 }}>
+                  <Typography.Text ellipsis={{ tooltip: img.prompt }} style={{ fontSize: 13, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
                     {img.prompt}
                   </Typography.Text>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
                     <ProviderBadge provider={img.provider} size="small" />
-                    <Tag style={{ margin: 0, fontSize: 10, background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }}>{img.model}</Tag>
+                    <Tag style={{ margin: 0, fontSize: 10, background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>{img.model}</Tag>
                     {img.generationDuration && (
-                      <span style={{ fontSize: 10, color: "var(--text-muted, #52525b)", marginLeft: "auto" }}>{formatDuration(img.generationDuration)}</span>
+                      <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: "auto" }}>{formatDuration(img.generationDuration)}</span>
                     )}
                   </div>
                 </>
