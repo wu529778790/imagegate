@@ -147,9 +147,29 @@ export default function HomePage() {
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
-          <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 320, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-            style={{ borderRight: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.95)", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
-            <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", fontWeight: 600, fontSize: 14, color: "#e4e4e7" }}>历史记录</div>
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 320, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              borderRight: "1px solid var(--border-subtle)",
+              background: "var(--bg-surface)",
+              display: "flex",
+              flexDirection: "column",
+              flexShrink: 0,
+              overflow: "hidden"
+            }}
+          >
+            <div style={{
+              padding: "14px 16px",
+              borderBottom: "1px solid var(--border-subtle)",
+              fontWeight: 600,
+              fontSize: 14,
+              color: "var(--text-primary)"
+            }}>
+              历史记录
+            </div>
             <div style={{ flex: 1, overflow: "auto", padding: "8px 10px" }}>
               {recordsLoading ? (
                 <LoadingCard count={5} height={80} />
@@ -157,48 +177,148 @@ export default function HomePage() {
                 <EmptyState {...EmptyStates.noRecords.props} style={{ marginTop: 60 }} />
               ) : (
                 records.map((item) => (
-                  <div key={item.id} style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)", marginBottom: 6, cursor: "pointer", transition: "all 0.15s", background: "rgba(255,255,255,0.02)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)"; }}
-                    onClick={() => setPrompt(item.prompt)}>
-                    <div style={{ fontSize: 12, color: "var(--text-secondary, #a1a1aa)", lineHeight: 1.5, marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{item.prompt}</div>
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: 10,
+                      borderRadius: 10,
+                      border: "1px solid var(--border-subtle)",
+                      marginBottom: 6,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                      background: "var(--bg-elevated)"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border-accent)";
+                      e.currentTarget.style.background = "var(--bg-surface)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border-subtle)";
+                      e.currentTarget.style.background = "var(--bg-elevated)";
+                    }}
+                    onClick={() => setPrompt(item.prompt)}
+                  >
+                    <div style={{
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                      lineHeight: 1.5,
+                      marginBottom: 6,
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical"
+                    }}>
+                      {item.prompt}
+                    </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <ProviderBadge provider={item.provider} size="small" />
                       <StatusBadge status={item.status === "success" ? "success" : "failed"} />
-                      <span style={{ fontSize: 10, color: "var(--text-muted, #52525b)", marginLeft: "auto" }}>{new Date(item.created_at).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                      <span style={{
+                        fontSize: 10,
+                        color: "var(--text-muted)",
+                        marginLeft: "auto"
+                      }}>
+                        {new Date(item.created_at).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
                       <Popconfirm title="确认删除？" onConfirm={() => handleDelete(item.id)} okText="删除" cancelText="取消">
-                        <DeleteOutlined style={{ fontSize: 10, color: "var(--text-muted, #52525b)", cursor: "pointer" }} onClick={(e) => e.stopPropagation()} />
+                        <DeleteOutlined
+                          style={{ fontSize: 10, color: "var(--text-muted)", cursor: "pointer" }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
                       </Popconfirm>
                     </div>
                   </div>
                 ))
               )}
             </div>
-            {total > 20 && <div style={{ padding: "6px 12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}><Pagination size="small" current={page} total={total} pageSize={20} onChange={setPage} showSizeChanger={false} /></div>}
+            {total > 20 && (
+              <div style={{ padding: "6px 12px", borderTop: "1px solid var(--border-subtle)" }}>
+                <Pagination
+                  size="small"
+                  current={page}
+                  total={total}
+                  pageSize={20}
+                  onChange={setPage}
+                  showSizeChanger={false}
+                />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ position: "absolute", left: sidebarOpen ? 320 : 0, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 20, height: 48, background: "rgba(20,20,32,0.9)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0 8px 8px 0", color: "#71717a", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "left 0.2s" }}>
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        style={{
+          position: "absolute",
+          left: sidebarOpen ? 320 : 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 10,
+          width: 20,
+          height: 48,
+          background: "var(--bg-surface)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "0 8px 8px 0",
+          color: "var(--text-muted)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "left 0.2s"
+        }}
+      >
         {sidebarOpen ? <LeftOutlined style={{ fontSize: 10 }} /> : <RightOutlined style={{ fontSize: 10 }} />}
       </button>
 
       {/* Main */}
-      <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 24px" }}>
+      <div style={{
+        flex: 1,
+        overflow: "auto",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "32px 24px"
+      }}>
         <div style={{ width: "100%", maxWidth: 720 }}>
 
           {/* Template chips */}
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
               {TEMPLATE_CATEGORIES.map((cat) => (
-                <button key={cat.id} onClick={() => setTemplateCategory(cat.id)}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: templateCategory === cat.id ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.06)", background: templateCategory === cat.id ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.02)", color: templateCategory === cat.id ? "#818cf8" : "#71717a", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
+                <button
+                  key={cat.id}
+                  onClick={() => setTemplateCategory(cat.id)}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    border: templateCategory === cat.id ? "1px solid var(--border-accent)" : "1px solid var(--border-subtle)",
+                    background: templateCategory === cat.id ? "rgba(99,102,241,0.12)" : "var(--bg-elevated)",
+                    color: templateCategory === cat.id ? "var(--accent-primary)" : "var(--text-muted)",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    transition: "all 0.15s"
+                  }}
+                >
                   {cat.icon} {cat.label}
                 </button>
               ))}
               <div style={{ marginLeft: "auto" }}>
-                <button onClick={() => { setBatchMode(!batchMode); setBatchItems([]); }}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: batchMode ? "1px solid rgba(234,179,8,0.4)" : "1px solid rgba(255,255,255,0.06)", background: batchMode ? "rgba(234,179,8,0.12)" : "rgba(255,255,255,0.02)", color: batchMode ? "#eab308" : "#71717a", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
+                <button
+                  onClick={() => { setBatchMode(!batchMode); setBatchItems([]); }}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    border: batchMode ? "1px solid rgba(234,179,8,0.4)" : "1px solid var(--border-subtle)",
+                    background: batchMode ? "rgba(234,179,8,0.12)" : "var(--bg-elevated)",
+                    color: batchMode ? "var(--color-warning)" : "var(--text-muted)",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    transition: "all 0.15s"
+                  }}
+                >
                   📦 {batchMode ? "批量模式" : "单条模式"}
                 </button>
               </div>
@@ -206,10 +326,27 @@ export default function HomePage() {
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {filteredTemplates.map((t) => (
                 <Tooltip key={t.id} title="点击应用模板" placement="top">
-                  <button onClick={() => applyTemplate(t)}
-                    style={{ padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#a1a1aa", cursor: "pointer", fontSize: 12, transition: "all 0.15s" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#e4e4e7"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#a1a1aa"; }}>
+                  <button
+                    onClick={() => applyTemplate(t)}
+                    style={{
+                      padding: "5px 10px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border-subtle)",
+                      background: "var(--bg-elevated)",
+                      color: "var(--text-secondary)",
+                      cursor: "pointer",
+                      fontSize: 12,
+                      transition: "all 0.15s"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border-accent)";
+                      e.currentTarget.style.color = "var(--text-primary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border-subtle)";
+                      e.currentTarget.style.color = "var(--text-secondary)";
+                    }}
+                  >
                     {t.icon} {t.label}
                   </button>
                 </Tooltip>
@@ -218,13 +355,39 @@ export default function HomePage() {
           </div>
 
           {/* Prompt input */}
-          <div className="gradient-border" style={{ marginBottom: 16 }}>
-            <textarea ref={textareaRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={handleKeyDown}
+          <div
+            className="gradient-border"
+            style={{ marginBottom: 16 }}
+          >
+            <textarea
+              ref={textareaRef}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={batchMode ? "输入多个 Prompt，每行一个：\n一只橘猫在窗台晒太阳\n赛博朋克风格的城市夜景\n水彩风格的山水画" : "描述你想要生成的图片...\n\n试试点击上方的模板快速开始"}
-              rows={batchMode ? 6 : 4} maxLength={50000}
-              style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", outline: "none", color: "#e4e4e7", fontSize: 15, lineHeight: 1.6, resize: "none", fontFamily: "inherit", borderRadius: 16 }} />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 16px 12px" }}>
-              <span style={{ fontSize: 11, color: "#52525b" }}>
+              rows={batchMode ? 6 : 4}
+              maxLength={50000}
+              style={{
+                width: "100%",
+                padding: "16px 20px",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "var(--text-primary)",
+                fontSize: 15,
+                lineHeight: 1.6,
+                resize: "none",
+                fontFamily: "inherit",
+                borderRadius: 16
+              }}
+            />
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "8px 16px 12px"
+            }}>
+              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
                 {batchMode ? (
                   batchRunning ? `批量生成中 ${batchDone}/${batchTotal}` : `${prompt.split("\n").filter((l) => l.trim()).length} 条 · ⌘ + Enter 开始`
                 ) : (
@@ -233,34 +396,106 @@ export default function HomePage() {
               </span>
               {batchMode ? (
                 batchRunning ? (
-                  <Button danger icon={<StopOutlined />} onClick={stopBatch} style={{ borderRadius: 10, fontWeight: 600, height: 38 }}>停止</Button>
+                  <Button danger icon={<StopOutlined />} onClick={stopBatch} style={{ borderRadius: 10, fontWeight: 600, height: 38 }}>
+                    停止
+                  </Button>
                 ) : (
-                  <Button type="primary" icon={<ThunderboltOutlined />} onClick={startBatch} disabled={!prompt.trim()}
-                    className={prompt.trim() ? "pulse-glow" : ""} style={{ borderRadius: 10, fontWeight: 600, height: 38 }}>批量生成</Button>
+                  <Button
+                    type="primary"
+                    icon={<ThunderboltOutlined />}
+                    onClick={startBatch}
+                    disabled={!prompt.trim()}
+                    className={prompt.trim() ? "pulse-glow" : ""}
+                    style={{ borderRadius: 10, fontWeight: 600, height: 38 }}
+                  >
+                    批量生成
+                  </Button>
                 )
               ) : (
-                <Button type="primary" icon={<ThunderboltOutlined />} loading={loading} onClick={() => doGenerate()} disabled={!prompt.trim()}
-                  className={prompt.trim() && !loading ? "pulse-glow" : ""} style={{ borderRadius: 10, fontWeight: 600, height: 38 }}>生成</Button>
+                <Button
+                  type="primary"
+                  icon={<ThunderboltOutlined />}
+                  loading={loading}
+                  onClick={() => doGenerate()}
+                  disabled={!prompt.trim()}
+                  className={prompt.trim() && !loading ? "pulse-glow" : ""}
+                  style={{ borderRadius: 10, fontWeight: 600, height: 38 }}
+                >
+                  生成
+                </Button>
               )}
             </div>
           </div>
 
           {/* Quick params */}
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
-            <Segmented size="small" value={provider} onChange={(v) => setProvider(v as string)}
-              options={Object.entries(PROVIDER_LABELS).map(([value, label]) => ({ value, label: <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12 }}><span style={{ width: 5, height: 5, borderRadius: "50%", background: PROVIDER_COLORS[value], display: "inline-block" }} />{label}</span> }))} />
+          <div style={{
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+            marginBottom: 24,
+            flexWrap: "wrap"
+          }}>
+            <Segmented
+              size="small"
+              value={provider}
+              onChange={(v) => setProvider(v as string)}
+              options={Object.entries(PROVIDER_LABELS).map(([value, label]) => ({
+                value,
+                label: <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12 }}>
+                  <span style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: PROVIDER_COLORS[value],
+                    display: "inline-block"
+                  }} />
+                  {label}
+                </span>
+              }))}
+            />
             <Segmented size="small" value={ar} onChange={(v) => setAr(v as string)} options={AR_OPTIONS} />
-            <Segmented size="small" value={quality} onChange={(v) => setQuality(v as string)} options={[{ label: "标准", value: "normal" }, { label: "高清", value: "2k" }]} />
-            <Button size="small" type="text" icon={<EditOutlined />} onClick={() => setShowParams(!showParams)} style={{ color: "#71717a" }} />
+            <Segmented
+              size="small"
+              value={quality}
+              onChange={(v) => setQuality(v as string)}
+              options={[{ label: "标准", value: "normal" }, { label: "高清", value: "2k" }]}
+            />
+            <Button
+              size="small"
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => setShowParams(!showParams)}
+              style={{ color: "var(--text-muted)" }}
+            />
           </div>
 
           {/* Advanced params */}
           <AnimatePresence>
             {showParams && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.15 }} style={{ overflow: "hidden", marginBottom: 16 }}>
-                <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <div style={{ fontSize: 12, color: "#71717a", marginBottom: 8 }}>Model</div>
-                  <Input size="small" value={model} onChange={(e) => setModel(e.target.value)} placeholder={settings[`${provider}_model`] || "输入模型名称"} style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }} />
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                style={{ overflow: "hidden", marginBottom: 16 }}
+              >
+                <div style={{
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  background: "var(--bg-elevated)",
+                  border: "1px solid var(--border-subtle)"
+                }}>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>Model</div>
+                  <Input
+                    size="small"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    placeholder={settings[`${provider}_model`] || "输入模型名称"}
+                    style={{
+                      background: "var(--bg-surface)",
+                      borderColor: "var(--border-subtle)"
+                    }}
+                  />
                 </div>
               </motion.div>
             )}
@@ -271,13 +506,32 @@ export default function HomePage() {
             <div style={{ marginBottom: 24 }}>
               {batchRunning && (
                 <div style={{ marginBottom: 16 }}>
-                  <Progress percent={Math.round((batchDone / batchTotal) * 100)} strokeColor="var(--accent-primary, #6366f1)" />
-                  <div style={{ textAlign: "center", fontSize: 13, color: "var(--text-secondary, #71717a)", marginTop: 4 }}>{batchDone}/{batchTotal} 完成</div>
+                  <Progress
+                    percent={Math.round((batchDone / batchTotal) * 100)}
+                    strokeColor="var(--accent-primary)"
+                  />
+                  <div style={{
+                    textAlign: "center",
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                    marginTop: 4
+                  }}>
+                    {batchDone}/{batchTotal} 完成
+                  </div>
                 </div>
               )}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                gap: 12
+              }}>
                 {batchItems.map((item, idx) => (
-                  <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: idx * 0.03 }}
+                  >
                     <ImageCard
                       src={item.status === "success" && item.result ? `data:image/png;base64,${item.result.image}` : undefined}
                       alt={item.prompt}
@@ -286,11 +540,30 @@ export default function HomePage() {
                       onDownload={item.status === "success" && item.result ? () => handleDownload(item.result!.image, `batch-${idx + 1}.png`) : undefined}
                       metadata={
                         <div>
-                          <div style={{ fontSize: 11, color: "var(--text-secondary, #a1a1aa)", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", marginBottom: 4 }}>{item.prompt}</div>
+                          <div style={{
+                            fontSize: 11,
+                            color: "var(--text-secondary)",
+                            lineHeight: 1.4,
+                            overflow: "hidden",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            marginBottom: 4
+                          }}>
+                            {item.prompt}
+                          </div>
                           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            {item.status === "success" && <CheckCircleOutlined style={{ color: "var(--color-success, #22c55e)", fontSize: 10 }} />}
-                            {item.status === "error" && <span style={{ fontSize: 10, color: "var(--color-error, #ef4444)" }}>{item.error}</span>}
-                            {item.status === "success" && item.result && <span style={{ fontSize: 10, color: "var(--text-muted, #52525b)", marginLeft: "auto" }}>{(item.result.duration_ms / 1000).toFixed(1)}s</span>}
+                            {item.status === "success" && <CheckCircleOutlined style={{ color: "var(--color-success)", fontSize: 10 }} />}
+                            {item.status === "error" && <span style={{ fontSize: 10, color: "var(--color-error)" }}>{item.error}</span>}
+                            {item.status === "success" && item.result && (
+                              <span style={{
+                                fontSize: 10,
+                                color: "var(--text-muted)",
+                                marginLeft: "auto"
+                              }}>
+                                {(item.result.duration_ms / 1000).toFixed(1)}s
+                              </span>
+                            )}
                           </div>
                         </div>
                       }
@@ -307,17 +580,76 @@ export default function HomePage() {
               {loading && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginBottom: 24 }}>
                   <LoadingCard height={400} />
-                  <div style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "var(--text-secondary, #71717a)" }}>正在生成中...</div>
+                  <div style={{
+                    textAlign: "center",
+                    marginTop: 12,
+                    fontSize: 13,
+                    color: "var(--text-secondary)"
+                  }}>
+                    正在生成中...
+                  </div>
                 </motion.div>
               )}
               <AnimatePresence>
                 {result && !loading && (
-                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: "easeOut" }}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                  >
                     <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                      <Tooltip title="编辑 Prompt 重新生成"><Button size="small" icon={<EditOutlined />} onClick={() => textareaRef.current?.focus()} style={{ borderRadius: 8 }}>编辑 Prompt</Button></Tooltip>
-                      <Tooltip title="换个比例再试"><Button size="small" icon={<SwapOutlined />} onClick={() => { const next = AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length]; setAr(next); doGenerate(prompt, provider, next, quality); }} style={{ borderRadius: 8 }}>换比例 ({AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length]})</Button></Tooltip>
-                      <Tooltip title="换 Provider 再试"><Button size="small" icon={<SwapOutlined />} onClick={() => { const next = provider === "openai" ? "anthropic" : "openai"; setProvider(next); doGenerate(prompt, next, ar, quality); }} style={{ borderRadius: 8 }}>换 Provider ({provider === "openai" ? "Anthropic" : "OpenAI"})</Button></Tooltip>
-                      <Tooltip title="换质量再试"><Button size="small" icon={<SwapOutlined />} onClick={() => { const next = quality === "2k" ? "normal" : "2k"; setQuality(next); doGenerate(prompt, provider, ar, next); }} style={{ borderRadius: 8 }}>换质量 ({quality === "2k" ? "标准" : "高清"})</Button></Tooltip>
+                      <Tooltip title="编辑 Prompt 重新生成">
+                        <Button
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={() => textareaRef.current?.focus()}
+                          style={{ borderRadius: 8 }}
+                        >
+                          编辑 Prompt
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title={`换个比例再试 (${AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length]})`}>
+                        <Button
+                          size="small"
+                          icon={<SwapOutlined />}
+                          onClick={() => {
+                            const next = AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length];
+                            setAr(next);
+                            doGenerate(prompt, provider, next, quality);
+                          }}
+                          style={{ borderRadius: 8 }}
+                        >
+                          换比例
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title={`换 Provider 再试 (${provider === "openai" ? "Anthropic" : "OpenAI"})`}>
+                        <Button
+                          size="small"
+                          icon={<SwapOutlined />}
+                          onClick={() => {
+                            const next = provider === "openai" ? "anthropic" : "openai";
+                            setProvider(next);
+                            doGenerate(prompt, next, ar, quality);
+                          }}
+                          style={{ borderRadius: 8 }}
+                        >
+                          换 Provider
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title={`换质量再试 (${quality === "2k" ? "标准" : "高清"})`}>
+                        <Button
+                          size="small"
+                          icon={<SwapOutlined />}
+                          onClick={() => {
+                            const next = quality === "2k" ? "normal" : "2k";
+                            setQuality(next);
+                            doGenerate(prompt, provider, ar, next);
+                          }}
+                          style={{ borderRadius: 8 }}
+                        >
+                          换质量
+                        </Button>
+                      </Tooltip>
                     </div>
                     <ImageCard
                       src={`data:image/png;base64,${result.image}`}
@@ -326,15 +658,52 @@ export default function HomePage() {
                       onDownload={() => handleDownload(result.image)}
                       actions={
                         <>
-                          <Button icon={<CopyOutlined />} onClick={() => { navigator.clipboard.writeText(prompt); message.success("已复制 Prompt"); }} style={{ borderRadius: 8 }}>复制 Prompt</Button>
-                          <Button icon={<ReloadOutlined />} onClick={() => doGenerate()} style={{ borderRadius: 8 }}>重新生成</Button>
+                          <Button
+                            icon={<CopyOutlined />}
+                            onClick={() => {
+                              navigator.clipboard.writeText(prompt);
+                              message.success("已复制 Prompt");
+                            }}
+                            style={{ borderRadius: 8 }}
+                          >
+                            复制 Prompt
+                          </Button>
+                          <Button
+                            icon={<ReloadOutlined />}
+                            onClick={() => doGenerate()}
+                            style={{ borderRadius: 8 }}
+                          >
+                            重新生成
+                          </Button>
                         </>
                       }
                       metadata={
-                        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", padding: "8px 12px" }}>
+                        <div style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          gap: 8,
+                          flexWrap: "wrap",
+                          padding: "8px 12px"
+                        }}>
                           <ProviderBadge provider={result.provider} />
-                          <Tag style={{ margin: 0, fontSize: 10, background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.06)" }}>{result.model}</Tag>
-                          <span style={{ fontSize: 12, color: "var(--text-secondary, #71717a)", display: "flex", alignItems: "center", gap: 4 }}><ClockCircleOutlined />{(result.duration_ms / 1000).toFixed(1)}s</span>
+                          <Tag style={{
+                            margin: 0,
+                            fontSize: 10,
+                            background: "var(--bg-elevated)",
+                            borderColor: "var(--border-subtle)"
+                          }}>
+                            {result.model}
+                          </Tag>
+                          <span style={{
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4
+                          }}>
+                            <ClockCircleOutlined />
+                            {(result.duration_ms / 1000).toFixed(1)}s
+                          </span>
                         </div>
                       }
                     />

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { ConfigProvider, Layout, Button, Avatar, Dropdown, Space } from "antd";
-import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined, AppstoreOutlined } from "@ant-design/icons";
+import { ConfigProvider, Layout, Button, Avatar, Dropdown, Space, Tooltip } from "antd";
+import { SettingOutlined, PictureOutlined, HistoryOutlined, UserOutlined, LogoutOutlined, GithubOutlined, AppstoreOutlined, SunOutlined, MoonOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -11,6 +11,7 @@ import SettingsModal from "@/components/SettingsModal";
 import HistoryModal from "@/components/HistoryModal";
 import SessionProvider from "@/components/SessionProvider";
 import { AuthProvider } from "@/components/AuthContext";
+import { ThemeProvider, useTheme } from "@/components/ThemeContext";
 import { theme } from "antd";
 import { SkipLink } from "@/components/ui/SkipLink";
 
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
 
 function AppHeader() {
   const { data: session, status } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -54,6 +56,10 @@ function AppHeader() {
       onClick: () => signOut({ callbackUrl: "/login" }),
     },
   ];
+
+  // Theme toggle button
+  const themeIcon = theme === "dark" ? <SunOutlined /> : <MoonOutlined />;
+  const themeTooltip = theme === "dark" ? "切换到浅色模式" : "切换到深色模式";
 
   return (
     <>
@@ -110,6 +116,14 @@ function AppHeader() {
 
         {/* Right: Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <Tooltip title={themeTooltip}>
+            <Button
+              icon={themeIcon}
+              type="text"
+              style={{ color: "#71717a" }}
+              onClick={toggleTheme}
+            />
+          </Tooltip>
           <Button
             icon={<HistoryOutlined />}
             type="text"
@@ -167,37 +181,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body style={{ margin: 0 }}>
         <SessionProvider>
-          <AntdRegistry>
-            <ConfigProvider
-              theme={{
-                algorithm: theme.darkAlgorithm,
-                token: {
-                  colorPrimary: "#6366f1",
-                  borderRadius: 12,
-                  colorBgContainer: "#141420",
-                  colorBgElevated: "#1e1e2e",
-                  colorBgLayout: "#0a0a0f",
-                  colorBorder: "rgba(255, 255, 255, 0.06)",
-                  colorText: "#e4e4e7",
-                  colorTextSecondary: "#71717a",
-                  fontFamily: "\"Inter\", -apple-system, BlinkMacSystemFont, sans-serif",
-                },
-              }}
-            >
-              <AuthProvider>
-                <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-100%' }}>
-                  跳到主要内容
-                </a>
-                <Layout style={{ minHeight: "100vh", background: "#0a0a0f" }}>
-                  <div className="mesh-bg" />
-                  <AppHeader />
-                  <Content id="main-content" style={{ padding: 0, position: "relative", zIndex: 1 }} tabIndex={-1}>
-                    {children}
-                  </Content>
-                </Layout>
-              </AuthProvider>
-            </ConfigProvider>
-          </AntdRegistry>
+          <ThemeProvider>
+            <AntdRegistry>
+              <ConfigProvider
+                theme={{
+                  algorithm: theme.darkAlgorithm,
+                  token: {
+                    colorPrimary: "#6366f1",
+                    borderRadius: 12,
+                    colorBgContainer: "#141420",
+                    colorBgElevated: "#1e1e2e",
+                    colorBgLayout: "#0a0a0f",
+                    colorBorder: "rgba(255, 255, 255, 0.06)",
+                    colorText: "#e4e4e7",
+                    colorTextSecondary: "#71717a",
+                    fontFamily: "\"Inter\", -apple-system, BlinkMacSystemFont, sans-serif",
+                  },
+                }}
+              >
+                <AuthProvider>
+                  <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-100%' }}>
+                    跳到主要内容
+                  </a>
+                  <Layout style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
+                    <div className="mesh-bg" />
+                    <AppHeader />
+                    <Content id="main-content" style={{ padding: 0, position: "relative", zIndex: 1 }} tabIndex={-1}>
+                      {children}
+                    </Content>
+                  </Layout>
+                </AuthProvider>
+              </ConfigProvider>
+            </AntdRegistry>
+          </ThemeProvider>
         </SessionProvider>
       </body>
     </html>
