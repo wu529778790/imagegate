@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Card, Select, Space, Typography, message, Pagination, Button, Tag } from "antd";
 import { ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { HeaderSection, EmptyState, EmptyStates, LoadingGrid, ProviderBadge, StatusBadge, StatsCard } from "@/components/ui";
-import { formatDuration, cn } from "@/lib/ui";
+import { formatDuration } from "@/lib/ui";
 
 const { Text } = Typography;
 
@@ -26,27 +26,21 @@ export default function RecordsPage() {
   const [page, setPage] = useState(1);
   const [providerFilter, setProviderFilter] = useState<string | undefined>();
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
-  const [stats, setStats] = useState({
-    total: 0,
-    success: 0,
-    failed: 0,
-    avgDuration: 0,
-  });
 
-  // Compute statistics
-  useEffect(() => {
+  // Use useMemo to compute statistics without triggering cascading renders
+  const computedStats = useMemo(() => {
     const successCount = records.filter(r => r.status === "success").length;
     const failedCount = records.filter(r => r.status === "failed").length;
     const avgDuration = records.length > 0
       ? records.reduce((sum, r) => sum + (r.duration_ms || 0), 0) / records.length
       : 0;
 
-    setStats({
+    return {
       total: records.length,
       success: successCount,
       failed: failedCount,
       avgDuration: Math.round(avgDuration / 1000),
-    });
+    };
   }, [records]);
 
   useEffect(() => {
@@ -112,27 +106,27 @@ export default function RecordsPage() {
       >
         <StatsCard
           title="总记录"
-          value={stats.total}
+          value={computedStats.total}
           icon={<ClockCircleOutlined />}
           color="var(--accent-primary, #6366f1)"
         />
         <StatsCard
           title="成功"
-          value={stats.success}
+          value={computedStats.success}
           icon={<CheckCircleOutlined />}
           color="var(--color-success, #22c55e)"
-          trend={{ value: stats.total > 0 ? Math.round((stats.success / stats.total) * 100) : 0, isPositive: true }}
+          trend={{ value: computedStats.total > 0 ? Math.round((computedStats.success / computedStats.total) * 100) : 0, isPositive: true }}
         />
         <StatsCard
           title="失败"
-          value={stats.failed}
+          value={computedStats.failed}
           icon={<CloseCircleOutlined />}
           color="var(--color-error, #ef4444)"
-          trend={{ value: stats.total > 0 ? Math.round((stats.failed / stats.total) * 100) : 0, isPositive: false }}
+          trend={{ value: computedStats.total > 0 ? Math.round((computedStats.failed / computedStats.total) * 100) : 0, isPositive: false }}
         />
         <StatsCard
           title="平均耗时"
-          value={`${stats.avgDuration}s`}
+          value={`${computedStats.avgDuration}s`}
           icon={<ReloadOutlined />}
           color="var(--color-info, #3b82f6)"
         />
@@ -239,7 +233,7 @@ function RecordCard({ record, index }: { record: GenerationRecordItem; index: nu
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <ProviderBadge provider={record.provider} size="small" />
-          <StatusBadge status={record.status as any} />
+          <StatusBadge status={record.status as "success" | "failed" | "pending" | "running"} />
         </div>
         {record.duration_ms && (
           <Text style={{ fontSize: 11, color: "var(--text-muted, #52525b)" }}>

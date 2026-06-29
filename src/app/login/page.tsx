@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button, Typography } from "antd";
 import { GithubOutlined, PictureOutlined } from "@ant-design/icons";
 import { signIn } from "next-auth/react";
@@ -7,6 +10,32 @@ import { signIn } from "next-auth/react";
 const { Text } = Typography;
 
 export default function LoginPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // 如果已登录，重定向到首页
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
+
+  // 如果正在检查状态，显示加载中
+  if (status === "loading") {
+    return (
+      <div style={{ minHeight: "calc(100vh - 56px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 14, color: "#71717a" }}>加载中...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // 如果已登录，不显示内容（正在重定向）
+  if (status === "authenticated") {
+    return null;
+  }
+
   return (
     <div
       style={{

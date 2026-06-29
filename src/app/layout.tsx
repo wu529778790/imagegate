@@ -10,6 +10,7 @@ import { useSession, signOut } from "next-auth/react";
 import SettingsModal from "@/components/SettingsModal";
 import HistoryModal from "@/components/HistoryModal";
 import SessionProvider from "@/components/SessionProvider";
+import { AuthProvider } from "@/components/AuthContext";
 import { theme } from "antd";
 import { SkipLink } from "@/components/ui/SkipLink";
 
@@ -183,16 +184,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 },
               }}
             >
-              <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-100%' }}>
-                跳到主要内容
-              </a>
-              <Layout style={{ minHeight: "100vh", background: "#0a0a0f" }}>
-                <div className="mesh-bg" />
-                <AppHeader />
-                <Content id="main-content" style={{ padding: 0, position: "relative", zIndex: 1 }} tabIndex={-1}>
-                  {children}
-                </Content>
-              </Layout>
+              <AuthProvider>
+                <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-100%' }}>
+                  跳到主要内容
+                </a>
+                <Layout style={{ minHeight: "100vh", background: "#0a0a0f" }}>
+                  <div className="mesh-bg" />
+                  <AppHeader />
+                  <Content id="main-content" style={{ padding: 0, position: "relative", zIndex: 1 }} tabIndex={-1}>
+                    {children}
+                  </Content>
+                </Layout>
+              </AuthProvider>
             </ConfigProvider>
           </AntdRegistry>
         </SessionProvider>

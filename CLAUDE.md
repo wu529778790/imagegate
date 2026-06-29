@@ -8,7 +8,7 @@ This project uses Next.js 16, which has breaking changes from earlier versions. 
 
 ## Project Overview
 
-AI image generation service (ImageGate) with management UI. Wraps 10 AI image providers behind HTTP endpoints, backed by SQLite. Features GitHub OAuth login, encrypted API key storage, background image sync to GitHub, and structured logging. All UI text is in Chinese (zh-CN).
+AI image generation service (ImageGate) with management UI. Supports 2 provider types (OpenAI-compatible and Anthropic) covering 10+ AI image generation services, backed by SQLite. Features GitHub OAuth login, encrypted API key storage, background image sync to GitHub, and structured logging. All UI text is in Chinese (zh-CN).
 
 ## Commands
 
@@ -24,28 +24,20 @@ npm run test:coverage # Jest with coverage
 
 ## Architecture
 
-**Framework:** Next.js 16 (App Router), React 19, Ant Design 6, Tailwind CSS 4
+**Framework:** Next.js 16 (App Router), React 19, Ant Design 6, Tailwind CSS 4, Framer Motion
 
 **Database:** SQLite via `better-sqlite3`. Singleton in `src/lib/db.ts` with WAL mode and foreign keys. Stored at `DATABASE_URL` (format: `file:/path`) or defaults to `data/imagegate.db`. Five tables: `api_keys`, `generation_records`, `settings`, `users`, `images`. On startup, records stuck in "pending" for >10 minutes are auto-marked "failed".
 
-**Auth:** NextAuth.js v5 beta with GitHub OAuth (`src/lib/auth.ts`). Middleware in `src/middleware.ts` protects routes via session cookie — public routes include `/login`, `/api/auth`, `/api/generate`, and several others; protected routes redirect to `/login` (pages) or return 401 (API).
+**Auth:** NextAuth.js v5 beta with GitHub OAuth (`src/lib/auth.ts`). Middleware in `src/middleware.ts` protects routes via session cookie — public routes include `/login`, `/api/auth`, `/api/generate`, and several others; protected routes redirect to `/login` (pages) or return 401 (API). `NEXTAUTH_SECRET` is auto-generated on first run and persisted to the `settings` table.
 
 **Encryption:** All API keys (both `api_keys` table and `{provider}_api_key` settings) are encrypted with AES-256-GCM before storage (`src/lib/crypto.ts`). The `ENCRYPTED_SETTINGS_KEYS` list in `db.ts` defines which settings keys get encrypted.
 
-**Provider pattern:** Each image provider implements `ImageProvider` interface (`src/providers/types.ts`), returning `Promise<Buffer>` (PNG bytes). `BaseProvider` abstract class (`src/providers/base.ts`) provides OpenAI-compatible defaults. Factory registry in `src/providers/index.ts` exposes `createProvider(name, config?)` and `generateImage()` wrapper. Providers:
+**Provider pattern:** Simplified to 2 provider types (v0.3.0 refactor). Each implements `ImageProvider` interface (`src/providers/types.ts`), returning `Promise<Buffer>` (PNG bytes). `BaseProvider` abstract class (`src/providers/base.ts`) provides OpenAI-compatible defaults. Factory registry in `src/providers/index.ts` exposes `createProvider(name, config?)` and `generateImage()` wrapper.
 
 | Provider | File | Default Model | Notes |
 |---|---|---|---|
-| Z.AI (智谱) | `zai.ts` | cogview-3 | JWT auth, two model families |
-| OpenAI | `openai.ts` | gpt-image-2 | Extends OpenAI-compatible |
-| Google | `google.ts` | gemini-2.0-flash-preview-image-generation | Gemini-specific format |
-| OpenRouter | `openrouter.ts` | google/gemini-2.0-flash-preview-image-generation | Multi-model gateway |
-| Dashscope (通义) | `dashscope.ts` | qwen-image-2.0-pro | Async task polling |
-| MiniMax | `minimax.ts` | image-01 | Unified error handling |
-| Replicate | `replicate.ts` | google/nano-banana-2 | Async task polling |
-| Jimeng (即梦) | `jimeng.ts` | jimeng_t2i_v40 | Async task polling |
-| Seedream (豆包) | `seedream.ts` | doubao-seedream-5-0-260128 | Size normalization |
-| Azure | `azure.ts` | gpt-image-2 | Azure-specific config |
+| OpenAI 兼容 | `openai.ts` | gpt-image-2 | Covers OpenAI, 通义, 智谱, 豆包, Google, etc. |
+| Anthropic | `anthropic.ts` | claude-sonnet-4-20250514 | Claude Messages API |
 
 **Image sync:** `src/lib/github.ts` handles GitHub API operations (auto-create `imagegate-images` repo, upload images). `src/lib/sync.ts` provides an in-memory async queue for background uploads. Triggered automatically after successful generation for logged-in users.
 
@@ -53,8 +45,37 @@ npm run test:coverage # Jest with coverage
 - `rate-limit.ts` — In-memory rate limiting (generate: 10/min, general: 100/min, auth: 5/min)
 - `logger.ts` — Structured JSON logging with request tracing
 - `timeout.ts` — Request timeout wrappers (image generation: 2 min)
-- `errors.ts` — Error class hierarchy with sanitization
+- `errors.ts` — Error class hierarchy with sanitization (AppError, ValidationError, AuthenticationError, RateLimitError, ProviderError)
 - `validation.ts` — Zod v4 schemas for all API inputs
+- `ui.ts` — Shared UI utilities (cn, formatDuration, etc.)
+- `prompts.ts` — Prompt template library for different use cases
+- `github.ts` — GitHub API wrapper for image sync
+- `sync.ts` — Background sync queue
+- `crypto.ts` — AES-256-GCM encryption
+- `auth.ts` — NextAuth.js v5 configuration with auto-secret generation
+
+**Reusable UI components (`src/components/ui/`):**
+- `ImageCard.tsx` — Image display with hover actions (download, copy, regenerate)
+- `ImageGrid.tsx` — Responsive image grid layout
+- `ActionButtons.tsx` — Consistent action button group
+- `HeaderSection.tsx` — Page header with title and description
+- `StatsCard.tsx` — Statistics display card
+- `EmptyState.tsx` — Empty state placeholder
+- `LoadingCard.tsx` — Loading skeleton
+- `LazyImage.tsx` — Lazy-loaded image with blur-up
+- `VirtualList.tsx` — Virtualized list for large datasets
+- `AccessibleButton.tsx` — Accessible button with ARIA support
+- `SkipLink.tsx` — Skip navigation link
+- `ConfirmDialog.tsx` — Confirmation dialog
+- `ErrorAlert.tsx` — Error message display
+- `TagBadge.tsx` — Status and provider badges
+- `index.ts` — Component exports
+
+**Modals (`src/components/`):**
+- `SettingsModal.tsx` — Provider configuration UI
+- `HistoryModal.tsx` — Generation history sidebar
+- `AuthModal.tsx` — Authentication modal
+- `AuthContext.tsx` — Auth state management context
 
 **API routes** in `src/app/api/`:
 
@@ -62,21 +83,24 @@ npm run test:coverage # Jest with coverage
 - `GET/POST /api/keys` — List (masked) / add API keys
 - `DELETE/PATCH /api/keys/[id]` — Delete / toggle key
 - `GET /api/records` — Generation records (paginated, filterable)
+- `GET /api/records/[id]` — Get single record details
 - `GET/POST /api/settings` — App settings key-value store. Allowlisted keys: `default_provider`, `default_quality`, `default_ar`, and per-provider keys (`{provider}_api_key`, `{provider}_base_url`, `{provider}_model`)
 - `GET /api/stats` — Dashboard statistics (totals, success/fail, today count, avg duration, per-provider counts)
 - `GET/POST /api/images` — User's image gallery (paginated, auth required)
 - `GET /api/images/[...path]` — Serve image files from disk
 - `GET/POST /api/sync` — GitHub sync status / trigger sync
 - `GET /api/auth/session` — Current user session
+- `POST /api/auth/[...nextauth]` — NextAuth.js callback routes
 
 **Frontend pages** in `src/app/`:
-- `/` — XHS (小红书) style card generation (9 visual styles, 6 layouts, 4 palettes)
-- `/infographic` — Infographic generation
-- `/gallery` — User image gallery (auth required)
-- `/records` — Generation history
-- `/login` — GitHub OAuth login
+- `/` — AI image generation with prompt-centric UI, batch mode, remix mode, and prompt templates library. Supports provider/model/ratio/quality selection with real-time preview.
+- `/xhs` — 小红书 (Xiaohongshu) style card generation with 9 visual styles, 6 layouts, 4 color palettes, and 21 layout options
+- `/infographic` — Infographic generation with multiple layout and style options
+- `/gallery` — User image gallery with pagination, GitHub sync status (auth required)
+- `/records` — Generation history with filtering and stats
+- `/login` — GitHub OAuth login page
 
-All client-rendered with `"use client"`. Uses Ant Design components with inline `style` props (not CSS modules). Tailwind available but primary styling is through Ant Design's `ConfigProvider` theme and inline styles.
+All pages are client-rendered with `"use client"`. Uses Ant Design components with inline `style` props (not CSS modules). Tailwind available but primary styling is through Ant Design's `ConfigProvider` theme and inline styles. Framer Motion provides animations (fade-in, hover effects, sidebar collapse).
 
 **Layout:** `src/app/layout.tsx` uses a top `Header` with navigation links, auth display, and settings/history modals. Wraps children in `SessionProvider`, `AntdRegistry`, and `ConfigProvider`.
 
@@ -88,6 +112,12 @@ All client-rendered with `"use client"`. Uses Ant Design components with inline 
 - `ProviderError` class in `src/providers/types.ts` carries provider name and HTTP status code
 - All providers validate API key presence before making requests
 - `VALID_PROVIDERS` array in `/api/generate/route.ts` must stay in sync with the `Provider` type union
+- Frontend uses a component library at `src/components/ui/` with reusable, accessible components (ImageCard, ActionButtons, VirtualList, etc.)
+- Prompt templates are stored in `src/lib/prompts.ts` with categorized templates for different use cases
+- Batch generation mode allows processing multiple prompts sequentially with abort capability
+- Remix mode enables regenerating images with different parameters from history
+- Error handling uses custom error classes (AppError, ValidationError, RateLimitError, etc.) with sanitized user-facing messages
+- Rate limiting is in-memory with separate limiters for different endpoint types
 
 ## CI/CD
 
@@ -100,3 +130,8 @@ GitHub Actions (`.github/workflows/docker.yml`): builds Docker image, pushes to 
 3. Register in `src/providers/index.ts` factory (`PROVIDER_REGISTRY` map)
 4. Add default model entry in `src/app/api/generate/route.ts` (`DEFAULT_MODELS` and `VALID_PROVIDERS`)
 5. Add allowlisted settings keys in `src/app/api/settings/route.ts` if the provider needs API key, base URL, or model settings
+6. Update UI components (`SettingsModal.tsx`, `ProviderForm.tsx`) to display the new provider option
+
+---
+
+*Last updated: 2026-06-29*

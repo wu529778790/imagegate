@@ -6,6 +6,7 @@ import { PictureOutlined, CloudSyncOutlined, GithubOutlined, CheckCircleOutlined
 import { useSession } from "next-auth/react";
 import { ImageGrid, EmptyState, LoadingGrid, EmptyStates, HeaderSection, ProviderBadge } from "@/components/ui";
 import { formatDuration } from "@/lib/ui";
+import { useAuthModal } from "@/components/AuthContext";
 
 const { Text } = Typography;
 
@@ -36,6 +37,7 @@ interface SyncStatus {
 
 export default function GalleryPage() {
   const { data: session, status } = useSession();
+  const authModal = useAuthModal();
   const [images, setImages] = useState<ImageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
@@ -98,19 +100,25 @@ export default function GalleryPage() {
     }
   }, [status]);
 
-  if (status === "loading") {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
-        <div className="shimmer" style={{ width: 200, height: 200, borderRadius: 16 }} />
-      </div>
-    );
-  }
-
+  // Show empty state for unauthenticated users
   if (status === "unauthenticated") {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
-        <Empty description={<span style={{ color: "#71717a" }}>请先登录查看您的图片</span>} image={Empty.PRESENTED_IMAGE_SIMPLE}>
-          <a href="/login" style={{ color: "#6366f1" }}>去登录</a>
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <span style={{ color: "#71717a" }}>
+              登录后查看您保存的图片
+            </span>
+          }
+        >
+          <Button
+            type="primary"
+            onClick={() => authModal.openAuthModal({ action: "查看图片库" })}
+            style={{ borderRadius: 8 }}
+          >
+            立即登录
+          </Button>
         </Empty>
       </div>
     );

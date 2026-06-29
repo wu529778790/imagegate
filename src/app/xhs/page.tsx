@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { HeaderSection } from "@/components/ui/HeaderSection";
 import { ActionButtons } from "@/components/ui/ActionButtons";
 import { cn } from "@/lib/ui";
+import { useAuthModal } from "@/components/AuthContext";
 
 const XHS_STYLES = [
   { value: "cute", label: "甜美可爱", preview: "/images/xhs-styles/cute.webp", description: "少女风、甜美 aesthetic" },
@@ -48,6 +49,7 @@ const gridCardStyle = (selected: boolean): React.CSSProperties => ({
 });
 
 export default function HomePage() {
+  const authModal = useAuthModal();
   const [loading, setLoading] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -56,6 +58,12 @@ export default function HomePage() {
   const [previewLayout, setPreviewLayout] = useState<string | null>(null);
 
   const handleGenerate = async (values: { content: string; style: string; layout: string; palette?: string }) => {
+    // 检查认证状态
+    const isAuthenticated = await authModal.requireAuth({ action: "生成小红书卡片" });
+    if (!isAuthenticated) {
+      return; // 用户关闭了弹窗
+    }
+
     setLoading(true);
     try {
       const styleInfo = XHS_STYLES.find(s => s.value === values.style);

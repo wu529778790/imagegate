@@ -20,33 +20,26 @@ export function middleware(request: NextRequest) {
   // Check if the route is public
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
-  // If it's a public route, allow access
-  if (isPublicRoute) {
+  // If it's a public route or the login page, allow access
+  if (isPublicRoute || pathname === "/login") {
     return NextResponse.next();
   }
 
-  // For protected routes, check for session cookie
-  // NextAuth v5 uses "authjs.session-token" (was "next-auth.session-token" in v4)
-  const sessionCookie = request.cookies.get("authjs.session-token") ||
-                        request.cookies.get("__Secure-authjs.session-token") ||
-                        request.cookies.get("next-auth.session-token") ||
-                        request.cookies.get("__Secure-next-auth.session-token");
-
-  // For API routes, return 401 if no session
-  if (pathname.startsWith("/api/") && !sessionCookie) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+  // For API routes (other than public ones), return 401 if no session
+  if (pathname.startsWith("/api/")) {
+    const sessionCookie = request.cookies.get("authjs.session-token") ||
+                          request.cookies.get("__Secure-authjs.session-token") ||
+                          request.cookies.get("next-auth.session-token") ||
+                          request.cookies.get("__Secure-next-auth.session-token");
+    if (!sessionCookie) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
   }
 
-  // For page routes, redirect to login if no session
-  if (!pathname.startsWith("/api/") && !sessionCookie) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+  // For page routes, allow access (pages will handle auth checks via AuthModal)
   return NextResponse.next();
 }
 

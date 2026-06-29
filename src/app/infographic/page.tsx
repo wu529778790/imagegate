@@ -5,6 +5,7 @@ import { Button, Form, Input, Row, Col, Select, Modal, message, Tooltip } from "
 import { DownloadOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { HeaderSection } from "@/components/ui/HeaderSection";
 import { ActionButtons } from "@/components/ui/ActionButtons";
+import { useAuthModal } from "@/components/AuthContext";
 
 // 信息图布局选项（21种）
 const INFOGRAPHIC_LAYOUTS = [
@@ -67,6 +68,7 @@ const RESPONSIVE_GRID = {
 };
 
 export default function InfographicPage() {
+  const authModal = useAuthModal();
   const [loading, setLoading] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -97,6 +99,12 @@ export default function InfographicPage() {
     aspect?: string;
     lang?: string;
   }) => {
+    // 检查认证状态
+    const isAuthenticated = await authModal.requireAuth({ action: "生成信息图" });
+    if (!isAuthenticated) {
+      return; // 用户关闭了弹窗
+    }
+
     setLoading(true);
 
     try {

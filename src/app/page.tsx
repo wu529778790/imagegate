@@ -10,6 +10,7 @@ import { EmptyState, EmptyStates } from "@/components/ui/EmptyState";
 import { LoadingCard } from "@/components/ui/LoadingCard";
 import { StatusBadge, ProviderBadge } from "@/components/ui/TagBadge";
 import { cn, formatDuration } from "@/lib/ui";
+import { useAuthModal } from "@/components/AuthContext";
 
 const PROVIDER_COLORS: Record<string, string> = { openai: "#10a37f", anthropic: "#d97706" };
 const PROVIDER_LABELS: Record<string, string> = { openai: "OpenAI 兼容", anthropic: "Anthropic" };
@@ -20,6 +21,7 @@ interface GenerateResult { image: string; provider: string; model: string; durat
 interface BatchItem { prompt: string; status: "pending" | "running" | "success" | "error"; result?: GenerateResult; error?: string; }
 
 export default function HomePage() {
+  const authModal = useAuthModal();
   const [prompt, setPrompt] = useState("");
   const [provider, setProvider] = useState<string>("openai");
   const [model, setModel] = useState("");
@@ -64,6 +66,13 @@ export default function HomePage() {
   const doGenerate = async (p?: string, prov?: string, ratio?: string, q?: string) => {
     const usePrompt = p ?? prompt; const useProvider = prov ?? provider; const useAr = ratio ?? ar; const useQuality = q ?? quality;
     if (!usePrompt.trim()) { message.warning("请输入图片描述"); return; }
+
+    // 检查认证状态
+    const isAuthenticated = await authModal.requireAuth({ action: "生成图片" });
+    if (!isAuthenticated) {
+      return; // 用户关闭了弹窗
+    }
+
     setLoading(true);
     try {
       const body: Record<string, string> = { prompt: usePrompt, provider: useProvider, ar: useAr, quality: useQuality };
@@ -80,6 +89,13 @@ export default function HomePage() {
   const startBatch = async () => {
     const lines = prompt.split("\n").map((l) => l.trim()).filter(Boolean);
     if (lines.length === 0) { message.warning("请输入至少一个 Prompt（每行一个）"); return; }
+
+    // 检查认证状态
+    const isAuthenticated = await authModal.requireAuth({ action: "批量生成图片" });
+    if (!isAuthenticated) {
+      return; // 用户关闭了弹窗
+    }
+
     const items: BatchItem[] = lines.map((p) => ({ prompt: p, status: "pending" as const }));
     setBatchItems(items);
     setBatchRunning(true);
