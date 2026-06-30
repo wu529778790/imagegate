@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { App, Typography, Empty, Tag, Pagination, Button, Space, Tooltip } from "antd";
 import { PictureOutlined, CloudSyncOutlined, GithubOutlined } from "@ant-design/icons";
 import { useSession } from "next-auth/react";
@@ -94,10 +94,13 @@ export default function GalleryPage() {
     }
   };
 
-  // Initial sync status fetch on auth
-  if (status === "authenticated" && !syncStatus) {
-    fetchSyncStatus();
-  }
+  // Initial sync status fetch on auth (must be in useEffect, not render phase)
+  useEffect(() => {
+    if (status === "authenticated" && !syncStatus) {
+      fetchSyncStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   if (status === "unauthenticated") {
     return (
