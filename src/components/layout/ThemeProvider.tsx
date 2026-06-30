@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfigProvider } from "antd";
+import { ConfigProvider, App } from "antd";
 import { theme as antTheme } from "antd";
 import { AuthProvider } from "@/components/AuthContext";
 import { SkipLink } from "@/components/ui/SkipLink";
@@ -54,7 +54,7 @@ export function ThemeAwareProviders({ children }: { children: React.ReactNode })
           }}
           tabIndex={-1}
         >
-          {children}
+          <App>{children}</App>
         </main>
       </AuthProvider>
     </ConfigProvider>
