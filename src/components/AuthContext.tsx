@@ -37,8 +37,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAuthOptions({
           ...options,
           onSuccess: () => {
-            closeAuthModal();
+            // Clear promiseRef BEFORE calling closeAuthModal to prevent it from resolving false
             promiseRef.current = null;
+            closeAuthModal();
             options?.onSuccess?.();
             resolve(true);
           },
