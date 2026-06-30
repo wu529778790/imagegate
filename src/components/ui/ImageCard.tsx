@@ -63,7 +63,7 @@ export interface ImageCardProps {
   duration?: string;
 }
 
-export function ImageCard({
+export const ImageCard = React.memo(function ImageCard({
   src,
   alt = 'Generated image',
   width = '100%',
@@ -240,11 +240,11 @@ export function ImageCard({
       )}
     </div>
   );
-}
+});
 
 /**
  * CompactImageCard - Smaller variant for dense layouts
  */
-export function CompactImageCard(props: Omit<ImageCardProps, 'borderRadius' | 'showSync' | 'showDelete'>) {
+export const CompactImageCard = React.memo(function CompactImageCard(props: Omit<ImageCardProps, 'borderRadius' | 'showSync' | 'showDelete'>) {
   return <ImageCard {...props} borderRadius={8} showSync={false} showDelete={false} />;
-}
+});

@@ -1,47 +1,51 @@
-"use client";
+/**
+ * useRecords — Records data hook, now powered by SWR.
+ *
+ * Replaces manual fetch() + useState with SWR caching + revalidation.
+ * Uses apiClient for DELETE mutation + SWR mutate for cache refresh.
+ * No local type definitions — imports GenerationRecord from @/types.
+ */
 
-import { useState, useEffect, useCallback } from "react";
+'use client';
 
-interface RecordItem {
-  id: number;
-  provider: string;
-  model: string;
-  prompt: string;
-  status: string;
-  duration_ms: number;
-  created_at: string;
-}
+import { useState, useCallback } from "react";
+import useSWR from "swr";
+import { swrFetcher, apiClient } from "@/lib/api/client";
+import type { RecordsResponse } from "@/types/api";
+import type { GenerationRecord } from "@/types/records";
 
 export function useRecords() {
-  const [records, setRecords] = useState<RecordItem[]>([]);
-  const [recordsLoading, setRecordsLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const pageSize = 20;
 
-  const loadRecords = useCallback(async (p = 1) => {
-    setRecordsLoading(true);
-    try {
-      const res = await fetch(`/api/records?page=${p}&pageSize=20`);
-      const data = await res.json();
-      setRecords(data.records || []);
-      setTotal(data.total || 0);
-    } catch {
-      /* silent */
-    } finally {
-      setRecordsLoading(false);
-    }
-  }, []);
+  const {
+    data,
+    error: swrError,
+    isLoading: recordsLoading,
+    mutate,
+  } = useSWR<RecordsResponse>(
+    `/api/records?page=${page}&pageSize=${pageSize}`,
+    swrFetcher,
+    { keepPreviousData: true }
+  );
 
-  useEffect(() => {
-    loadRecords(page);
-  }, [page, loadRecords]);
+  const records: GenerationRecord[] = data?.records ?? [];
+  const total = data?.total ?? 0;
 
   const handleDelete = useCallback(
     async (id: number) => {
-      await fetch(`/api/records?id=${id}`, { method: "DELETE" });
-      loadRecords(page);
+      try {
+        await apiClient.delete(`/api/records?id=${id}`);
+        // Refresh SWR cache after deletion
+        await mutate();
+      } catch (err: unknown) {
+        // Surface error instead of silent catch
+        if (err instanceof Error) {
+          console.error("Failed to delete record:", err.message);
+        }
+      }
     },
-    [page, loadRecords]
+    [mutate]
   );
 
   return {
@@ -50,9 +54,10 @@ export function useRecords() {
     page,
     total,
     setPage,
-    loadRecords,
     handleDelete,
+    swrError,
   };
 }
 
-export type { RecordItem };
+// Re-export for backward compatibility during migration
+export type { GenerationRecord as RecordItem };

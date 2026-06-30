@@ -1,28 +1,24 @@
-"use client";
+/**
+ * useGenerate — Single image generation hook.
+ *
+ * Uses apiClient for the POST request (consistent error handling).
+ * Auth check via AuthContext remains.
+ * No local type definitions — all imported from @/types.
+ */
 
-import { useState, useCallback, useRef } from "react";
+'use client';
+
+import { useState, useCallback } from "react";
 import { message } from "antd";
 import { useAuthModal } from "@/components/AuthContext";
-
-interface GenerateParams {
-  prompt: string;
-  provider: string;
-  model: string;
-  ar: string;
-  quality: string;
-}
-
-interface GenerateResult {
-  image: string;
-  provider: string;
-  model: string;
-  duration_ms: number;
-}
+import { apiClient } from "@/lib/api/client";
+import type { GenerateParams } from "@/types/generation";
+import type { GenerateResponse } from "@/types/api";
 
 export function useGenerate() {
   const authModal = useAuthModal();
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<GenerateResult | null>(null);
+  const [result, setResult] = useState<GenerateResponse | null>(null);
 
   const generate = useCallback(
     async (params: GenerateParams) => {
@@ -48,19 +44,14 @@ export function useGenerate() {
         };
         if (model) body.model = model;
 
-        const res = await fetch("/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || "生成失败");
-
+        const data = await apiClient.post<GenerateResponse>("/api/generate", body);
         setResult(data);
         message.success(`生成成功 (${(data.duration_ms / 1000).toFixed(1)}s)`);
         return data;
       } catch (err: unknown) {
-        message.error(err instanceof Error ? err.message : "生成失败");
+        const msg =
+          err instanceof Error ? err.message : "生成失败";
+        message.error(msg);
         return null;
       } finally {
         setLoading(false);
@@ -74,4 +65,5 @@ export function useGenerate() {
   return { loading, result, generate, clearResult, setResult };
 }
 
-export type { GenerateParams, GenerateResult };
+// Re-export types from @/types for backward compatibility during migration
+export type { GenerateParams, GenerateResponse };

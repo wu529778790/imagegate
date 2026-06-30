@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Background layers (优化对比度) ── */
-  --bg-deep: #050508;
-  --bg-primary: #0a0a0f;
-  --bg-surface: #12121a;
-  --bg-elevated: #1a1a25;
-  --bg-overlay: #22222f;
+  /* ── Background layers (light default, matching reference design) ── */
+  --bg-deep: #ffffff;
+  --bg-primary: #f8f9fa;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f1f3f5;
+  --bg-overlay: #e9ecef;
 
-  /* ── Text hierarchy (提升对比度) ── */
-  --text-primary: #f0f0f5;
-  --text-secondary: #a0a0b0;
-  --text-muted: #6b6b80;
-  --text-disabled: #4a4a5a;
+  /* ── Text hierarchy ── */
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a5a;
+  --text-muted: #8a8a9a;
+  --text-disabled: #c0c0c8;
 
-  /* ── Accent (降低饱和度，更舒适) ── */
+  /* ── Accent ── */
   --accent-primary: #7c3aed;
   --accent-primary-hover: #6d28d9;
-  --accent-primary-soft: rgba(124, 58, 237, 0.12);
+  --accent-primary-soft: rgba(124, 58, 237, 0.08);
   --accent-secondary: #a855f7;
   --accent-purple: #8b5cf6;
   --accent-gradient: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
@@ -27,12 +27,12 @@
   --sidebar-width: 280px;
 
   /* ── Borders ── */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-default: rgba(255, 255, 255, 0.12);
-  --border-accent: rgba(124, 58, 237, 0.4);
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.12);
+  --border-accent: rgba(124, 58, 237, 0.3);
   --border-focus: var(--accent-primary);
 
-  /* ── Semantic (更直观的颜色) ── */
+  /* ── Semantic ── */
   --color-success: #22c55e;
   --color-success-soft: rgba(34, 197, 94, 0.12);
   --color-warning: #f59e0b;
@@ -43,18 +43,18 @@
   --color-info-soft: rgba(59, 130, 246, 0.12);
 
   /* ── Glass ── */
-  --glass-bg: rgba(18, 18, 26, 0.85);
-  --glass-bg-hover: rgba(26, 26, 37, 0.9);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-subtle: rgba(18, 18, 26, 0.6);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg-hover: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-subtle: rgba(255, 255, 255, 0.6);
 
   /* ── Scrollbar ── */
-  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
 
   /* ── Nav ── */
-  --nav-hover-bg: rgba(255, 255, 255, 0.06);
-  --nav-active-bg: rgba(124, 58, 237, 0.12);
+  --nav-hover-bg: rgba(0, 0, 0, 0.04);
+  --nav-active-bg: rgba(124, 58, 237, 0.08);
 
   /* ── Spacing (4px base) ── */
   --space-0-5: 0.125rem;  /* 2px */
@@ -79,17 +79,17 @@
   --radius-2xl: 1.5rem;    /* 24px */
   --radius-full: 9999px;
 
-  /* ── Shadows (增强层次感) ── */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 16px -4px rgba(0, 0, 0, 0.6);
-  --shadow-xl: 0 16px 32px -8px rgba(0, 0, 0, 0.7);
-  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.25);
-  --shadow-glow-sm: 0 0 10px rgba(124, 58, 237, 0.15);
+  /* ── Shadows (light theme) ── */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 16px 32px -8px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.12);
+  --shadow-glow-sm: 0 0 10px rgba(124, 58, 237, 0.08);
 
   /* ── Typography ── */
-  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-size-xs: 0.75rem;    /* 12px */
   --font-size-sm: 0.8125rem;  /* 13px */
   --font-size-base: 0.875rem;  /* 14px */
@@ -119,41 +119,43 @@
   --easing-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── Light theme ── */
-.light {
-  --bg-deep: #ffffff;
-  --bg-primary: #f8f9fa;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f1f3f5;
-  --bg-overlay: #e9ecef;
+/* ── Dark theme ── */
+.dark {
+  --bg-deep: #050508;
+  --bg-primary: #0a0a0f;
+  --bg-surface: #12121a;
+  --bg-elevated: #1a1a25;
+  --bg-overlay: #22222f;
 
-  --text-primary: #1a1a2e;
-  --text-secondary: #4a4a5a;
-  --text-muted: #8a8a9a;
-  --text-disabled: #c0c0c8;
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b0;
+  --text-muted: #6b6b80;
+  --text-disabled: #4a4a5a;
 
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-default: rgba(0, 0, 0, 0.12);
-  --border-accent: rgba(124, 58, 237, 0.3);
+  --accent-primary-soft: rgba(124, 58, 237, 0.12);
 
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-bg-hover: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-subtle: rgba(255, 255, 255, 0.6);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-accent: rgba(124, 58, 237, 0.4);
 
-  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
-  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --glass-bg: rgba(18, 18, 26, 0.85);
+  --glass-bg-hover: rgba(26, 26, 37, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-subtle: rgba(18, 18, 26, 0.6);
 
-  --nav-hover-bg: rgba(0, 0, 0, 0.04);
-  --nav-active-bg: rgba(124, 58, 237, 0.08);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 16px 32px -8px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.15);
-  --shadow-glow-sm: 0 0 10px rgba(124, 58, 237, 0.1);
+  --nav-hover-bg: rgba(255, 255, 255, 0.06);
+  --nav-active-bg: rgba(124, 58, 237, 0.12);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 16px -4px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 16px 32px -8px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.25);
+  --shadow-glow-sm: 0 0 10px rgba(124, 58, 237, 0.15);
 }
 
 /* ── Reset ── */

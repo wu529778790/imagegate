@@ -1,15 +1,18 @@
-"use client";
+/**
+ * useBatchGenerate — Sequential batch generation hook.
+ *
+ * Uses apiClient for each POST request instead of raw fetch().
+ * Auth check via AuthContext remains.
+ * No local type definitions — all imported from @/types.
+ */
+
+'use client';
 
 import { useState, useCallback, useRef } from "react";
 import { useAuthModal } from "@/components/AuthContext";
-import type { GenerateParams } from "./useGenerate";
-
-interface BatchItem {
-  prompt: string;
-  status: "pending" | "running" | "success" | "error";
-  result?: { image: string; provider: string; model: string; duration_ms: number };
-  error?: string;
-}
+import { apiClient } from "@/lib/api/client";
+import type { GenerateParams } from "@/types/generation";
+import type { BatchItem, GenerateResponse } from "@/types/api";
 
 export function useBatchGenerate() {
   const authModal = useAuthModal();
@@ -54,13 +57,7 @@ export function useBatchGenerate() {
           };
           if (model) body.model = model;
 
-          const res = await fetch("/api/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error?.message || "失败");
+          const data = await apiClient.post<GenerateResponse>("/api/generate", body);
 
           setBatchItems((prev) =>
             prev.map((item, idx) =>
@@ -110,4 +107,5 @@ export function useBatchGenerate() {
   };
 }
 
+// Re-export for backward compatibility during migration
 export type { BatchItem };

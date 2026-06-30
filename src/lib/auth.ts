@@ -1,18 +1,27 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import crypto from "crypto";
-import { getDb, getSetting, setSetting } from "./db";
+import fs from "fs";
+import path from "path";
+import { getDb } from "./db";
 
-// Auto-generate NEXTAUTH_SECRET if not set — stored in SQLite so it persists across restarts
+const SECRET_FILE = path.join(process.cwd(), "data", ".auth_secret");
+
+// Auto-generate NEXTAUTH_SECRET if not set — stored in a file so it persists across restarts
+// (previously stored in SQLite, but that requires async init which isn't available at module level)
 function getAuthSecret(): string {
   if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
 
-  const db = getDb();
-  let secret = getSetting("nextauth_secret");
-  if (!secret) {
-    secret = crypto.randomBytes(32).toString("hex");
-    setSetting("nextauth_secret", secret);
+  if (fs.existsSync(SECRET_FILE)) {
+    return fs.readFileSync(SECRET_FILE, "utf-8").trim();
   }
+
+  const secret = crypto.randomBytes(32).toString("hex");
+  const dir = path.dirname(SECRET_FILE);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(SECRET_FILE, secret);
   return secret;
 }
 
@@ -32,7 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === "github" && profile) {
-        const db = getDb();
+        const db = await getDb();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const githubProfile = profile as any;
 
@@ -55,7 +64,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session }) {
       if (session.user) {
-        const db = getDb();
+        const db = await getDb();
         // Try to find user by github_id (stored in session.user.id after signIn)
         const user = db.prepare(
           "SELECT id, github_id, username, avatar_url FROM users WHERE id = ?"
@@ -87,7 +96,7 @@ export async function getCurrentUser() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const db = getDb();
+  const db = await getDb();
   return db.prepare(
     "SELECT * FROM users WHERE id = ?"
   ).get(parseInt(session.user.id)) as {

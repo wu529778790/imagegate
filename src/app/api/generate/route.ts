@@ -45,7 +45,7 @@ async function saveImageToLocalStorage(
   await writeFile(fullPath, imageBuffer);
 
   // Store metadata in database
-  const db = getDb();
+  const db = await getDb();
   db.prepare(`
     INSERT INTO images (user_id, generation_id, local_path, prompt, provider, model, created_at)
     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
@@ -95,20 +95,20 @@ export async function POST(request: NextRequest) {
 
   if (providerName) {
     // Try settings table first, then api_keys table
-    apiKey = getSetting(`${providerName}_api_key`) ?? undefined;
+    apiKey = (await getSetting(`${providerName}_api_key`)) ?? undefined;
     if (!apiKey) {
-      const keyRecord = getActiveKeyByProvider(providerName);
+      const keyRecord = await getActiveKeyByProvider(providerName);
       apiKey = keyRecord?.api_key;
     }
   } else {
     // Auto-detect: check settings first, then api_keys
-    const defaultProvider = (getSetting("default_provider") ?? "openai") as Provider;
-    apiKey = getSetting(`${defaultProvider}_api_key`) ?? undefined;
+    const defaultProvider = ((await getSetting("default_provider")) ?? "openai") as Provider;
+    apiKey = (await getSetting(`${defaultProvider}_api_key`)) ?? undefined;
     if (apiKey) {
       providerName = defaultProvider;
     } else {
       for (const name of VALID_PROVIDERS) {
-        const keyRecord = getActiveKeyByProvider(name);
+        const keyRecord = await getActiveKeyByProvider(name);
         if (keyRecord) {
           apiKey = keyRecord.api_key;
           providerName = name;
@@ -127,10 +127,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Resolve model: from request > from settings > from provider default
-    const resolvedModel = model || getSetting(`${providerName}_model`) || DEFAULT_MODELS[providerName];
+    const resolvedModel = model || (await getSetting(`${providerName}_model`)) || DEFAULT_MODELS[providerName];
 
     // Resolve base URL from settings
-    const baseUrl = getSetting(`${providerName}_base_url`) || undefined;
+    const baseUrl = (await getSetting(`${providerName}_base_url`)) || undefined;
 
     reqLogger.info("Generating image", {
       provider: providerName,
@@ -138,8 +138,8 @@ export async function POST(request: NextRequest) {
       userId: userId || "anonymous",
     });
 
-    const record = addRecord({
-      api_key_id: getKeyIdByProviderAndKey(providerName, apiKey),
+    const record = await addRecord({
+      api_key_id: await getKeyIdByProviderAndKey(providerName, apiKey),
       provider: providerName,
       model: resolvedModel,
       prompt,
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       const imageData = `data:image/png;base64,${imageBuffer.toString("base64")}`;
 
       // Update record with success status
-      updateRecord(record.id, {
+      await updateRecord(record.id, {
         status: "success",
         duration_ms: durationMs,
         image_url: imageData,
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
 
           // Add to sync queue for GitHub upload (async, non-blocking)
           if (savedImage) {
-            const db = getDb();
+            const db = await getDb();
             const imageRecord = db.prepare(
               "SELECT id FROM images WHERE local_path = ?"
             ).get(savedImage.localPath) as { id: number } | undefined;
@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
         error: (error as Error).message,
       });
 
-      updateRecord(record.id, {
+      await updateRecord(record.id, {
         status: "failed",
         error_message: (error as Error).message,
         duration_ms: durationMs,

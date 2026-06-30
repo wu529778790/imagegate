@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   const userId = parseInt(session.user.id);
-  const db = getDb();
+  const db = await getDb();
 
   // Get user's sync statistics
   const stats = db.prepare(`

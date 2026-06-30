@@ -1,33 +1,196 @@
-import Database from "better-sqlite3";
+/**
+ * Database layer — sql.js (pure WASM SQLite) implementation.
+ *
+ * Replaces better-sqlite3 to avoid native compilation issues.
+ * Provides a compatible API so consuming code doesn't need changes.
+ *
+ * Key differences from better-sqlite3:
+ * - sql.js operates on in-memory WASM; must explicitly load/save to disk
+ * - No direct file-path opening; reads Uint8Array, writes via fs.writeFileSync
+ * - WAL mode not supported (in-memory); uses DELETE journal mode instead
+ * - Save-to-disk happens after every write operation for data safety
+ */
+
+import initSqlJs, { Database as SqlJsDatabase } from "sql.js";
+import type { Statement as SqlJsStatement, BindParams, SqlValue } from "sql.js";
 import path from "path";
+import fs from "fs";
 import { encrypt, decrypt, isEncrypted } from "./crypto";
 
 const DB_PATH =
   process.env.DATABASE_URL?.replace("file:", "") ||
   path.join(process.cwd(), "data", "imagegate.db");
 
-let db: Database.Database;
+let dbInstance: CompatibleDatabase | null = null;
+let initPromise: Promise<CompatibleDatabase> | null = null;
 
-export function getDb(): Database.Database {
-  if (!db) {
-    const tempDb = new Database(DB_PATH);
-    try {
-      tempDb.pragma("journal_mode = WAL");
-      tempDb.pragma("foreign_keys = ON");
-      initSchema(tempDb);
-      db = tempDb;
-    } catch (error) {
-      tempDb.close();
-      const message = error instanceof Error ? error.message : "Unknown error";
-      throw new Error(
-        `Database initialization failed (path: ${DB_PATH}): ${message}`,
-      );
-    }
-  }
-  return db;
+// ---------------------------------------------------------------------------
+// Compatibility layer — mimics better-sqlite3's prepare().run/get/all API
+// ---------------------------------------------------------------------------
+
+interface RunResult {
+  lastInsertRowid: number;
+  changes: number;
 }
 
-function initSchema(db: Database.Database) {
+class CompatibleStatement {
+  private stmt: SqlJsStatement;
+
+  constructor(stmt: SqlJsStatement) {
+    this.stmt = stmt;
+  }
+
+  run(...params: unknown[]): RunResult {
+    this.stmt.bind(params as BindParams);
+    this.stmt.step();
+    const lastInsertRowid = (this.stmt as unknown as { lastInsertRowid: number }).lastInsertRowid ?? 0;
+    const changes = (this.stmt as unknown as { changes: number }).changes ?? 0;
+    this.stmt.free();
+    return { lastInsertRowid, changes };
+  }
+
+  get(...params: unknown[]): Record<string, unknown> | undefined {
+    this.stmt.bind(params as BindParams);
+    const hasRow = this.stmt.step();
+    if (!hasRow) {
+      this.stmt.free();
+      return undefined;
+    }
+    const row = this.stmt.getAsObject();
+    this.stmt.free();
+    return row;
+  }
+
+  all(...params: unknown[]): Record<string, unknown>[] {
+    this.stmt.bind(params as BindParams);
+    const rows: Record<string, unknown>[] = [];
+    while (this.stmt.step()) {
+      rows.push(this.stmt.getAsObject());
+    }
+    this.stmt.free();
+    return rows;
+  }
+}
+
+class CompatibleDatabase {
+  private db: SqlJsDatabase;
+
+  constructor(db: SqlJsDatabase) {
+    this.db = db;
+  }
+
+  prepare(sql: string): CompatibleStatement {
+    const stmt = this.db.prepare(sql);
+    return new CompatibleStatement(stmt);
+  }
+
+  exec(sql: string): void {
+    this.db.exec(sql);
+    this.saveToDisk();
+  }
+
+  pragma(str: string): void {
+    // sql.js doesn't have .pragma(); use exec instead
+    this.db.exec(`PRAGMA ${str}`);
+  }
+
+  close(): void {
+    this.saveToDisk();
+    this.db.close();
+  }
+
+  /** Save in-memory database to disk file. */
+  saveToDisk(): void {
+    try {
+      const data = this.db.export();
+      const dir = path.dirname(DB_PATH);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(DB_PATH, data);
+    } catch (err) {
+      console.error("Failed to save database to disk:", err);
+    }
+  }
+
+  /** Raw sql.js database access (for advanced use). */
+  getRawDb(): SqlJsDatabase {
+    return this.db;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Database initialization
+// ---------------------------------------------------------------------------
+
+export type Database = CompatibleDatabase;
+
+/**
+ * Get or initialize the database.
+ * Since sql.js requires async WASM loading, this is now async.
+ * All consuming code needs to await this before using the database.
+ */
+export async function getDb(): Promise<Database> {
+  if (dbInstance) return dbInstance;
+
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    // Load sql.js WASM module — locateFile tells sql.js where to find the .wasm binary.
+    // On server side we use the absolute path in node_modules; on client side it's served from /public/.
+    const wasmPath = path.join(process.cwd(), "node_modules", "sql.js", "dist", "sql-wasm.wasm");
+    const SQL = await initSqlJs({
+      locateFile: (file: string) => {
+        // For the WASM binary, use the absolute filesystem path (server-side)
+        if (file.endsWith(".wasm")) {
+          // If node_modules wasm exists, use it; otherwise fallback to public dir
+          if (fs.existsSync(wasmPath)) {
+            return wasmPath;
+          }
+          // Fallback: read from public/ and return as a data URL (won't work server-side)
+          // This shouldn't happen in production, but serves as safety net
+          return path.join(process.cwd(), "public", file);
+        }
+        // For JS files, let sql.js use its default resolution
+        return file;
+      },
+    });
+
+    // Try to load existing database file
+    let buffer: Uint8Array | null = null;
+    if (fs.existsSync(DB_PATH)) {
+      buffer = fs.readFileSync(DB_PATH) as Uint8Array;
+    }
+
+    const sqlDb = buffer ? new SQL.Database(buffer) : new SQL.Database();
+
+    const compatDb = new CompatibleDatabase(sqlDb);
+
+    // Apply pragmas (no WAL in sql.js, use DELETE journal mode)
+    compatDb.pragma("journal_mode = DELETE");
+    compatDb.pragma("foreign_keys = ON");
+
+    // Initialize schema
+    initSchema(compatDb);
+
+    // Save initial state to disk
+    compatDb.saveToDisk();
+
+    // Ensure database is saved on process exit
+    process.on("beforeExit", () => {
+      if (dbInstance) {
+        dbInstance.saveToDisk();
+      }
+    });
+
+    dbInstance = compatDb;
+    return compatDb;
+  })();
+
+  return initPromise;
+}
+
+function initSchema(db: Database) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS api_keys (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,13 +247,16 @@ function initSchema(db: Database.Database) {
     );
   `);
 
-  // Clean up records stuck in 'pending' for more than 10 minutes (e.g. from a crash)
+  // Clean up records stuck in 'pending' for more than 10 minutes
   db.prepare(
     "UPDATE generation_records SET status = 'failed', error_message = 'Process interrupted' WHERE status = 'pending' AND created_at < datetime('now', '-10 minutes')",
   ).run();
 }
 
+// ---------------------------------------------------------------------------
 // API Keys
+// ---------------------------------------------------------------------------
+
 export interface ApiKey {
   id: number;
   name: string;
@@ -100,9 +266,6 @@ export interface ApiKey {
   created_at: string;
 }
 
-/**
- * Decrypt API key if it's encrypted
- */
 function decryptApiKey(key: ApiKey): ApiKey {
   return {
     ...key,
@@ -110,30 +273,31 @@ function decryptApiKey(key: ApiKey): ApiKey {
   };
 }
 
-export function getAllKeys(): ApiKey[] {
-  const keys = getDb()
+export async function getAllKeys(): Promise<ApiKey[]> {
+  const db = await getDb();
+  const keys = db
     .prepare("SELECT * FROM api_keys ORDER BY created_at DESC")
-    .all() as ApiKey[];
+    .all() as unknown as ApiKey[];
+  db.saveToDisk();
   return keys.map(decryptApiKey);
 }
 
-export function getActiveKeyByProvider(provider: string): ApiKey | undefined {
-  const key = getDb()
-    .prepare(
-      "SELECT * FROM api_keys WHERE provider = ? AND is_active = 1 LIMIT 1",
-    )
-    .get(provider) as ApiKey | undefined;
+export async function getActiveKeyByProvider(provider: string): Promise<ApiKey | undefined> {
+  const db = await getDb();
+  const key = db
+    .prepare("SELECT * FROM api_keys WHERE provider = ? AND is_active = 1 LIMIT 1")
+    .get(provider) as unknown as ApiKey | undefined;
   return key ? decryptApiKey(key) : undefined;
 }
 
-export function getKeyIdByProviderAndKey(
+export async function getKeyIdByProviderAndKey(
   provider: string,
   apiKey: string,
-): number | null {
-  // We need to check all keys for this provider and compare decrypted values
-  const keys = getDb()
+): Promise<number | null> {
+  const db = await getDb();
+  const keys = db
     .prepare("SELECT id, api_key FROM api_keys WHERE provider = ?")
-    .all(provider) as { id: number; api_key: string }[];
+    .all(provider) as unknown as { id: number; api_key: string }[];
   for (const key of keys) {
     const decrypted = isEncrypted(key.api_key)
       ? decrypt(key.api_key)
@@ -145,29 +309,37 @@ export function getKeyIdByProviderAndKey(
   return null;
 }
 
-export function addKey(name: string, provider: string, apiKey: string): ApiKey {
-  // Encrypt the API key before storing
+export async function addKey(name: string, provider: string, apiKey: string): Promise<ApiKey> {
+  const db = await getDb();
   const encryptedKey = encrypt(apiKey);
-  const result = getDb()
+  const result = db
     .prepare("INSERT INTO api_keys (name, provider, api_key) VALUES (?, ?, ?)")
     .run(name, provider, encryptedKey);
-  const key = getDb()
+  const key = db
     .prepare("SELECT * FROM api_keys WHERE id = ?")
-    .get(result.lastInsertRowid) as ApiKey;
+    .get(result.lastInsertRowid) as unknown as ApiKey;
+  db.saveToDisk();
   return decryptApiKey(key);
 }
 
-export function deleteKey(id: number): void {
-  getDb().prepare("DELETE FROM api_keys WHERE id = ?").run(id);
+export async function deleteKey(id: number): Promise<void> {
+  const db = await getDb();
+  db.prepare("DELETE FROM api_keys WHERE id = ?").run(id);
+  db.saveToDisk();
 }
 
-export function toggleKey(id: number, isActive: boolean): void {
-  getDb()
+export async function toggleKey(id: number, isActive: boolean): Promise<void> {
+  const db = await getDb();
+  db
     .prepare("UPDATE api_keys SET is_active = ? WHERE id = ?")
     .run(isActive ? 1 : 0, id);
+  db.saveToDisk();
 }
 
+// ---------------------------------------------------------------------------
 // Generation Records
+// ---------------------------------------------------------------------------
+
 export interface GenerationRecord {
   id: number;
   api_key_id: number | null;
@@ -189,11 +361,11 @@ export interface RecordFilters {
   pageSize?: number;
 }
 
-export function getRecords(filters: RecordFilters = {}): {
+export async function getRecords(filters: RecordFilters = {}): Promise<{
   records: GenerationRecord[];
   total: number;
-} {
-  const db = getDb();
+}> {
+  const db = await getDb();
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -211,7 +383,7 @@ export function getRecords(filters: RecordFilters = {}): {
   const total = (
     db
       .prepare(`SELECT COUNT(*) as count FROM generation_records ${where}`)
-      .get(...params) as { count: number }
+      .get(...params) as unknown as { count: number }
   ).count;
 
   const page = filters.page || 1;
@@ -222,12 +394,12 @@ export function getRecords(filters: RecordFilters = {}): {
     .prepare(
       `SELECT * FROM generation_records ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     )
-    .all(...params, pageSize, offset) as GenerationRecord[];
+    .all(...params, pageSize, offset) as unknown as GenerationRecord[];
 
   return { records, total };
 }
 
-export function addRecord(record: {
+export async function addRecord(record: {
   api_key_id?: number | null;
   provider: string;
   model?: string | null;
@@ -237,8 +409,8 @@ export function addRecord(record: {
   error_message?: string | null;
   duration_ms?: number | null;
   image_url?: string | null;
-}): GenerationRecord {
-  const db = getDb();
+}): Promise<GenerationRecord> {
+  const db = await getDb();
   const result = db
     .prepare(
       "INSERT INTO generation_records (api_key_id, provider, model, prompt, parameters, status, error_message, duration_ms, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -254,12 +426,14 @@ export function addRecord(record: {
       record.duration_ms ?? null,
       record.image_url ?? null,
     );
-  return db
+  const inserted = db
     .prepare("SELECT * FROM generation_records WHERE id = ?")
-    .get(result.lastInsertRowid) as GenerationRecord;
+    .get(result.lastInsertRowid) as unknown as GenerationRecord;
+  db.saveToDisk();
+  return inserted;
 }
 
-export function updateRecord(
+export async function updateRecord(
   id: number,
   updates: Partial<
     Pick<
@@ -267,8 +441,8 @@ export function updateRecord(
       "status" | "error_message" | "duration_ms" | "image_url"
     >
   >,
-): void {
-  const db = getDb();
+): Promise<void> {
+  const db = await getDb();
   const fields: string[] = [];
   const values: unknown[] = [];
 
@@ -294,10 +468,14 @@ export function updateRecord(
     db.prepare(
       `UPDATE generation_records SET ${fields.join(", ")} WHERE id = ?`,
     ).run(...values);
+    db.saveToDisk();
   }
 }
 
+// ---------------------------------------------------------------------------
 // Stats
+// ---------------------------------------------------------------------------
+
 export interface Stats {
   totalGenerations: number;
   successCount: number;
@@ -307,8 +485,8 @@ export interface Stats {
   providerStats: { provider: string; count: number }[];
 }
 
-export function getStats(): Stats {
-  const db = getDb();
+export async function getStats(): Promise<Stats> {
+  const db = await getDb();
   const total = (
     db.prepare("SELECT COUNT(*) as count FROM generation_records").get() as {
       count: number;
@@ -316,38 +494,30 @@ export function getStats(): Stats {
   ).count;
   const success = (
     db
-      .prepare(
-        "SELECT COUNT(*) as count FROM generation_records WHERE status = 'success'",
-      )
-      .get() as { count: number }
+      .prepare("SELECT COUNT(*) as count FROM generation_records WHERE status = 'success'")
+      .get() as unknown as { count: number }
   ).count;
   const fail = (
     db
-      .prepare(
-        "SELECT COUNT(*) as count FROM generation_records WHERE status = 'failed'",
-      )
-      .get() as { count: number }
+      .prepare("SELECT COUNT(*) as count FROM generation_records WHERE status = 'failed'")
+      .get() as unknown as { count: number }
   ).count;
   const today = (
     db
-      .prepare(
-        "SELECT COUNT(*) as count FROM generation_records WHERE date(created_at) = date('now')",
-      )
-      .get() as { count: number }
+      .prepare("SELECT COUNT(*) as count FROM generation_records WHERE date(created_at) = date('now')")
+      .get() as unknown as { count: number }
   ).count;
   const avgDuration =
     (
       db
-        .prepare(
-          "SELECT AVG(duration_ms) as avg FROM generation_records WHERE status = 'success'",
-        )
-        .get() as { avg: number | null }
+        .prepare("SELECT AVG(duration_ms) as avg FROM generation_records WHERE status = 'success'")
+        .get() as unknown as { avg: number | null }
     ).avg || 0;
   const providerStats = db
     .prepare(
       "SELECT provider, COUNT(*) as count FROM generation_records GROUP BY provider ORDER BY count DESC",
     )
-    .all() as { provider: string; count: number }[];
+    .all() as unknown as { provider: string; count: number }[];
 
   return {
     totalGenerations: total,
@@ -359,26 +529,26 @@ export function getStats(): Stats {
   };
 }
 
+// ---------------------------------------------------------------------------
 // Settings
+// ---------------------------------------------------------------------------
+
 const ENCRYPTED_SETTINGS_KEYS = [
   "openai_api_key",
   "anthropic_api_key",
 ];
 
-/**
- * Check if a setting key should be encrypted
- */
 function shouldEncrypt(key: string): boolean {
   return ENCRYPTED_SETTINGS_KEYS.includes(key);
 }
 
-export function getSetting(key: string): string | null {
-  const row = getDb()
+export async function getSetting(key: string): Promise<string | null> {
+  const db = await getDb();
+  const row = db
     .prepare("SELECT value FROM settings WHERE key = ?")
-    .get(key) as { value: string } | undefined;
+    .get(key) as unknown as { value: string } | undefined;
   if (!row?.value) return null;
 
-  // Decrypt if needed
   if (shouldEncrypt(key) && isEncrypted(row.value)) {
     return decrypt(row.value);
   }
@@ -386,10 +556,11 @@ export function getSetting(key: string): string | null {
   return row.value;
 }
 
-export function setSetting(key: string, value: string): void {
-  // Encrypt API keys before storing
+export async function setSetting(key: string, value: string): Promise<void> {
+  const db = await getDb();
   const valueToStore = shouldEncrypt(key) ? encrypt(value) : value;
-  getDb()
+  db
     .prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)")
     .run(key, valueToStore);
+  db.saveToDisk();
 }

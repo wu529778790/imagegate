@@ -18,7 +18,7 @@ const SETTINGS_KEYS = [
 export async function GET() {
   const settings: Record<string, string | null> = {};
   for (const key of SETTINGS_KEYS) {
-    settings[key] = getSetting(key);
+    settings[key] = await getSetting(key);
   }
   return NextResponse.json(settings);
 }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   for (const [key, value] of Object.entries(body)) {
     if (SETTINGS_KEYS.includes(key) && typeof value === "string") {
-      setSetting(key, value);
+      await setSetting(key, value);
     }
   }
 

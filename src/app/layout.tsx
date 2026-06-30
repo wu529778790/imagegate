@@ -1,17 +1,29 @@
-"use client";
+/**
+ * RootLayout — Server Component shell.
+ *
+ * No "use client" directive — this is a Server Component.
+ * All client-side providers live in ClientProviders.
+ * Font loaded via next/font/google (no external link blocking render).
+ */
 
-import { AntdRegistry } from "@ant-design/nextjs-registry";
-import SessionProvider from "@/components/SessionProvider";
-import { ThemeProvider } from "@/components/ThemeContext";
-import { AppHeader, ThemeAwareProviders, ANTI_FOUC_SCRIPT } from "@/components/layout";
+import { Inter } from "next/font/google";
+import { ClientProviders } from "@/components/ClientProviders";
+import { ANTI_FOUC_SCRIPT } from "@/components/layout/ThemeProvider";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning className={inter.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: ANTI_FOUC_SCRIPT }} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0c0c14" />
+        <meta name="theme-color" content="#f9fafb" />
         <meta name="description" content="ImageGate - AI 图片生成服务" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -20,27 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           content="black-translucent"
         />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body style={{ margin: 0 }}>
-        <SessionProvider>
-          <ThemeProvider>
-            <AntdRegistry>
-              <div className="mesh-bg" />
-              <AppHeader />
-              <ThemeAwareProviders>{children}</ThemeAwareProviders>
-            </AntdRegistry>
-          </ThemeProvider>
-        </SessionProvider>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );

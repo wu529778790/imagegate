@@ -16,7 +16,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const emptySubscribe = () => () => {};
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   // Skip SSR for theme detection
@@ -24,7 +24,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem("theme") as Theme | null;
     if (stored) {
       setThemeState(stored);
-    } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setThemeState("dark");
+    } else {
       setThemeState("light");
     }
     setMounted(true);
@@ -61,7 +63,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // During SSR, provide default values without throwing
   if (!mounted) {
     return (
-      <ThemeContext.Provider value={{ theme: "dark", toggleTheme, setTheme }}>
+      <ThemeContext.Provider value={{ theme: "light", toggleTheme, setTheme }}>
         {children}
       </ThemeContext.Provider>
     );
@@ -79,7 +81,7 @@ export function useTheme() {
   if (context === undefined) {
     // Return default during SSR instead of throwing
     if (typeof window === "undefined") {
-      return { theme: "dark" as Theme, toggleTheme: () => {}, setTheme: () => {} };
+      return { theme: "light" as Theme, toggleTheme: () => {}, setTheme: () => {} };
     }
     throw new Error("useTheme must be used within a ThemeProvider");
   }

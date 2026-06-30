@@ -248,8 +248,8 @@ export default function AuthModal({ open, onClose, action, onSuccess }: AuthModa
       width={420}
       centered
       closable={!loading}
-      maskClosable={!loading}
-      destroyOnClose
+      mask={{ closable: !loading }}
+      destroyOnHidden
       styles={{
         body: { padding: "32px 24px" },
         mask: { backdropFilter: "blur(8px)" },

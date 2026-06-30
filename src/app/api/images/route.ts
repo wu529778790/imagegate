@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const pageSize = parseInt(searchParams.get("pageSize") || "20");
   const offset = (page - 1) * pageSize;
 
-  const db = getDb();
+  const db = await getDb();
 
   // Get total count
   const total = (db.prepare(

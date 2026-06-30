@@ -6,7 +6,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const db = getDb();
+  const db = await getDb();
 
   try {
     db.prepare("DELETE FROM generation_records WHERE id = ?").run(id);

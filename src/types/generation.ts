@@ -1,5 +1,7 @@
 import type { Quality } from "@/providers/types";
 
+export type { Quality };
+
 /** Available aspect ratio options. */
 export const AR_OPTIONS = ["1:1", "16:9", "9:16", "4:3", "3:4"] as const;
 

@@ -7,7 +7,7 @@ function maskApiKey(apiKey: string): string {
 }
 
 export async function GET() {
-  const keys = getAllKeys().map(({ api_key, ...rest }) => ({
+  const keys = (await getAllKeys()).map(({ api_key, ...rest }) => ({
     ...rest,
     api_key: maskApiKey(api_key),
   }));
@@ -21,6 +21,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "name, provider, and api_key are required" }, { status: 400 });
   }
 
-  const key = addKey(name, provider, api_key);
+  const key = await addKey(name, provider, api_key);
   return NextResponse.json({ ...key, api_key: maskApiKey(key.api_key) }, { status: 201 });
 }

@@ -1,63 +1,74 @@
-"use client";
+/**
+ * GalleryPage — User's saved images gallery.
+ *
+ * Phase 3 refactoring:
+ * - Uses SWR hooks for images and sync status (no raw fetch)
+ * - Auth check via AuthContext (client-side)
+ * - apiClient for sync mutations
+ * - No silent catch blocks
+ */
 
-import { useState, useEffect } from "react";
+'use client';
+
+import { useState } from "react";
 import { Typography, Empty, Tag, Pagination, Button, message, Space, Tooltip } from "antd";
 import { PictureOutlined, CloudSyncOutlined, GithubOutlined } from "@ant-design/icons";
 import { useSession } from "next-auth/react";
-import { ImageGrid, EmptyState, LoadingGrid, EmptyStates, HeaderSection, ProviderBadge } from "@/components/ui";
+import dynamic from "next/dynamic";
 import { useAuthModal } from "@/components/AuthContext";
+import { HeaderSection, EmptyState, EmptyStates, ProviderBadge } from "@/components/ui";
+import { useImages } from "@/lib/api/hooks";
+import { apiClient } from "@/lib/api/client";
 import type { ImageItem, SyncStatus } from "@/types";
+
+// Lazy-load heavy components ( reduce initial bundle )
+const ImageGrid = dynamic(() => import("@/components/ui/ImageGrid").then((m) => ({ default: m.ImageGrid })), { ssr: false });
+const LoadingGrid = dynamic(() => import("@/components/ui/LoadingCard").then((m) => ({ default: m.LoadingGrid })), { ssr: false });
 
 const { Text } = Typography;
 
 export default function GalleryPage() {
   const { data: session, status } = useSession();
   const authModal = useAuthModal();
-  const [images, setImages] = useState<ImageItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 0 });
+  const [page, setPage] = useState(1);
+
+  // SWR for images data
+  const { data: imagesData, isLoading: loading, mutate: refreshImages } = useImages(page);
+  const images: ImageItem[] = imagesData?.images ?? [];
+  const pagination = imagesData?.pagination ?? { page: 1, pageSize: 20, total: 0, totalPages: 0 };
 
   const user = session?.user as { id?: string; username?: string; avatarUrl?: string } | undefined;
 
-  const fetchImages = async (page: number = 1) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/images?page=${page}&pageSize=20`);
-      if (res.ok) {
-        const data = await res.json();
-        setImages(data.images);
-        setPagination(data.pagination);
-      }
-    } catch { /* ignore */ } finally { setLoading(false); }
-  };
-
+  // Fetch sync status ( one-time, not cached by SWR since it's rare )
   const fetchSyncStatus = async () => {
     try {
-      const res = await fetch("/api/sync");
-      if (res.ok) setSyncStatus(await res.json());
-    } catch { /* ignore */ }
+      const data = await apiClient.get<SyncStatus>("/api/sync");
+      setSyncStatus(data);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        message.error(`同步状态查询失败: ${err.message}`);
+      }
+    }
   };
 
   const handleSyncImage = async (imageId: number) => {
     setSyncing(true);
     try {
-      const res = await fetch("/api/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync-image", imageId }),
+      const result = await apiClient.post<{ success: boolean; error?: string }>("/api/sync", {
+        action: "sync-image",
+        imageId,
       });
-      const result = await res.json();
       if (result.success) {
         message.success("已同步到 GitHub");
-        fetchImages(pagination.page);
+        refreshImages();
         fetchSyncStatus();
       } else {
         message.error(result.error || "同步失败");
       }
-    } catch {
-      message.error("同步失败");
+    } catch (err: unknown) {
+      message.error(err instanceof Error ? err.message : "同步失败");
     } finally {
       setSyncing(false);
     }
@@ -66,31 +77,26 @@ export default function GalleryPage() {
   const handleRetryAll = async () => {
     setSyncing(true);
     try {
-      const res = await fetch("/api/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "retry-all" }),
+      const result = await apiClient.post<{ success: boolean; error?: string }>("/api/sync", {
+        action: "retry-all",
       });
-      const result = await res.json();
       if (result.success) {
         message.success("已加入同步队列");
         fetchSyncStatus();
       } else {
         message.error(result.error || "操作失败");
       }
-    } catch {
-      message.error("操作失败");
+    } catch (err: unknown) {
+      message.error(err instanceof Error ? err.message : "操作失败");
     } finally {
       setSyncing(false);
     }
   };
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchImages();
-      fetchSyncStatus();
-    }
-  }, [status]);
+  // Initial sync status fetch on auth
+  if (status === "authenticated" && !syncStatus) {
+    fetchSyncStatus();
+  }
 
   if (status === "unauthenticated") {
     return (
@@ -177,10 +183,10 @@ export default function GalleryPage() {
           {pagination.totalPages > 1 && (
             <div style={{ marginTop: 24, textAlign: "center" }}>
               <Pagination
-                current={pagination.page}
+                current={page}
                 total={pagination.total}
                 pageSize={pagination.pageSize}
-                onChange={fetchImages}
+                onChange={(p) => setPage(p)}
                 showSizeChanger={false}
               />
             </div>

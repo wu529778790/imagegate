@@ -97,7 +97,7 @@ async function processSyncJob(job: SyncJob): Promise<void> {
   updateSyncStatus(job);
 
   // Get user's GitHub access token
-  const db = getDb();
+  const db = await getDb();
   const user = db.prepare(
     "SELECT access_token, username FROM users WHERE id = ?"
   ).get(job.userId) as {
@@ -170,7 +170,7 @@ export function getSyncQueueStatus(): {
  * Retry failed sync jobs
  */
 export async function retryFailedJobs(): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
 
   // Get images that failed to sync
   const failedImages = db.prepare(`
@@ -206,7 +206,7 @@ export async function syncImageNow(
   userId: number,
   imageId: number
 ): Promise<{ success: boolean; githubUrl?: string; error?: string }> {
-  const db = getDb();
+  const db = await getDb();
 
   const image = db.prepare(
     "SELECT * FROM images WHERE id = ? AND user_id = ?"
