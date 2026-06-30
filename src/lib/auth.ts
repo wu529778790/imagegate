@@ -27,6 +27,12 @@ function getAuthSecret(): string {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: getAuthSecret(),
+  // trustHost is required for Docker/reverse-proxy deployments where the container
+  // sees http://localhost:3000 but the external URL is https://imagegate.shenzjd.com/.
+  // Without this, Auth.js infers cookie domain from the internal URL, causing the
+  // pkceCodeVerifier cookie to have the wrong domain, so the browser won't send it
+  // on the GitHub callback → "InvalidCheck: pkceCodeVerifier value could not be parsed".
+  trustHost: true,
   providers: [
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,
