@@ -43,14 +43,14 @@ export default function GalleryPage() {
   const user = session?.user as { id?: string; username?: string; avatarUrl?: string } | undefined;
 
   // Fetch sync status ( one-time, not cached by SWR since it's rare )
+  // Failures are silent: UI gracefully hides the sync block when status is null,
+  // and a red toast on every visit is just noise (e.g. 401 when not logged in).
   const fetchSyncStatus = async () => {
     try {
       const data = await apiClient.get<SyncStatus>("/api/sync");
       setSyncStatus(data);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        message.error(`同步状态查询失败: ${err.message}`);
-      }
+    } catch {
+      // Silent: sync status is supplementary info, not critical.
     }
   };
 
