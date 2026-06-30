@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-  // Resolve provider: from request > from settings > auto-detect from api_keys
+  // Resolve provider: from request > from settings > auto-detect from all sources
   let providerName = requestedProvider as Provider | undefined;
   let apiKey: string | undefined;
 
@@ -100,6 +100,20 @@ export async function POST(request: NextRequest) {
       const keyRecord = await getActiveKeyByProvider(providerName);
       apiKey = keyRecord?.api_key;
     }
+    // Fallback: if the requested provider has no key, auto-detect from any provider
+    if (!apiKey) {
+      for (const name of VALID_PROVIDERS) {
+        apiKey = (await getSetting(`${name}_api_key`)) ?? undefined;
+        if (!apiKey) {
+          const keyRecord = await getActiveKeyByProvider(name);
+          apiKey = keyRecord?.api_key;
+        }
+        if (apiKey) {
+          providerName = name;
+          break;
+        }
+      }
+    }
   } else {
     // Auto-detect: check settings first, then api_keys
     const defaultProvider = ((await getSetting("default_provider")) ?? "openai") as Provider;
@@ -108,9 +122,12 @@ export async function POST(request: NextRequest) {
       providerName = defaultProvider;
     } else {
       for (const name of VALID_PROVIDERS) {
-        const keyRecord = await getActiveKeyByProvider(name);
-        if (keyRecord) {
-          apiKey = keyRecord.api_key;
+        apiKey = (await getSetting(`${name}_api_key`)) ?? undefined;
+        if (!apiKey) {
+          const keyRecord = await getActiveKeyByProvider(name);
+          apiKey = keyRecord?.api_key;
+        }
+        if (apiKey) {
           providerName = name;
           break;
         }

@@ -50,10 +50,23 @@ export const useGenerateStore = create<GenerateState>((set) => ({
   setPrompt: (v) => set({ prompt: v }),
   toggleBatchMode: () => set((s) => ({ batchMode: !s.batchMode })),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-  resetFromSettings: (_settings) =>
-    set({
-      provider: _settings.default_provider || "openai",
-      ar: (_settings.default_ar as AspectRatio) || "1:1",
-      quality: (_settings.default_quality as Quality) || "2k",
-    }),
+    resetFromSettings: (_settings) => {
+      // Smart provider detection: if default_provider is not set, find the first
+      // provider that has a configured API key
+      let provider = _settings.default_provider || "";
+      if (!provider) {
+        const availableProviders = ["anthropic", "openai"] as const;
+        for (const p of availableProviders) {
+          if (_settings[`${p}_api_key`]) {
+            provider = p;
+            break;
+          }
+        }
+      }
+      set({
+        provider: provider || "openai",
+        ar: (_settings.default_ar as AspectRatio) || "1:1",
+        quality: (_settings.default_quality as Quality) || "2k",
+      });
+    },
 }));
