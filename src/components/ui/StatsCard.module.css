@@ -1,0 +1,79 @@
+/* StatsCard — 统计卡片组件样式 */
+
+.card {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+}
+
+.cardBody {
+  padding: 16px !important;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.icon {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.valueSkeleton {
+  display: inline-block;
+  width: 80px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subtext {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.trend {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.trendPositive {
+  color: #22c55e;
+}
+
+.trendNegative {
+  color: #ef4444;
+}
+
+/* StatsGrid */
+.grid {
+  display: grid;
+  margin-bottom: 24px;
+}

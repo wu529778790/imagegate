@@ -1,0 +1,23 @@
+/* ErrorAlert — 错误提示组件样式 */
+
+.alert {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-error-soft) !important;
+  background: var(--color-error-soft) !important;
+}
+
+.successAlert {
+  border-radius: 12px !important;
+  border: 1px solid rgba(34, 197, 94, 0.3) !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+}
+
+.warningAlert {
+  border-radius: 12px !important;
+  border: 1px solid rgba(234, 179, 8, 0.3) !important;
+  background: rgba(234, 179, 8, 0.1) !important;
+}
+
+.retryBtn {
+  margin-left: 8px;
+}

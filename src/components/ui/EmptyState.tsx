@@ -5,6 +5,7 @@
 import React from 'react';
 import { Empty } from 'antd';
 import type { EmptyProps } from 'antd';
+import styles from './EmptyState.module.css';
 
 export interface EmptyStateProps {
   /** Empty state description */
@@ -34,18 +35,14 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={className}
-      style={{
-        padding: center ? '60px 24px' : '24px',
-        textAlign: 'center',
-        ...style,
-      }}
+      className={`${center ? styles.emptyState : styles.emptyStateNoCenter} ${className || ''}`}
+      style={style}
     >
-      {icon && <div style={{ marginBottom: 12 }}>{icon}</div>}
+      {icon && <div className={styles.icon}>{icon}</div>}
       <Empty
         image={image}
         description={
-          <span style={{ color: 'var(--text-secondary)' }}>{description}</span>
+          <span className={styles.description}>{description}</span>
         }
       >
         {action && action}
@@ -68,7 +65,7 @@ export const EmptyStates = {
       <span>
         没有找到相关记录
         <br />
-        <span style={{ fontSize: 12, opacity: 0.7 }}>尝试调整筛选条件</span>
+        <span className={styles.searchEmptyHint}>尝试调整筛选条件</span>
       </span>
     ),
   },

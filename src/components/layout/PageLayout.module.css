@@ -1,0 +1,21 @@
+/* PageLayout — 统一页面布局容器 */
+
+.page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.pageFluid {
+  max-width: none;
+}
+
+.pageNarrow {
+  max-width: 960px;
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: 16px;
+  }
+}

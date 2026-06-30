@@ -4,6 +4,7 @@
 
 import React, { useState, useRef } from 'react';
 import type { ImageProps } from 'antd';
+import styles from './LazyImage.module.css';
 
 export interface LazyImageProps extends Omit<ImageProps, 'src'> {
   /** Image source */
@@ -44,48 +45,21 @@ export function LazyImage({
     onError?.();
   };
 
-  const containerStyle: React.CSSProperties = {
-    position: 'relative',
-    overflow: 'hidden',
-    ...style,
-  };
-
-  const imageStyle: React.CSSProperties = {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    transition: 'opacity 0.3s ease',
-    opacity: loaded ? 1 : 0,
-  };
-
   return (
-    <div style={containerStyle}>
+    <div className={styles.container} style={style}>
       {/* Placeholder / Blur */}
       {!loaded && !error && (
         <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: blurDataURL
-              ? `url(${blurDataURL})`
-              : 'var(--bg-surface)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: blurDataURL ? 'blur(20px)' : 'none',
-            transform: blurDataURL ? 'scale(1.1)' : 'none',
-          }}
+          className={blurDataURL ? styles.blurPlaceholder : styles.solidPlaceholder}
+          style={blurDataURL ? { backgroundImage: `url(${blurDataURL})` } : undefined}
         />
       )}
 
       {/* Skeleton shimmer */}
       {!loaded && !error && !blurDataURL && (
         <div
-          className="shimmer"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            aspectRatio,
-          }}
+          className={`shimmer ${styles.shimmerPlaceholder}`}
+          style={{ aspectRatio }}
         />
       )}
 
@@ -96,21 +70,14 @@ export function LazyImage({
           src={src}
           onLoad={handleLoad}
           onError={handleError}
-          style={imageStyle}
+          className={`${styles.image} ${loaded ? styles.imageVisible : styles.imageHidden}`}
           loading="lazy"
           {...props}
         />
       ) : (
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--bg-surface)',
-            color: 'var(--text-muted)',
-            fontSize: 12,
-            aspectRatio,
-          }}
+          className={styles.errorState}
+          style={{ aspectRatio }}
         >
           {error ? '加载失败' : placeholder}
         </div>

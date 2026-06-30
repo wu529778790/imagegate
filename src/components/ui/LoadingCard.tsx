@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
+import styles from './LoadingCard.module.css';
 
 interface LoadingCardProps {
   /** Number of skeleton items to show */
@@ -42,20 +43,17 @@ export function LoadingCard({
   if (grid) {
     return (
       <div
-        className={className}
+        className={`${styles.grid} ${className || ''}`}
         style={{
-          display: 'grid',
           gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-          gap: 16,
         }}
       >
         {items.map((_, i) => (
           <div
             key={i}
-            className="shimmer"
+            className={`shimmer ${styles.skeleton}`}
             style={{
               height: typeof height === 'number' ? `${height}px` : height,
-              borderRadius: 12,
             }}
           />
         ))}
@@ -64,14 +62,13 @@ export function LoadingCard({
   }
 
   return (
-    <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className={`${styles.list} ${className || ''}`}>
       {items.map((_, i) => (
         <div
           key={i}
-          className="shimmer"
+          className={`shimmer ${styles.skeleton}`}
           style={{
             height: typeof height === 'number' ? `${height}px` : height,
-            borderRadius: 12,
           }}
         />
       ))}
@@ -107,10 +104,9 @@ export function LoadingGrid({
 
   return (
     <div
+      className={styles.grid}
       style={{
-        display: 'grid',
         gridTemplateColumns: `repeat(${getCols()}, 1fr)`,
-        gap: 16,
       }}
     >
       {Array.from({ length: count }).map((_, i) => (

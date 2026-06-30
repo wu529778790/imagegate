@@ -1,0 +1,13 @@
+/* ImageGrid — 图片网格组件样式 */
+
+.grid {
+  display: grid;
+}
+
+.gridItem {
+  opacity: 0;
+}
+
+.gridItemVisible {
+  opacity: 1;
+}

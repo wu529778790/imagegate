@@ -1,0 +1,16 @@
+/* LoadingCard — 骨架屏加载组件样式 */
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.skeleton {
+  border-radius: 12px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

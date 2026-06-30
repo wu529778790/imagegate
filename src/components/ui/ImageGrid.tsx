@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { ImageCard } from './ImageCard';
 import type { ImageCardProps } from './ImageCard';
+import styles from './ImageGrid.module.css';
 
 export interface ImageGridProps {
   /** Array of image items */
@@ -66,8 +67,8 @@ export function ImageGrid({
   if (loading) {
     return (
       <div
+        className={styles.grid}
         style={{
-          display: 'grid',
           gridTemplateColumns: `repeat(${getCols()}, 1fr)`,
           gap,
         }}
@@ -86,8 +87,8 @@ export function ImageGrid({
   if (renderItem) {
     return (
       <div
+        className={styles.grid}
         style={{
-          display: 'grid',
           gridTemplateColumns: `repeat(${getCols()}, 1fr)`,
           gap,
         }}
@@ -103,8 +104,8 @@ export function ImageGrid({
 
   return (
     <div
+      className={styles.grid}
       style={{
-        display: 'grid',
         gridTemplateColumns: `repeat(${getCols()}, 1fr)`,
         gap,
       }}
@@ -115,9 +116,9 @@ export function ImageGrid({
         return (
           <div
             key={item.src || index}
+            className={animate ? styles.gridItem : styles.gridItemVisible}
             style={{
               animation: animate ? `fade-in-up 0.4s ease-out ${delay}ms forwards` : undefined,
-              opacity: animate ? 0 : 1,
             }}
           >
             <ImageCard {...item} />

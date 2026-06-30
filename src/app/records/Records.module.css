@@ -1,0 +1,122 @@
+/* Records Page — 生成记录页面样式 */
+
+.page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.filterCard {
+  border-radius: 12px;
+  margin-bottom: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+.loading {
+  text-align: center;
+  padding: 48px;
+  color: var(--text-muted);
+}
+
+.recordsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+}
+
+.pagination {
+  margin-top: 24px;
+  text-align: center;
+}
+
+/* Record Card */
+.recordCard {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s var(--easing-spring);
+  animation: fade-in-up 0.4s ease-out forwards;
+  opacity: 0;
+  cursor: default;
+}
+
+.recordCard:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.recordHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.recordHeaderLeft {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.recordDuration {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.recordPrompt {
+  margin-bottom: 12px;
+}
+
+.recordPromptText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  display: block;
+}
+
+.recordPromptToggle {
+  padding: 0;
+  height: auto;
+  font-size: 11px;
+  color: var(--accent-primary);
+}
+
+.recordMeta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.recordMetaTag {
+  margin: 0;
+  font-size: 10px;
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+}
+
+.recordMetaId {
+  margin-left: auto;
+}
+
+.recordError {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--color-error);
+}

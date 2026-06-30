@@ -1,0 +1,70 @@
+/* ImageCard — 图片卡片组件样式 */
+
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface, #1e1e2e);
+  transition: all 0.2s ease;
+}
+
+.cardPreviewable {
+  cursor: pointer;
+}
+
+.imageWrap {
+  position: relative;
+  width: 100%;
+}
+
+.image {
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+.imageHidden {
+  opacity: 0;
+}
+
+.imageVisible {
+  opacity: 1;
+}
+
+.shimmerPlaceholder {
+  width: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.emptyPlaceholder {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.card:hover .overlay {
+  opacity: 1;
+}
+
+.metadata {
+  padding: 10px 12px;
+}
+
+.syncedIcon {
+  color: #22c55e;
+}

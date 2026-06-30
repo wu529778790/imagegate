@@ -17,6 +17,7 @@ import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { useAuthModal } from "@/components/AuthContext";
 import { HeaderSection, EmptyState, EmptyStates, ProviderBadge } from "@/components/ui";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { useImages } from "@/lib/api/hooks";
 import { apiClient } from "@/lib/api/client";
 import type { ImageItem, SyncStatus } from "@/types";
@@ -104,25 +105,27 @@ export default function GalleryPage() {
 
   if (status === "unauthenticated") {
     return (
-      <div style={{ padding: 40, textAlign: "center" }}>
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={<span style={{ color: "var(--text-muted)" }}>登录后查看您保存的图片</span>}
-        >
-          <Button
-            type="primary"
-            onClick={() => authModal.openAuthModal({ action: "查看图片库" })}
-            style={{ borderRadius: 8 }}
+      <PageLayout>
+        <div style={{ textAlign: "center", padding: 40 }}>
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={<span style={{ color: "var(--text-muted)" }}>登录后查看您保存的图片</span>}
           >
-            立即登录
-          </Button>
-        </Empty>
-      </div>
+            <Button
+              type="primary"
+              onClick={() => authModal.openAuthModal({ action: "查看图片库" })}
+              style={{ borderRadius: 8 }}
+            >
+              立即登录
+            </Button>
+          </Empty>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div style={{ padding: "20px 20px", maxWidth: 1400, margin: "0 auto" }}>
+    <PageLayout>
       <HeaderSection
         title="我的图片"
         icon={<PictureOutlined />}
@@ -197,6 +200,6 @@ export default function GalleryPage() {
           )}
         </>
       )}
-    </div>
+    </PageLayout>
   );
 }

@@ -5,6 +5,7 @@
 import React from 'react';
 import type { CardProps } from 'antd';
 import { Card } from 'antd';
+import styles from './StatsCard.module.css';
 
 export interface StatsCardProps extends Omit<CardProps, 'children'> {
   /** Card title */
@@ -41,45 +42,26 @@ export function StatsCard({
       variant="borderless"
       size="small"
       {...cardProps}
-      style={{
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 12,
-        ...cardProps.style,
-      }}
+      className={`${styles.card} ${cardProps.className || ''}`}
       styles={{
         body: {
           padding: 16,
         },
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className={styles.content}>
         {/* Title row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span
-            style={{
-              fontSize: 12,
-              color: 'var(--text-secondary)',
-              fontWeight: 500,
-            }}
-          >
+        <div className={styles.titleRow}>
+          <span className={styles.title}>
             {title}
           </span>
           {icon && (
-            <span style={{ fontSize: 16, color, opacity: 0.8 }}>{icon}</span>
+            <span className={styles.icon} style={{ color }}>{icon}</span>
           )}
         </div>
 
         {/* Value */}
-        <div
-          style={{
-            fontSize: 28,
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1,
-          }}
-        >
+        <div className={styles.value}>
           {loading ? (
             <span
               className="shimmer"
@@ -92,17 +74,13 @@ export function StatsCard({
 
         {/* Subtext / Trend */}
         {(subtext || trend) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className={styles.footer}>
             {subtext && (
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{subtext}</span>
+              <span className={styles.subtext}>{subtext}</span>
             )}
             {trend && (
               <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: trend.isPositive ? '#22c55e' : '#ef4444',
-                }}
+                className={`${styles.trend} ${trend.isPositive ? styles.trendPositive : styles.trendNegative}`}
               >
                 {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
               </span>
@@ -144,11 +122,10 @@ export function StatsGrid({
 
   return (
     <div
+      className={styles.grid}
       style={{
-        display: 'grid',
         gridTemplateColumns: `repeat(${getCols()}, 1fr)`,
         gap,
-        marginBottom: 24,
       }}
     >
       {stats.map((stat, index) => (

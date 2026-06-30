@@ -5,6 +5,7 @@
 import React from 'react';
 import { Space } from 'antd';
 import type { SpaceProps } from 'antd';
+import styles from './HeaderSection.module.css';
 
 export interface HeaderSectionProps {
   /** Page title */
@@ -33,49 +34,22 @@ export function HeaderSection({
   center = false,
 }: HeaderSectionProps) {
   return (
-    <div style={{ marginBottom }}>
+    <div className={styles.header} style={{ marginBottom }}>
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: center ? 'center' : 'space-between',
-          gap: 12,
-          flexWrap: 'wrap',
-        }}
+        className={`${styles.headerInner} ${center ? styles.headerInnerCenter : ''}`}
       >
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            ...(center ? { justifyContent: 'center', width: '100%' } : {}),
-          }}
+          className={`${styles.titleWrap} ${center ? styles.titleWrapCenter : ''}`}
         >
           {icon && (
-            <span style={{ fontSize: 18, color: 'var(--accent-primary)' }}>{icon}</span>
+            <span className={styles.icon}>{icon}</span>
           )}
           <div>
-            <h1
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.02em',
-                margin: 0,
-                lineHeight: 1.3,
-              }}
-            >
+            <h1 className={styles.title}>
               {title}
             </h1>
             {subtitle && (
-              <p
-                style={{
-                  fontSize: 13,
-                  color: 'var(--text-secondary)',
-                  margin: '4px 0 0',
-                  lineHeight: 1.4,
-                }}
-              >
+              <p className={styles.subtitle}>
                 {subtitle}
               </p>
             )}
@@ -83,7 +57,7 @@ export function HeaderSection({
         </div>
         {actions && <Space>{actions}</Space>}
       </div>
-      {children && <div style={{ marginTop: 16 }}>{children}</div>}
+      {children && <div className={styles.children}>{children}</div>}
     </div>
   );
 }
@@ -103,28 +77,21 @@ export function SectionTitle({
   marginBottom?: number;
 }) {
   const Tag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4';
+  const titleClass =
+    level === 1 ? styles.sectionTitleH1 :
+    level === 2 ? styles.sectionTitleH2 :
+    level === 3 ? styles.sectionTitleH3 :
+    styles.sectionTitleH4;
 
   return (
-    <div style={{ marginBottom }}>
+    <div className={styles.sectionTitleWrap} style={{ marginBottom }}>
       <Tag
-        style={{
-          fontSize: level === 1 ? 24 : level === 2 ? 20 : level === 3 ? 18 : 16,
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          letterSpacing: '-0.02em',
-          margin: 0,
-        }}
+        className={`${styles.sectionTitle} ${titleClass}`}
       >
         {title}
       </Tag>
       {subtitle && (
-        <p
-          style={{
-            fontSize: 13,
-            color: 'var(--text-secondary)',
-            margin: '4px 0 0',
-          }}
-        >
+        <p className={styles.sectionSubtitle}>
           {subtitle}
         </p>
       )}

@@ -1,0 +1,35 @@
+/* TagBadge — 标签徽章组件样式 */
+
+.sizeSmall {
+  font-size: 10px;
+  padding: 0 5px;
+  height: 18px;
+  line-height: 18px;
+}
+
+.sizeMedium {
+  font-size: 12px;
+  padding: 0 8px;
+  height: 22px;
+  line-height: 22px;
+}
+
+.sizeLarge {
+  font-size: 14px;
+  padding: 0 10px;
+  height: 26px;
+  line-height: 26px;
+}
+
+.icon {
+  margin-right: 4px;
+}
+
+.statusIcon {
+  font-size: 10px;
+}
+
+.statusIconSpin {
+  font-size: 10px;
+  animation: spin 1s linear infinite;
+}

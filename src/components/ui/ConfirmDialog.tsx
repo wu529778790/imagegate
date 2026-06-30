@@ -6,6 +6,7 @@
 import React from 'react';
 import { Modal } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import styles from './ConfirmDialog.module.css';
 
 export interface ConfirmDialogProps {
   /** Whether dialog is visible */
@@ -52,7 +53,7 @@ export function ConfirmDialog({
     <Modal
       open={open}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className={styles.title}>
           {icon}
           <span>{title}</span>
         </div>
@@ -69,7 +70,7 @@ export function ConfirmDialog({
         header: { paddingBottom: 12 },
       }}
     >
-      {content && <div style={{ marginBottom: 8 }}>{content}</div>}
+      {content && <div className={styles.content}>{content}</div>}
     </Modal>
   );
 }

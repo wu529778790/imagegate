@@ -1,0 +1,23 @@
+/* EmptyState — 空状态组件样式 */
+
+.emptyState {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.emptyStateNoCenter {
+  padding: 24px;
+}
+
+.icon {
+  margin-bottom: 12px;
+}
+
+.description {
+  color: var(--text-secondary);
+}
+
+.searchEmptyHint {
+  font-size: 12px;
+  opacity: 0.7;
+}

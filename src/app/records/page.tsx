@@ -19,6 +19,9 @@ import { apiClient } from "@/lib/api/client";
 import { formatDuration } from "@/lib/utils";
 import { PROVIDER_LABELS, STATUS_CONFIG } from "@/types";
 import type { GenerationRecord, RecordStatus } from "@/types";
+import { PageLayout } from "@/components/layout/PageLayout";
+
+import styles from "./Records.module.css";
 
 export default function RecordsPage() {
   const [providerFilter, setProviderFilter] = useState<string | undefined>();
@@ -71,10 +74,10 @@ export default function RecordsPage() {
   }, [records, providerFilter, statusFilter]);
 
   return (
-    <div style={{ padding: "20px 20px", maxWidth: 1400, margin: "0 auto" }}>
+    <PageLayout>
       <HeaderSection title="生成记录" subtitle="查看所有历史生成记录" marginBottom={24} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
+      <div className={styles.statsGrid}>
         <StatsCard title="总记录" value={computedStats.total} icon={<ClockCircleOutlined />} color="var(--accent-primary)" />
         <StatsCard
           title="成功"
@@ -99,10 +102,7 @@ export default function RecordsPage() {
         <StatsCard title="平均耗时" value={`${computedStats.avgDuration}s`} icon={<ReloadOutlined />} color="var(--color-info)" />
       </div>
 
-      <Card
-        variant="borderless"
-        style={{ borderRadius: 12, marginBottom: 16, background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}
-      >
+      <Card variant="borderless" className={styles.filterCard}>
         <Space wrap>
           <Select
             allowClear
@@ -133,25 +133,25 @@ export default function RecordsPage() {
       </Card>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: 48, color: "var(--text-muted)" }}>加载中...</div>
+        <div className={styles.loading}>加载中...</div>
       ) : filteredRecords.length === 0 ? (
         <EmptyState {...EmptyStates.noRecords} />
       ) : (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 16 }}>
+          <div className={styles.recordsGrid}>
             {filteredRecords.map((record, index) => (
               <RecordCard key={record.id} record={record} index={index} onDelete={handleDelete} />
             ))}
           </div>
 
           {total > 20 && (
-            <div style={{ marginTop: 24, textAlign: "center" }}>
+            <div className={styles.pagination}>
               <Pagination current={1} total={total} pageSize={20} onChange={() => refreshRecords()} showSizeChanger={false} />
             </div>
           )}
         </>
       )}
-    </div>
+    </PageLayout>
   );
 }
 
@@ -169,32 +169,23 @@ const RecordCard = React.memo(function RecordCard({
 
   return (
     <div
-      className="card-hover"
-      style={{
-        background: "var(--bg-elevated)",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: 12,
-        padding: 16,
-        transition: "all 0.2s",
-        animation: `fade-in-up 0.4s ease-out ${index * 0.03}s forwards`,
-        opacity: 0,
-        cursor: "default",
-      }}
+      className={styles.recordCard}
+      style={{ animationDelay: `${index * 0.03}s` }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div className={styles.recordHeader}>
+        <div className={styles.recordHeaderLeft}>
           <ProviderBadge provider={record.provider} size="small" />
           <StatusBadge status={record.status as RecordStatus} />
         </div>
         {record.duration_ms && (
-          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{formatDuration(record.duration_ms)}</span>
+          <span className={styles.recordDuration}>{formatDuration(record.duration_ms)}</span>
         )}
       </div>
 
-      <div style={{ marginBottom: 12 }}>
+      <div className={styles.recordPrompt}>
         <Typography.Text
           ellipsis={!showFullPrompt}
-          style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, display: "block" }}
+          className={styles.recordPromptText}
           title={record.prompt || undefined}
         >
           {record.prompt || "无提示词"}
@@ -204,35 +195,25 @@ const RecordCard = React.memo(function RecordCard({
             type="link"
             size="small"
             onClick={() => setShowFullPrompt(!showFullPrompt)}
-            style={{ padding: 0, height: "auto", fontSize: 11, color: "var(--accent-primary)" }}
+            className={styles.recordPromptToggle}
           >
             {showFullPrompt ? "收起" : "展开"}
           </Button>
         )}
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", fontSize: 11, color: "var(--text-muted)" }}>
+      <div className={styles.recordMeta}>
         {record.model && (
-          <Tag style={{ margin: 0, fontSize: 10, background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>
+          <Tag className={styles.recordMetaTag}>
             {record.model}
           </Tag>
         )}
         <span>{new Date(record.created_at).toLocaleString("zh-CN")}</span>
-        <span style={{ marginLeft: "auto" }}>#{record.id}</span>
+        <span className={styles.recordMetaId}>#{record.id}</span>
       </div>
 
       {record.error_message && (
-        <div
-          style={{
-            marginTop: 12,
-            padding: "8px 12px",
-            background: "color-mix(in srgb, var(--color-error) 10%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--color-error) 20%, transparent)",
-            borderRadius: 8,
-            fontSize: 12,
-            color: "var(--color-error)",
-          }}
-        >
+        <div className={styles.recordError}>
           {record.error_message}
         </div>
       )}

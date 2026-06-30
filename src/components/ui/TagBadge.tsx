@@ -6,6 +6,7 @@ import React from "react";
 import { Tag, TagProps } from "antd";
 import { PROVIDER_COLORS, STATUS_CONFIG } from "@/types";
 import type { RecordStatus } from "@/types";
+import styles from "./TagBadge.module.css";
 
 export interface TagBadgeProps extends Omit<TagProps, "color"> {
   label: React.ReactNode;
@@ -16,12 +17,6 @@ export interface TagBadgeProps extends Omit<TagProps, "color"> {
   onClose?: (e: React.MouseEvent) => void;
 }
 
-const SIZE_STYLES = {
-  small: { fontSize: 10, padding: "0 5px", height: 18, lineHeight: "18px" },
-  medium: { fontSize: 12, padding: "0 8px", height: 22, lineHeight: "22px" },
-  large: { fontSize: 14, padding: "0 10px", height: 26, lineHeight: "26px" },
-} as const;
-
 export function TagBadge({
   label,
   color,
@@ -31,20 +26,23 @@ export function TagBadge({
   onClose,
   ...props
 }: TagBadgeProps) {
-  const sizeStyle = SIZE_STYLES[size];
+  const sizeClass =
+    size === "small" ? styles.sizeSmall :
+    size === "large" ? styles.sizeLarge :
+    styles.sizeMedium;
 
   return (
     <Tag
       {...props}
+      className={`${sizeClass} ${props.className || ""}`}
       style={{
-        ...sizeStyle,
         ...(color ? { background: `${color}15`, borderColor: `${color}30`, color } : {}),
         ...props.style,
       }}
       closable={closable}
       {...(closable ? { onClose } : {})}
     >
-      {icon && <span style={{ marginRight: 4 }}>{icon}</span>}
+      {icon && <span className={styles.icon}>{icon}</span>}
       {label}
     </Tag>
   );
@@ -84,11 +82,11 @@ export function StatusBadge({
 
   const icon =
     status === "success" ? (
-      <span style={{ fontSize: 10 }}>✓</span>
+      <span className={styles.statusIcon}>✓</span>
     ) : status === "failed" ? (
-      <span style={{ fontSize: 10 }}>✗</span>
+      <span className={styles.statusIcon}>✗</span>
     ) : status === "running" ? (
-      <span style={{ fontSize: 10, animation: "spin 1s linear infinite" }}>⟳</span>
+      <span className={styles.statusIconSpin}>⟳</span>
     ) : undefined;
 
   return <TagBadge label={config.label} color={config.color} icon={icon} />;

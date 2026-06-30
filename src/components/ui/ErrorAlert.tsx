@@ -5,6 +5,7 @@
 import React from 'react';
 import { Alert, Button } from 'antd';
 import type { AlertProps } from 'antd';
+import styles from './ErrorAlert.module.css';
 
 export interface ErrorAlertProps extends Omit<AlertProps, 'type'> {
   /** Error message */
@@ -41,16 +42,11 @@ export function ErrorAlert({
       closable={closable}
       onClose={onClose}
       showIcon
-      className={className}
-      style={{
-        borderRadius: 12,
-        border: '1px solid var(--color-error-soft)',
-        background: 'var(--color-error-soft)',
-        ...props.style,
-      }}
+      className={`${styles.alert} ${className || ''}`}
+      style={props.style}
       action={
         onRetry ? (
-          <Button size="small" onClick={onRetry} style={{ marginLeft: 8 }}>
+          <Button size="small" onClick={onRetry} className={styles.retryBtn}>
             {retryText}
           </Button>
         ) : undefined
@@ -79,13 +75,8 @@ export function SuccessAlert({
       closable={closable}
       onClose={onClose}
       showIcon
-      className={className}
-      style={{
-        borderRadius: 12,
-        border: '1px solid rgba(34, 197, 94, 0.3)',
-        background: 'rgba(34, 197, 94, 0.1)',
-        ...props.style,
-      }}
+      className={`${styles.successAlert} ${className || ''}`}
+      style={props.style}
       {...props}
     />
   );
@@ -110,13 +101,8 @@ export function WarningAlert({
       closable={closable}
       onClose={onClose}
       showIcon
-      className={className}
-      style={{
-        borderRadius: 12,
-        border: '1px solid rgba(234, 179, 8, 0.3)',
-        background: 'rgba(234, 179, 8, 0.1)',
-        ...props.style,
-      }}
+      className={`${styles.warningAlert} ${className || ''}`}
+      style={props.style}
       {...props}
     />
   );
