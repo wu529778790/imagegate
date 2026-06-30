@@ -100,7 +100,7 @@ export default function RecordsPage() {
       </div>
 
       <Card
-        bordered={false}
+        variant="borderless"
         style={{ borderRadius: 12, marginBottom: 16, background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}
       >
         <Space wrap>
