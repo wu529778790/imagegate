@@ -38,7 +38,7 @@ export function StatsCard({
 }: StatsCardProps) {
   return (
     <Card
-      bordered={false}
+      variant="borderless"
       size="small"
       {...cardProps}
       style={{

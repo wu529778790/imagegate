@@ -11,7 +11,7 @@
 'use client';
 
 import { useState } from "react";
-import { Typography, Empty, Tag, Pagination, Button, message, Space, Tooltip } from "antd";
+import { App, Typography, Empty, Tag, Pagination, Button, Space, Tooltip } from "antd";
 import { PictureOutlined, CloudSyncOutlined, GithubOutlined } from "@ant-design/icons";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
@@ -28,6 +28,7 @@ const LoadingGrid = dynamic(() => import("@/components/ui/LoadingCard").then((m)
 const { Text } = Typography;
 
 export default function GalleryPage() {
+  const { message } = App.useApp();
   const { data: session, status } = useSession();
   const authModal = useAuthModal();
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
