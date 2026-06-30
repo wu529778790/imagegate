@@ -1,28 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Form, Input, message } from "antd";
+import { Button, Form, Input } from "antd";
 import { SaveOutlined } from "@ant-design/icons";
+import type { ProviderMeta } from "@/types";
 
 interface ProviderFormProps {
-  provider: {
-    name: string;
-    label: string;
-    color: string;
-    fields: { key: string; label: string; placeholder: string; type?: "password" | "text" }[];
-  };
+  provider: Pick<ProviderMeta, "name" | "label" | "color" | "fields">;
   loading: boolean;
-  onSave: (provider: ProviderConfig, values: Record<string, string>) => Promise<void>;
+  onSave: (provider: ProviderMeta, values: Record<string, string>) => Promise<void>;
 }
 
-interface ProviderConfig {
-  name: string;
-  label: string;
-  color: string;
-  developerUrl: string;
-  description: string;
-  fields: { key: string; label: string; placeholder: string; type?: "password" | "text" }[];
-}
+const FIELD_STYLE = {
+  background: "var(--bg-elevated)",
+  borderColor: "var(--border-subtle)",
+  borderRadius: 8,
+};
 
 export function ProviderForm({ provider, loading, onSave }: ProviderFormProps) {
   const [form] = Form.useForm();
@@ -42,7 +35,7 @@ export function ProviderForm({ provider, loading, onSave }: ProviderFormProps) {
   const handleSave = async () => {
     const values = await form.validateFields().catch(() => null);
     if (values) {
-      await onSave(provider as ProviderConfig, values);
+      await onSave(provider as ProviderMeta, values);
     }
   };
 
@@ -58,23 +51,9 @@ export function ProviderForm({ provider, loading, onSave }: ProviderFormProps) {
             rules={field.type === "password" ? [{ required: true, message: `请输入${field.label}` }] : undefined}
           >
             {field.type === "password" ? (
-              <Input.Password
-                placeholder={field.placeholder}
-                style={{
-                  background: "var(--bg-elevated)",
-                  borderColor: "var(--border-subtle)",
-                  borderRadius: 8,
-                }}
-              />
+              <Input.Password placeholder={field.placeholder} style={FIELD_STYLE} />
             ) : (
-              <Input
-                placeholder={field.placeholder}
-                style={{
-                  background: "var(--bg-elevated)",
-                  borderColor: "var(--border-subtle)",
-                  borderRadius: 8,
-                }}
-              />
+              <Input placeholder={field.placeholder} style={FIELD_STYLE} />
             )}
           </Form.Item>
         ))}

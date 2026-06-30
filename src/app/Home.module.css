@@ -1,0 +1,27 @@
+/* 首页布局样式 */
+
+.layout {
+  display: flex;
+  height: calc(100vh - var(--header-height));
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8) var(--space-5);
+}
+
+.content {
+  width: 100%;
+  max-width: 720px;
+}
+
+@media (max-width: 639px) {
+  .main {
+    padding: var(--space-5) var(--space-4);
+  }
+}

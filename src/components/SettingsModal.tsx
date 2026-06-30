@@ -3,45 +3,11 @@
 import { useEffect, useState } from "react";
 import { Button, Form, Input, Modal, Select, Space, message, Collapse, Typography } from "antd";
 import { SaveOutlined, LinkOutlined } from "@ant-design/icons";
+import { PROVIDERS } from "@/types";
+import type { ProviderMeta } from "@/types";
 import { ProviderForm } from "./ProviderForm";
 
 const { Text } = Typography;
-
-interface ProviderConfig {
-  name: string;
-  label: string;
-  color: string;
-  developerUrl: string;
-  description: string;
-  fields: { key: string; label: string; placeholder: string; type?: "password" | "text" }[];
-}
-
-const PROVIDERS: ProviderConfig[] = [
-  {
-    name: "openai",
-    label: "OpenAI 兼容",
-    color: "#10a37f",
-    developerUrl: "https://platform.openai.com/api-keys",
-    description: "支持 OpenAI、通义、智谱、豆包、Google 等所有兼容 OpenAI 格式的服务",
-    fields: [
-      { key: "openai_api_key", label: "API Key", placeholder: "输入 API Key", type: "password" },
-      { key: "openai_base_url", label: "Base URL", placeholder: "https://api.openai.com/v1" },
-      { key: "openai_model", label: "模型", placeholder: "gpt-image-2" },
-    ],
-  },
-  {
-    name: "anthropic",
-    label: "Anthropic",
-    color: "#d97706",
-    developerUrl: "https://console.anthropic.com/settings/keys",
-    description: "Claude 系列模型，支持图片生成",
-    fields: [
-      { key: "anthropic_api_key", label: "API Key", placeholder: "输入 Anthropic API Key", type: "password" },
-      { key: "anthropic_base_url", label: "Base URL", placeholder: "https://api.anthropic.com" },
-      { key: "anthropic_model", label: "模型", placeholder: "claude-sonnet-4-20250514" },
-    ],
-  },
-];
 
 interface SettingsModalProps {
   open: boolean;
@@ -86,7 +52,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
     }
   };
 
-  const handleSaveProvider = async (provider: ProviderConfig, values: Record<string, string>) => {
+  const handleSaveProvider = async (provider: ProviderMeta, values: Record<string, string>) => {
     setLoading(true);
     try {
       const res = await fetch("/api/settings", {
@@ -117,9 +83,8 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
         body: { maxHeight: "calc(100vh - 200px)", overflowY: "auto", background: "var(--bg-primary)" },
         header: { background: "var(--bg-elevated)", borderBottom: "1px solid var(--border-subtle)" },
       }}
-      style={{ backgroundColor: "var(--bg-elevated)" }}
     >
-      {/* 全局默认设置 */}
+      {/* Global defaults */}
       <div style={{ marginBottom: 24 }}>
         <Text strong style={{ fontSize: 14, marginBottom: 12, display: "block", color: "var(--text-primary)" }}>
           全局默认
@@ -156,7 +121,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
         </Form>
       </div>
 
-      {/* 服务商配置 */}
+      {/* Provider configs */}
       <Collapse
         items={PROVIDERS.map((provider) => ({
           key: provider.name,

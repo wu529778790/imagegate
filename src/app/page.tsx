@@ -13,30 +13,29 @@ import {
   useRecords,
 } from "@/components/home";
 import { LoadingCard } from "@/components/ui/LoadingCard";
-
-const AR_OPTIONS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
+import { AR_OPTIONS } from "@/types";
+import type { AspectRatio, Quality } from "@/types";
+import { downloadImage } from "@/lib/utils";
+import styles from "./Home.module.css";
 
 export default function HomePage() {
-  // Settings
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [provider, setProvider] = useState("openai");
   const [model, setModel] = useState("");
-  const [ar, setAr] = useState("1:1");
-  const [quality, setQuality] = useState("2k");
+  const [ar, setAr] = useState<AspectRatio>("1:1");
+  const [quality, setQuality] = useState<Quality>("2k");
   const [prompt, setPrompt] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [batchMode, setBatchMode] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Hooks
   const { loading, result, generate, clearResult } = useGenerate();
   const { batchItems, batchRunning, batchDone, batchTotal, startBatch, stopBatch, clearBatch } =
     useBatchGenerate();
   const { records, recordsLoading, page, total, setPage, loadRecords, handleDelete } =
     useRecords();
 
-  // Load settings
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
@@ -48,7 +47,6 @@ export default function HomePage() {
       });
   }, []);
 
-  // Handlers
   const handleGenerate = async (overrides?: Partial<{ prompt: string; provider: string; ar: string; quality: string }>) => {
     const usePrompt = overrides?.prompt ?? prompt;
     const useProvider = overrides?.provider ?? provider;
@@ -82,15 +80,8 @@ export default function HomePage() {
     clearBatch();
   };
 
-  const handleDownload = (base64: string, name?: string) => {
-    const link = document.createElement("a");
-    link.href = `data:image/png;base64,${base64}`;
-    link.download = name || `imagegate-${Date.now()}.png`;
-    link.click();
-  };
-
   return (
-    <div className="home-layout">
+    <div className={styles.layout}>
       <HistorySidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -103,9 +94,8 @@ export default function HomePage() {
         onDelete={handleDelete}
       />
 
-      {/* Main content */}
-      <main className="home-main">
-        <div className="home-content">
+      <main className={styles.main}>
+        <div className={styles.content}>
           <TemplateSelector
             value={prompt}
             onChange={setPrompt}
@@ -144,16 +134,14 @@ export default function HomePage() {
             model={model}
           />
 
-          {/* Batch results */}
           <BatchResults
             items={batchItems}
             running={batchRunning}
             done={batchDone}
             total={batchTotal}
-            onDownload={handleDownload}
+            onDownload={downloadImage}
           />
 
-          {/* Single result */}
           {!batchMode && (
             <GenerateResultView
               result={result}
@@ -168,26 +156,6 @@ export default function HomePage() {
           )}
         </div>
       </main>
-
-      <style jsx>{`
-        .home-layout {
-          display: flex;
-          height: calc(100vh - 52px);
-          overflow: hidden;
-        }
-        .home-main {
-          flex: 1;
-          overflow: auto;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 28px 20px;
-        }
-        .home-content {
-          width: 100%;
-          max-width: 680px;
-        }
-      `}</style>
     </div>
   );
 }

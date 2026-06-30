@@ -3,6 +3,7 @@
 import { useRef, type KeyboardEvent } from "react";
 import { Button } from "antd";
 import { ThunderboltOutlined, StopOutlined } from "@ant-design/icons";
+import styles from "./PromptInput.module.css";
 
 interface PromptInputProps {
   value: string;
@@ -39,7 +40,7 @@ export function PromptInput({
   const lineCount = value.split("\n").filter((l) => l.trim()).length;
 
   return (
-    <div className="gradient-border prompt-input">
+    <div className={`gradient-border ${styles.promptInput}`}>
       <textarea
         ref={textareaRef}
         value={value}
@@ -52,10 +53,10 @@ export function PromptInput({
         }
         rows={batchMode ? 5 : 3}
         maxLength={50000}
-        className="prompt-input__textarea"
+        className={styles.textarea}
       />
-      <div className="prompt-input__footer">
-        <span className="prompt-input__count">
+      <div className={styles.footer}>
+        <span className={styles.count}>
           {batchMode
             ? batchRunning
               ? `生成中 ${batchDone}/${batchTotal}`
@@ -64,15 +65,15 @@ export function PromptInput({
             ? `${value.length}`
             : ""}
         </span>
-        <div className="prompt-input__actions">
-          <span className="prompt-input__shortcut">⌘↵</span>
+        <div className={styles.actions}>
+          <span className={styles.shortcut}>⌘↵</span>
           {batchMode ? (
             batchRunning ? (
               <Button
                 danger
                 icon={<StopOutlined />}
                 onClick={onStopBatch}
-                className="btn-generate btn-generate--danger"
+                className={`${styles.generateBtn}`}
                 size="small"
               >
                 停止
@@ -104,50 +105,6 @@ export function PromptInput({
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        .prompt-input {
-          margin-bottom: 12px;
-        }
-        .prompt-input__textarea {
-          width: 100%;
-          padding: 14px 16px;
-          background: transparent;
-          border: none;
-          outline: none;
-          color: var(--text-primary);
-          font-size: 14px;
-          line-height: 1.6;
-          resize: none;
-          font-family: inherit;
-          border-radius: 16px;
-        }
-        .prompt-input__footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 6px 14px 10px;
-        }
-        .prompt-input__count {
-          font-size: 11px;
-          color: var(--text-muted);
-        }
-        .prompt-input__actions {
-          display: flex;
-          gap: 4px;
-          align-items: center;
-        }
-        .prompt-input__shortcut {
-          font-size: 11px;
-          color: var(--text-muted);
-          margin-right: 4px;
-        }
-        .btn-generate {
-          border-radius: 8px !important;
-          font-weight: 600 !important;
-          height: 34px !important;
-        }
-      `}</style>
     </div>
   );
 }

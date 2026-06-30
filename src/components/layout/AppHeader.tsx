@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Avatar, Dropdown, Space, Tooltip } from "antd";
 import {
   SettingOutlined,
   PictureOutlined,
   HistoryOutlined,
+  AppstoreOutlined,
   UserOutlined,
   LogoutOutlined,
   GithubOutlined,
@@ -18,12 +19,11 @@ import { useSession, signOut } from "next-auth/react";
 import SettingsModal from "@/components/SettingsModal";
 import HistoryModal from "@/components/HistoryModal";
 import { useTheme } from "@/components/ThemeContext";
+import styles from "./AppHeader.module.css";
 
 const NAV_ITEMS = [
   { href: "/", label: "生图", icon: <PictureOutlined /> },
-  { href: "/xhs", label: "小红书", icon: <PictureOutlined /> },
-  { href: "/infographic", label: "信息图", icon: <PictureOutlined /> },
-  { href: "/gallery", label: "图库", icon: <PictureOutlined /> },
+  { href: "/gallery", label: "图库", icon: <AppstoreOutlined /> },
   { href: "/records", label: "记录", icon: <HistoryOutlined /> },
 ];
 
@@ -33,6 +33,13 @@ export function AppHeader() {
   const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Listen for external "open-settings" event (from AuthModal)
+  useEffect(() => {
+    const handler = () => setSettingsOpen(true);
+    window.addEventListener("open-settings", handler);
+    return () => window.removeEventListener("open-settings", handler);
+  }, []);
 
   const user = session?.user as {
     id?: string;
@@ -51,6 +58,7 @@ export function AppHeader() {
         </Space>
       ),
       disabled: true,
+      style: { opacity: 0.7 },
     },
     { type: "divider" as const },
     {
@@ -63,14 +71,13 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="app-header">
-        {/* Left: Logo + Nav */}
-        <div className="app-header__left">
-          <Link href="/" className="app-logo">
-            <div className="app-logo__icon">
+      <header className={styles.header}>
+        <div className={styles.headerLeft}>
+          <Link href="/" className={styles.logoLink}>
+            <div className={styles.logoIcon}>
               <PictureOutlined style={{ color: "#fff", fontSize: 14 }} />
             </div>
-            <span className="app-logo__text">ImageGate</span>
+            <span className={styles.logoText}>ImageGate</span>
           </Link>
 
           <nav className="app-nav">
@@ -86,14 +93,13 @@ export function AppHeader() {
           </nav>
         </div>
 
-        {/* Right: Actions */}
-        <div className="app-header__right">
+        <div className={styles.headerRight}>
           <Tooltip title={theme === "dark" ? "浅色模式" : "深色模式"}>
             <Button
               icon={theme === "dark" ? <SunOutlined /> : <MoonOutlined />}
               type="text"
               size="small"
-              className="header-btn"
+              className={styles.headerBtn}
               onClick={toggleTheme}
             />
           </Tooltip>
@@ -102,7 +108,7 @@ export function AppHeader() {
               icon={<HistoryOutlined />}
               type="text"
               size="small"
-              className="header-btn"
+              className={styles.headerBtn}
               onClick={() => setHistoryOpen(true)}
             />
           </Tooltip>
@@ -111,7 +117,7 @@ export function AppHeader() {
               icon={<SettingOutlined />}
               type="text"
               size="small"
-              className="header-btn"
+              className={styles.headerBtn}
               onClick={() => setSettingsOpen(true)}
             />
           </Tooltip>
@@ -127,13 +133,13 @@ export function AppHeader() {
               <Avatar
                 src={user?.avatarUrl}
                 icon={<UserOutlined />}
-                className="avatar-user"
+                className={styles.avatarUser}
                 size={28}
               />
             </Dropdown>
           ) : (
             <Link href="/login">
-              <Button type="primary" size="small" className="login-btn">
+              <Button type="primary" size="small" className={styles.loginBtn}>
                 登录
               </Button>
             </Link>
@@ -143,72 +149,6 @@ export function AppHeader() {
 
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
-
-      <style jsx>{`
-        .app-header {
-          background: var(--glass-bg);
-          backdrop-filter: blur(20px) saturate(1.2);
-          -webkit-backdrop-filter: blur(20px) saturate(1.2);
-          border-bottom: 1px solid var(--border-subtle);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 20px;
-          height: 52px;
-          position: sticky;
-          top: 0;
-          z-index: 100;
-        }
-        .app-header__left {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .app-header__right {
-          display: flex;
-          align-items: center;
-          gap: 2px;
-        }
-
-        /* Logo */
-        .app-logo {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          text-decoration: none;
-          margin-right: 12px;
-        }
-        .app-logo__icon {
-          width: 28px;
-          height: 28px;
-          border-radius: 7px;
-          background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .app-logo__text {
-          font-size: 15px;
-          font-weight: 700;
-          letter-spacing: -0.03em;
-          color: var(--text-primary);
-        }
-
-        /* Buttons */
-        .header-btn {
-          color: var(--text-muted) !important;
-        }
-        .avatar-user {
-          cursor: pointer;
-          background-color: var(--accent-primary) !important;
-          margin-left: 4px;
-        }
-        .login-btn {
-          border-radius: 7px !important;
-          margin-left: 4px;
-          font-size: 13px !important;
-        }
-      `}</style>
     </>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button, Typography } from "antd";
 import { GithubOutlined, PictureOutlined } from "@ant-design/icons";
 import { signIn } from "next-auth/react";
+import styles from "./Login.module.css";
 
 const { Text } = Typography;
 
@@ -21,15 +22,8 @@ export default function LoginPage() {
 
   if (status === "loading") {
     return (
-      <div
-        style={{
-          minHeight: "calc(100vh - 52px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div style={{ fontSize: 13, color: "var(--text-muted)" }}>加载中...</div>
+      <div className={styles.loadingWrapper}>
+        <div className={styles.loadingText}>加载中...</div>
       </div>
     );
   }
@@ -39,60 +33,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "calc(100vh - 52px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-      }}
-    >
-      <div
-        className="glass"
-        style={{
-          padding: "40px 36px",
-          maxWidth: 380,
-          width: "100%",
-          textAlign: "center",
-        }}
-      >
-        <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 12,
-            background: "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            margin: "0 auto 16px",
-          }}
-        >
+    <div className={styles.wrapper}>
+      <div className={`glass ${styles.card}`}>
+        <div className={styles.logo}>
           <PictureOutlined style={{ color: "#fff", fontSize: 22 }} />
         </div>
 
-        <div
-          style={{
-            fontSize: 20,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            marginBottom: 6,
-            letterSpacing: "-0.03em",
-          }}
-        >
-          ImageGate
-        </div>
-        <Text
-          style={{
-            color: "var(--text-muted)",
-            fontSize: 13,
-            display: "block",
-            marginBottom: 28,
-          }}
-        >
-          AI 图片生成服务
-        </Text>
+        <div className={styles.title}>ImageGate</div>
+        <span className={styles.subtitle}>AI 图片生成服务</span>
 
         <Button
           type="primary"
@@ -100,21 +48,14 @@ export default function LoginPage() {
           size="large"
           block
           onClick={() => signIn("github", { callbackUrl: "/" })}
-          style={{ height: 44, borderRadius: 10, fontWeight: 600, fontSize: 14 }}
+          className={styles.loginBtn}
         >
           使用 GitHub 登录
         </Button>
 
-        <Text
-          style={{
-            color: "var(--text-muted)",
-            fontSize: 12,
-            display: "block",
-            marginTop: 16,
-          }}
-        >
+        <span className={styles.footer}>
           登录后可保存生成的图片到您的 GitHub 仓库
-        </Text>
+        </span>
       </div>
     </div>
   );

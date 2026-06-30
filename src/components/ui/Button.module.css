@@ -1,0 +1,237 @@
+/* Button 组件样式 */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 移除默认 outline，使用自定义 focus-visible */
+.button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* 禁用状态 */
+.button:disabled,
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── 变体样式 ── */
+
+/* Primary - 主要按钮 */
+.primary {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-primary-hover);
+  border-color: var(--accent-primary-hover);
+  box-shadow: var(--shadow-md), var(--shadow-glow-sm);
+  transform: translateY(-1px);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Secondary - 次要按钮 */
+.secondary {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--bg-overlay);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Outline - 轮廓按钮 */
+.outline {
+  background: transparent;
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.outline:hover:not(:disabled) {
+  background: var(--accent-primary-soft);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+/* Ghost - 幽灵按钮 */
+.ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--nav-hover-bg);
+  color: var(--text-primary);
+}
+
+/* Danger - 危险按钮 */
+.danger {
+  background: var(--color-error);
+  color: white;
+  border-color: var(--color-error);
+  box-shadow: var(--shadow-sm);
+}
+
+.danger:hover:not(:disabled) {
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* Success - 成功按钮 */
+.success {
+  background: var(--color-success);
+  color: white;
+  border-color: var(--color-success);
+  box-shadow: var(--shadow-sm);
+}
+
+.success:hover:not(:disabled) {
+  background: #16a34a;
+  border-color: #16a34a;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ── 尺寸样式 ── */
+
+/* Extra Small */
+.xs {
+  height: 24px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+}
+
+/* Small */
+.sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+/* Medium (默认) */
+.md {
+  height: 40px;
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-base);
+}
+
+/* Large */
+.lg {
+  height: 48px;
+  padding: 0 var(--space-6);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-lg);
+}
+
+/* Extra Large */
+.xl {
+  height: 56px;
+  padding: 0 var(--space-8);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ── 块级按钮 ── */
+.block {
+  width: 100%;
+}
+
+/* ── 加载状态 ── */
+.loading {
+  cursor: wait;
+  position: relative;
+}
+
+/* 加载动画 */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.6s linear infinite;
+  margin-right: var(--space-1);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 加载时隐藏文字 */
+.loading .content {
+  opacity: 0.7;
+}
+
+/* ── 图标样式 ── */
+.iconLeft,
+.iconRight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconLeft {
+  margin-left: calc(var(--space-1) * -1);
+}
+
+.iconRight {
+  margin-right: calc(var(--space-1) * -1);
+}
+
+.content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── 按压效果 ── */
+.button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* ── 深色主题优化 ── */
+:global(.dark) .primary {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ── 浅色主题优化 ── */
+:global(.light) .primary {
+  box-shadow: var(--shadow-sm), 0 1px 2px rgba(124, 58, 237, 0.2);
+}
+
+:global(.light) .primary:hover:not(:disabled) {
+  box-shadow: var(--shadow-md), var(--shadow-glow-sm);
+}

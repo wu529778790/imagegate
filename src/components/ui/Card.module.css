@@ -1,0 +1,130 @@
+/* Card 组件样式 */
+
+.card {
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── 变体样式 ── */
+
+/* Default - 默认卡片 */
+.default {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Glass - 毛玻璃卡片 */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--glass-border);
+}
+
+/* Outlined - 轮廓卡片 */
+.outlined {
+  background: transparent;
+  border: 1px solid var(--border-default);
+}
+
+/* Elevated - 悬浮卡片 */
+.elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── 内边距 ── */
+
+.padding-none {
+  padding: 0;
+}
+
+.padding-sm {
+  padding: var(--space-3);
+}
+
+.padding-md {
+  padding: var(--space-4);
+}
+
+.padding-lg {
+  padding: var(--space-6);
+}
+
+/* ── 可悬浮 ── */
+.hoverable {
+  cursor: pointer;
+}
+
+.hoverable:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* ── 选中状态 ── */
+.selected {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+.selected::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 1px var(--accent-primary);
+  pointer-events: none;
+}
+
+/* ── 子组件样式 ── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.body {
+  flex: 1;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ── 响应式优化 ── */
+@media (max-width: 639px) {
+  .padding-md {
+    padding: var(--space-3);
+  }
+
+  .padding-lg {
+    padding: var(--space-4);
+  }
+}
+
+/* ── 深色主题优化 ── */
+:global(.dark) .elevated {
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── 浅色主题优化 ── */
+:global(.light) .glass {
+  box-shadow: var(--shadow-sm);
+}
+
+:global(.light) .elevated {
+  box-shadow: var(--shadow-md);
+}

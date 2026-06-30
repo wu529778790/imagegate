@@ -10,7 +10,9 @@ export interface EmptyStateProps {
   /** Empty state description */
   description?: React.ReactNode;
   /** Custom image (use Empty.PRESENTED_IMAGE_* for presets) */
-  image?: EmptyProps['image'];
+  image?: EmptyProps["image"];
+  /** Custom icon (displayed above description) */
+  icon?: React.ReactNode;
   /** Show action button */
   action?: React.ReactNode;
   /** Additional className */
@@ -24,6 +26,7 @@ export interface EmptyStateProps {
 export function EmptyState({
   description = '暂无数据',
   image = Empty.PRESENTED_IMAGE_SIMPLE,
+  icon,
   action,
   className,
   style,
@@ -38,6 +41,7 @@ export function EmptyState({
         ...style,
       }}
     >
+      {icon && <div style={{ marginBottom: 12 }}>{icon}</div>}
       <Empty
         image={image}
         description={
@@ -51,22 +55,21 @@ export function EmptyState({
 }
 
 /**
- * Pre-configured empty states for common scenarios
+ * Pre-configured empty state configs (not JSX elements).
+ * Use with <EmptyState {...EmptyStates.noRecords} /> instead of .props hack.
  */
 export const EmptyStates = {
-  noRecords: <EmptyState description="暂无生成记录" />,
-  noImages: <EmptyState description="还没有生成过图片" />,
-  noHistory: <EmptyState description="暂无历史记录" />,
-  noResults: <EmptyState description="没有找到匹配的结果" />,
-  searchEmpty: (
-    <EmptyState
-      description={
-        <span>
-          没有找到相关记录
-          <br />
-          <span style={{ fontSize: 12, opacity: 0.7 }}>尝试调整筛选条件</span>
-        </span>
-      }
-    />
-  ),
+  noRecords: { description: "暂无生成记录" },
+  noImages: { description: "还没有生成过图片" },
+  noHistory: { description: "暂无历史记录" },
+  noResults: { description: "没有找到匹配的结果" },
+  searchEmpty: {
+    description: (
+      <span>
+        没有找到相关记录
+        <br />
+        <span style={{ fontSize: 12, opacity: 0.7 }}>尝试调整筛选条件</span>
+      </span>
+    ),
+  },
 };

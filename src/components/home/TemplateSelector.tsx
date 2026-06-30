@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tooltip, Button } from "antd";
+import { Tooltip } from "antd";
 import { AppstoreOutlined } from "@ant-design/icons";
 import { PROMPT_TEMPLATES, TEMPLATE_CATEGORIES, type PromptTemplate } from "@/lib/prompts";
+import styles from "./TemplateSelector.module.css";
 
 interface TemplateSelectorProps {
   value: string;
@@ -28,8 +29,8 @@ export function TemplateSelector({ value, onChange, batchMode, onToggleBatch }: 
   };
 
   return (
-    <div className="template-selector">
-      <div className="template-selector__tabs">
+    <div className={styles.templateSelector}>
+      <div className={styles.tabs}>
         {TEMPLATE_CATEGORIES.map((cat) => (
           <button
             key={cat.id}
@@ -37,19 +38,19 @@ export function TemplateSelector({ value, onChange, batchMode, onToggleBatch }: 
               setTemplateCategory(cat.id);
               setShowTemplates(true);
             }}
-            className={`template-tab ${
-              templateCategory === cat.id && showTemplates ? "template-tab--active" : ""
+            className={`${styles.templateTab} ${
+              templateCategory === cat.id && showTemplates ? styles.templateTabActive : ""
             }`}
           >
             {cat.label}
           </button>
         ))}
-        <div className="template-selector__actions">
+        <div className={styles.actions}>
           <button
             onClick={() => {
               onToggleBatch();
             }}
-            className={`batch-toggle ${batchMode ? "batch-toggle--active" : ""}`}
+            className={`${styles.batchToggle} ${batchMode ? styles.batchToggleActive : ""}`}
           >
             <AppstoreOutlined style={{ marginRight: 4 }} />
             {batchMode ? "批量模式" : "单条模式"}
@@ -64,12 +65,12 @@ export function TemplateSelector({ value, onChange, batchMode, onToggleBatch }: 
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="template-list-wrapper"
+            className={styles.listWrapper}
           >
-            <div className="template-list">
+            <div className={styles.list}>
               {filteredTemplates.map((t) => (
                 <Tooltip key={t.id} title="点击应用" placement="top">
-                  <button onClick={() => applyTemplate(t)} className="template-chip">
+                  <button onClick={() => applyTemplate(t)} className={styles.chip}>
                     {t.icon} {t.label}
                   </button>
                 </Tooltip>
@@ -78,83 +79,6 @@ export function TemplateSelector({ value, onChange, batchMode, onToggleBatch }: 
           </motion.div>
         )}
       </AnimatePresence>
-
-      <style jsx>{`
-        .template-selector {
-          margin-bottom: 12px;
-        }
-        .template-selector__tabs {
-          display: flex;
-          gap: 6px;
-          align-items: center;
-          marginBottom: showTemplates ? 8px : 0;
-          flex-wrap: wrap;
-        }
-        .template-tab {
-          padding: 3px 10px;
-          border-radius: 6px;
-          border: 1px solid var(--border-subtle);
-          background: var(--bg-elevated);
-          color: var(--text-muted);
-          cursor: pointer;
-          font-size: 12px;
-          font-weight: 500;
-          transition: all 0.12s;
-        }
-        .template-tab:hover {
-          border-color: var(--border-accent);
-          color: var(--text-primary);
-        }
-        .template-tab--active {
-          border-color: var(--border-accent);
-          background: rgba(139, 92, 246, 0.1);
-          color: var(--accent-primary);
-        }
-        .template-selector__actions {
-          margin-left: auto;
-          display: flex;
-          gap: 4px;
-        }
-        .batch-toggle {
-          padding: 3px 10px;
-          border-radius: 6px;
-          border: 1px solid var(--border-subtle);
-          background: var(--bg-elevated);
-          color: var(--text-muted);
-          cursor: pointer;
-          font-size: 12px;
-          font-weight: 500;
-          transition: all 0.12s;
-        }
-        .batch-toggle--active {
-          border-color: rgba(251, 191, 36, 0.4);
-          background: rgba(251, 191, 36, 0.1);
-          color: var(--color-warning);
-        }
-        .template-list-wrapper {
-          overflow: hidden;
-        }
-        .template-list {
-          display: flex;
-          gap: 4px;
-          flex-wrap: wrap;
-          padding-top: 6px;
-        }
-        .template-chip {
-          padding: 4px 10px;
-          border-radius: 6px;
-          border: 1px solid var(--border-subtle);
-          background: var(--bg-elevated);
-          color: var(--text-secondary);
-          cursor: pointer;
-          font-size: 12px;
-          transition: all 0.12s;
-        }
-        .template-chip:hover {
-          border-color: var(--border-accent);
-          color: var(--text-primary);
-        }
-      `}</style>
     </div>
   );
 }

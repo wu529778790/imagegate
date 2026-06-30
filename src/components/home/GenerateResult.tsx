@@ -11,10 +11,13 @@ import {
   PictureOutlined,
 } from "@ant-design/icons";
 import { ImageCard } from "@/components/ui/ImageCard";
-import { EmptyState, EmptyStates } from "@/components/ui/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ProviderBadge } from "@/components/ui/TagBadge";
+import { AR_OPTIONS, QUALITY_OPTIONS } from "@/types";
+import type { AspectRatio } from "@/types";
+import { downloadImage, formatDuration } from "@/lib/utils";
 import type { GenerateResult } from "./hooks/useGenerate";
-import { AR_OPTIONS } from "./GenerateParams";
+import styles from "./GenerateResult.module.css";
 
 interface GenerateResultProps {
   result: GenerateResult | null;
@@ -27,6 +30,8 @@ interface GenerateResultProps {
   textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
+const PROVIDER_NAMES = ["openai", "anthropic"] as const;
+
 export function GenerateResultView({
   result,
   loading,
@@ -37,17 +42,9 @@ export function GenerateResultView({
   onRegenerate,
   textareaRef,
 }: GenerateResultProps) {
-  const handleDownload = (base64: string, name?: string) => {
-    const link = document.createElement("a");
-    link.href = `data:image/png;base64,${base64}`;
-    link.download = name || `imagegate-${Date.now()}.png`;
-    link.click();
-  };
-
   if (!loading && !result) {
     return (
       <EmptyState
-        {...EmptyStates.noRecords.props}
         description="输入描述或选择模板，开始创作"
         icon={
           <PictureOutlined
@@ -60,17 +57,19 @@ export function GenerateResultView({
     );
   }
 
+  const nextAr = AR_OPTIONS[(AR_OPTIONS.indexOf(ar as typeof AR_OPTIONS[number]) + 1) % AR_OPTIONS.length];
+  const nextProvider = PROVIDER_NAMES[(PROVIDER_NAMES.indexOf(provider as typeof PROVIDER_NAMES[number]) + 1) % PROVIDER_NAMES.length];
+  const nextQuality = quality === "2k" ? "normal" : "2k";
+
   return (
-    <div className="result-container">
-      {/* Loading state */}
+    <div className={styles.container}>
       {loading && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="result-loading">
-          <div className="result-loading__skeleton" style={{ height: 380 }} />
-          <p className="result-loading__text">正在生成中...</p>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={styles.loading}>
+          <div className={`shimmer ${styles.loadingSkeleton}`} style={{ height: 380 }} />
+          <p className={styles.loadingText}>正在生成中...</p>
         </motion.div>
       )}
 
-      {/* Result */}
       <AnimatePresence>
         {result && !loading && (
           <motion.div
@@ -78,45 +77,35 @@ export function GenerateResultView({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
-            <div className="result-actions">
+            <div className={styles.actions}>
               <Tooltip title="编辑 Prompt 重新生成">
-                <Button
-                  size="small"
-                  icon={<EditOutlined />}
-                  onClick={() => textareaRef?.current?.focus()}
-                >
+                <Button size="small" icon={<EditOutlined />} onClick={() => textareaRef?.current?.focus()}>
                   编辑
                 </Button>
               </Tooltip>
-              <Tooltip
-                title={`换比例 (${AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length]})`}
-              >
+              <Tooltip title={`换比例 (${nextAr})`}>
                 <Button
                   size="small"
                   icon={<SwapOutlined />}
-                  onClick={() => onRegenerate({ ar: AR_OPTIONS[(AR_OPTIONS.indexOf(ar) + 1) % AR_OPTIONS.length] })}
+                  onClick={() => onRegenerate({ ar: nextAr })}
                 >
                   换比例
                 </Button>
               </Tooltip>
-              <Tooltip
-                title={`换 Provider (${provider === "openai" ? "Anthropic" : "OpenAI"})`}
-              >
+              <Tooltip title={`换源 (${nextProvider})`}>
                 <Button
                   size="small"
                   icon={<SwapOutlined />}
-                  onClick={() => onRegenerate({ provider: provider === "openai" ? "anthropic" : "openai" })}
+                  onClick={() => onRegenerate({ provider: nextProvider })}
                 >
                   换源
                 </Button>
               </Tooltip>
-              <Tooltip
-                title={`换质量 (${quality === "2k" ? "标准" : "高清"})`}
-              >
+              <Tooltip title={`换质量 (${nextQuality === "2k" ? "高清" : "标准"})`}>
                 <Button
                   size="small"
                   icon={<SwapOutlined />}
-                  onClick={() => onRegenerate({ quality: quality === "2k" ? "normal" : "2k" })}
+                  onClick={() => onRegenerate({ quality: nextQuality })}
                 >
                   换质量
                 </Button>
@@ -127,7 +116,7 @@ export function GenerateResultView({
               src={`data:image/png;base64,${result.image}`}
               alt="生成结果"
               showDownload
-              onDownload={() => handleDownload(result.image)}
+              onDownload={() => downloadImage(result.image)}
               actions={
                 <>
                   <Button
@@ -145,12 +134,11 @@ export function GenerateResultView({
                 </>
               }
               metadata={
-                <div className="result-metadata">
+                <div className={styles.metadata}>
                   <ProviderBadge provider={result.provider} />
-                  <Tag className="result-tag">{result.model}</Tag>
-                  <span className="result-duration">
-                    <ClockCircleOutlined />
-                    {(result.duration_ms / 1000).toFixed(1)}s
+                  <Tag className={styles.tag}>{result.model}</Tag>
+                  <span className={styles.duration}>
+                    <ClockCircleOutlined /> {formatDuration(result.duration_ms)}
                   </span>
                 </div>
               }
@@ -158,55 +146,6 @@ export function GenerateResultView({
           </motion.div>
         )}
       </AnimatePresence>
-
-      <style jsx>{`
-        .result-container {
-          min-height: 200px;
-        }
-        .result-loading {
-          margin-bottom: 20px;
-        }
-        .result-loading__skeleton {
-          border-radius: var(--radius-md);
-        }
-        .result-loading__text {
-          text-align: center;
-          margin-top: 10px;
-          font-size: 13px;
-          color: var(--text-secondary);
-        }
-
-        .result-actions {
-          display: flex;
-          gap: 6px;
-          margin-bottom: 10px;
-          flex-wrap: wrap;
-        }
-        .result-actions :global(.ant-btn) {
-          border-radius: 7px !important;
-        }
-
-        .result-metadata {
-          display: flex;
-          justify-content: center;
-          gap: 8px;
-          flex-wrap: wrap;
-          padding: 6px 10px;
-        }
-        .result-tag {
-          margin: 0 !important;
-          font-size: 10px !important;
-          background: var(--bg-elevated) !important;
-          border-color: var(--border-subtle) !important;
-        }
-        .result-duration {
-          font-size: 12px;
-          color: var(--text-secondary);
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-      `}</style>
     </div>
   );
 }

@@ -108,7 +108,7 @@ export function ImageCard({
     position: 'relative',
     overflow: 'hidden',
     borderRadius: typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius,
-    border: '1px solid rgba(255, 255, 255, 0.06)',
+    border: '1px solid var(--border-subtle)',
     background: 'var(--bg-surface, #1e1e2e)',
     cursor: previewable ? 'pointer' : 'default',
     transition: 'all 0.2s ease',

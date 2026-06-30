@@ -1,0 +1,96 @@
+/* HistorySidebar 组件样式 */
+
+.sidebar {
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.body {
+  flex: 1;
+  overflow: auto;
+  padding: 6px 8px;
+}
+
+.footer {
+  padding: 6px 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.item {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: all 0.12s;
+  background: var(--bg-elevated);
+}
+
+.item:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-surface);
+}
+
+.itemPrompt {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 4px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.itemTime {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.itemDelete {
+  font-size: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.itemDelete:hover {
+  color: var(--color-error);
+}
+
+.toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 18px;
+  height: 44px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left 0.2s ease;
+  border-left: none;
+}

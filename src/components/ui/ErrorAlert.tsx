@@ -37,17 +37,15 @@ export function ErrorAlert({
     <Alert
       type="error"
       message={message}
-      description={
-        description || (onRetry ? <span>{description}</span> : undefined)
-      }
+      description={description}
       closable={closable}
       onClose={onClose}
       showIcon
       className={className}
       style={{
         borderRadius: 12,
-        border: '1px solid rgba(239, 68, 68, 0.3)',
-        background: 'rgba(239, 68, 68, 0.1)',
+        border: '1px solid var(--color-error-soft)',
+        background: 'var(--color-error-soft)',
         ...props.style,
       }}
       action={

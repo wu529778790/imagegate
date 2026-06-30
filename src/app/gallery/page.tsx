@@ -2,38 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { Typography, Empty, Tag, Pagination, Button, message, Space, Tooltip } from "antd";
-import { PictureOutlined, CloudSyncOutlined, GithubOutlined, CheckCircleOutlined, SyncOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons";
+import { PictureOutlined, CloudSyncOutlined, GithubOutlined } from "@ant-design/icons";
 import { useSession } from "next-auth/react";
 import { ImageGrid, EmptyState, LoadingGrid, EmptyStates, HeaderSection, ProviderBadge } from "@/components/ui";
-import { formatDuration } from "@/lib/ui";
 import { useAuthModal } from "@/components/AuthContext";
+import type { ImageItem, SyncStatus } from "@/types";
 
 const { Text } = Typography;
-
-interface ImageItem {
-  id: number;
-  imageUrl: string;
-  prompt: string;
-  provider: string;
-  model: string;
-  createdAt: string;
-  generationId: number;
-  generationStatus: string;
-  generationDuration: number;
-  githubPath?: string;
-}
-
-interface SyncStatus {
-  user: {
-    totalImages: number;
-    syncedImages: number;
-    pendingImages: number;
-  };
-  queue: {
-    pending: number;
-    processing: boolean;
-  };
-}
 
 export default function GalleryPage() {
   const { data: session, status } = useSession();
@@ -74,9 +49,18 @@ export default function GalleryPage() {
         body: JSON.stringify({ action: "sync-image", imageId }),
       });
       const result = await res.json();
-      if (result.success) { message.success("已同步到 GitHub"); fetchImages(pagination.page); fetchSyncStatus(); }
-      else { message.error(result.error || "同步失败"); }
-    } catch { message.error("同步失败"); } finally { setSyncing(false); }
+      if (result.success) {
+        message.success("已同步到 GitHub");
+        fetchImages(pagination.page);
+        fetchSyncStatus();
+      } else {
+        message.error(result.error || "同步失败");
+      }
+    } catch {
+      message.error("同步失败");
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const handleRetryAll = async () => {
@@ -88,29 +72,32 @@ export default function GalleryPage() {
         body: JSON.stringify({ action: "retry-all" }),
       });
       const result = await res.json();
-      if (result.success) { message.success("已加入同步队列"); fetchSyncStatus(); }
-      else { message.error(result.error || "操作失败"); }
-    } catch { message.error("操作失败"); } finally { setSyncing(false); }
+      if (result.success) {
+        message.success("已加入同步队列");
+        fetchSyncStatus();
+      } else {
+        message.error(result.error || "操作失败");
+      }
+    } catch {
+      message.error("操作失败");
+    } finally {
+      setSyncing(false);
+    }
   };
 
   useEffect(() => {
     if (status === "authenticated") {
-      const timer = setTimeout(() => { fetchImages(); fetchSyncStatus(); }, 0);
-      return () => clearTimeout(timer);
+      fetchImages();
+      fetchSyncStatus();
     }
   }, [status]);
 
-  // Show empty state for unauthenticated users
   if (status === "unauthenticated") {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={
-            <span style={{ color: "var(--text-muted)" }}>
-              登录后查看您保存的图片
-            </span>
-          }
+          description={<span style={{ color: "var(--text-muted)" }}>登录后查看您保存的图片</span>}
         >
           <Button
             type="primary"
@@ -126,7 +113,6 @@ export default function GalleryPage() {
 
   return (
     <div style={{ padding: "20px 20px", maxWidth: 1400, margin: "0 auto" }}>
-      {/* Header */}
       <HeaderSection
         title="我的图片"
         icon={<PictureOutlined />}
@@ -150,49 +136,53 @@ export default function GalleryPage() {
         marginBottom={24}
       />
 
-      {/* Images Grid */}
       {loading ? (
         <LoadingGrid cols={{ xs: 1, sm: 2, md: 3, lg: 4 }} count={12} />
       ) : images.length === 0 ? (
-        <EmptyState {...EmptyStates.noImages.props} />
+        <EmptyState {...EmptyStates.noImages} />
       ) : (
         <>
           <ImageGrid
-            items={images.map(img => ({
-              src: img.imageUrl,
+            items={images.map((img) => ({
+              src: img.imageUrl!,
               alt: img.prompt,
               showDownload: true,
-              onDownload: (e) => {
+              onDownload: (e: React.MouseEvent) => {
                 e.stopPropagation();
                 const link = document.createElement("a");
-                link.href = img.imageUrl;
+                link.href = img.imageUrl!;
                 link.download = `imagegate-${img.id}.png`;
                 link.click();
               },
               showSync: true,
               isSynced: !!img.githubPath,
-              onSync: img.githubPath ? undefined : (e) => { e.stopPropagation(); handleSyncImage(img.id); },
+              onSync: img.githubPath ? undefined : (e: React.MouseEvent) => { e.stopPropagation(); handleSyncImage(img.id); },
               metadata: (
                 <>
-                  <Typography.Text ellipsis={{ tooltip: img.prompt }} style={{ fontSize: 13, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
+                  <Text ellipsis={{ tooltip: img.prompt }} style={{ fontSize: 13, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
                     {img.prompt}
-                  </Typography.Text>
+                  </Text>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
                     <ProviderBadge provider={img.provider} size="small" />
-                    <Tag style={{ margin: 0, fontSize: 10, background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>{img.model}</Tag>
-                    {img.generationDuration && (
-                      <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: "auto" }}>{formatDuration(img.generationDuration)}</span>
+                    {img.model && (
+                      <Tag style={{ margin: 0, fontSize: 10, background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>{img.model}</Tag>
                     )}
                   </div>
                 </>
               ),
             }))}
-            emptyState={<EmptyState {...EmptyStates.noImages.props} />}
+            emptyState={<EmptyState {...EmptyStates.noImages} />}
             cols={{ xs: 1, sm: 2, md: 3, lg: 4 }}
           />
           {pagination.totalPages > 1 && (
             <div style={{ marginTop: 24, textAlign: "center" }}>
-              <Pagination current={pagination.page} total={pagination.total} pageSize={pagination.pageSize} onChange={(p) => fetchImages(p)} showSizeChanger={false} />
+              <Pagination
+                current={pagination.page}
+                total={pagination.total}
+                pageSize={pagination.pageSize}
+                onChange={fetchImages}
+                showSizeChanger={false}
+              />
             </div>
           )}
         </>

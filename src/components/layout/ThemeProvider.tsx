@@ -3,6 +3,7 @@
 import { ConfigProvider } from "antd";
 import { theme as antTheme } from "antd";
 import { AuthProvider } from "@/components/AuthContext";
+import { SkipLink } from "@/components/ui/SkipLink";
 import { useTheme } from "@/components/ThemeContext";
 
 const DARK_TOKENS = {
@@ -41,13 +42,7 @@ export function ThemeAwareProviders({ children }: { children: React.ReactNode })
       }}
     >
       <AuthProvider>
-        <a
-          href="#main-content"
-          className="sr-only"
-          style={{ position: "absolute", top: "-100%" }}
-        >
-          跳到主要内容
-        </a>
+        <SkipLink targetId="main-content" />
         <main
           id="main-content"
           style={{

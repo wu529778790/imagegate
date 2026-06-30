@@ -1,0 +1,86 @@
+/* TemplateSelector 组件样式 */
+
+.templateSelector {
+  margin-bottom: var(--space-3);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.templateTab {
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.templateTab:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.templateTabActive {
+  border-color: var(--border-accent);
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.batchToggle {
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.batchToggleActive {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.listWrapper {
+  overflow: hidden;
+}
+
+.list {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  padding-top: var(--space-1-5);
+}
+
+.chip {
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: all var(--transition-fast);
+}
+
+.chip:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}

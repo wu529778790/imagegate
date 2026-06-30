@@ -5,6 +5,7 @@ import { Progress } from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
 import { ImageCard } from "@/components/ui/ImageCard";
 import type { BatchItem } from "./hooks/useBatchGenerate";
+import styles from "./BatchResults.module.css";
 
 interface BatchResultsProps {
   items: BatchItem[];
@@ -28,20 +29,20 @@ export function BatchResults({
   };
 
   return (
-    <div className="batch-results">
+    <div className={styles.results}>
       {running && (
-        <div className="batch-progress">
+        <div className={styles.progress}>
           <Progress
             percent={Math.round((done / total) * 100)}
             strokeColor="var(--accent-primary)"
             size="small"
           />
-          <div className="batch-progress__text">
+          <div className={styles.progressText}>
             {done}/{total} 完成
           </div>
         </div>
       )}
-      <div className="batch-grid">
+      <div className={styles.grid}>
         {items.map((item, idx) => (
           <motion.div
             key={idx}
@@ -64,9 +65,9 @@ export function BatchResults({
                   : undefined
               }
               metadata={
-                <div className="batch-item-meta">
-                  <div className="batch-item-prompt">{item.prompt}</div>
-                  <div className="batch-item-status">
+                <div className={styles.itemMeta}>
+                  <div className={styles.itemPrompt}>{item.prompt}</div>
+                  <div className={styles.itemStatus}>
                     {item.status === "success" && (
                       <CheckCircleOutlined
                         style={{
@@ -76,10 +77,10 @@ export function BatchResults({
                       />
                     )}
                     {item.status === "error" && (
-                      <span className="batch-error">{item.error}</span>
+                      <span className={styles.error}>{item.error}</span>
                     )}
                     {item.status === "success" && item.result && (
-                      <span className="batch-time">
+                      <span className={styles.time}>
                         {(item.result.duration_ms / 1000).toFixed(1)}s
                       </span>
                     )}
@@ -90,53 +91,6 @@ export function BatchResults({
           </motion.div>
         ))}
       </div>
-
-      <style jsx>{`
-        .batch-results {
-          margin-bottom: 20px;
-        }
-        .batch-progress {
-          margin-bottom: 12px;
-        }
-        .batch-progress__text {
-          text-align: center;
-          font-size: 12px;
-          color: var(--text-secondary);
-          margin-top: 4px;
-        }
-        .batch-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 10px;
-        }
-        .batch-item-meta {
-          padding: 4px 0;
-        }
-        .batch-item-prompt {
-          font-size: 11px;
-          color: var(--text-secondary);
-          line-height: 1.4;
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          margin-bottom: 4px;
-        }
-        .batch-item-status {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .batch-error {
-          font-size: 10px;
-          color: var(--color-error);
-        }
-        .batch-time {
-          font-size: 10px;
-          color: var(--text-muted);
-          margin-left: auto;
-        }
-      `}</style>
     </div>
   );
 }
