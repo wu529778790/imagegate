@@ -17,14 +17,30 @@ export async function GET(request: NextRequest) {
   const pageSize = parseInt(searchParams.get("pageSize") || "20");
   const offset = (page - 1) * pageSize;
 
+  // Filters
+  const status = searchParams.get("status");
+  const search = searchParams.get("search");
+
   const db = await getDb();
 
-  // Get total count
-  const total = (db.prepare(
-    "SELECT COUNT(*) as count FROM images WHERE user_id = ?"
-  ).get(userId) as { count: number }).count;
+  const conditions = ["i.user_id = ?"];
+  const params: unknown[] = [userId];
 
-  // Get images with pagination
+  if (status && status !== "all") {
+    conditions.push("gr.status = ?");
+    params.push(status);
+  }
+  if (search) {
+    conditions.push("i.prompt LIKE ?");
+    params.push(`%${search}%`);
+  }
+
+  const whereClause = `WHERE ${conditions.join(" AND ")}`;
+
+  const total = (db.prepare(
+    `SELECT COUNT(*) as count FROM images i LEFT JOIN generation_records gr ON i.generation_id = gr.id ${whereClause}`
+  ).get(...params) as { count: number }).count;
+
   const images = db.prepare(`
     SELECT
       i.id,
@@ -34,14 +50,15 @@ export async function GET(request: NextRequest) {
       i.model,
       i.created_at,
       i.generation_id,
+      i.github_path,
       gr.status as generation_status,
       gr.duration_ms as generation_duration
     FROM images i
     LEFT JOIN generation_records gr ON i.generation_id = gr.id
-    WHERE i.user_id = ?
+    ${whereClause}
     ORDER BY i.created_at DESC
     LIMIT ? OFFSET ?
-  `).all(userId, pageSize, offset) as Array<{
+  `).all(...params, pageSize, offset) as Array<{
     id: number;
     local_path: string;
     prompt: string;
@@ -49,6 +66,7 @@ export async function GET(request: NextRequest) {
     model: string;
     created_at: string;
     generation_id: number;
+    github_path: string | null;
     generation_status: string;
     generation_duration: number;
   }>;
@@ -64,6 +82,7 @@ export async function GET(request: NextRequest) {
     generationId: img.generation_id,
     generationStatus: img.generation_status,
     generationDuration: img.generation_duration,
+    githubPath: img.github_path,
   }));
 
   return NextResponse.json({

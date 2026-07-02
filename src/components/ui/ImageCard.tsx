@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Button, message, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import {
   DownloadOutlined,
   SyncOutlined,
@@ -62,6 +62,12 @@ export interface ImageCardProps {
   tags?: Array<{ label: string; color?: string }>;
   /** Duration text */
   duration?: string;
+  /** Status badge rendered in the top-left corner */
+  statusBadge?: React.ReactNode;
+  /** Selected state — highlights the card border (drag-select) */
+  selected?: boolean;
+  /** Click handler for the entire card (e.g. open detail modal) */
+  onClick?: () => void;
 }
 
 export const ImageCard = React.memo(function ImageCard({
@@ -88,6 +94,9 @@ export const ImageCard = React.memo(function ImageCard({
   lazy = true,
   tags,
   duration,
+  statusBadge,
+  selected = false,
+  onClick,
 }: ImageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -109,11 +118,16 @@ export const ImageCard = React.memo(function ImageCard({
 
   return (
     <div
-      className={`${styles.card} ${previewable ? styles.cardPreviewable : ''} ${className || ''}`}
+      className={`${styles.card} ${previewable ? styles.cardPreviewable : ''} ${selected ? styles.cardSelected : ''} ${onClick ? styles.cardClickable : ''} ${className || ''}`}
       style={{ borderRadius: borderRadiusValue, ...style }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
     >
+      {statusBadge && <div className={styles.statusBadge}>{statusBadge}</div>}
       {/* Image */}
       <div className={styles.imageWrap}>
         {!imageLoaded && src && (

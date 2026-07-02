@@ -10,6 +10,7 @@ export { Card, CardHeader, CardBody, CardFooter } from "./Card";
 // 功能组件
 export { LoadingCard, LoadingGrid } from "./LoadingCard";
 export { EmptyState, EmptyStates } from "./EmptyState";
+export type { EmptyStateProps, EmptyStateConfig } from "./EmptyState";
 export { ImageCard, CompactImageCard } from "./ImageCard";
 export { LazyImage, ProgressiveImage } from "./LazyImage";
 export { ImageGrid } from "./ImageGrid";
@@ -19,3 +20,7 @@ export { TagBadge, ProviderBadge, StatusBadge } from "./TagBadge";
 export { HeaderSection } from "./HeaderSection";
 export { StatsCard, StatsGrid } from "./StatsCard";
 export { SkipLink } from "./SkipLink";
+export { FilterBar } from "./FilterBar";
+export { SearchInput } from "./SearchInput";
+export type { FilterOption, FilterBarProps } from "./FilterBar";
+export type { SearchInputProps } from "./SearchInput";

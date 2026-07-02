@@ -36,6 +36,23 @@ export interface RecordsResponse {
   total: number;
 }
 
+/**
+ * Query parameters accepted by GET /api/records.
+ * Shared between the route handler and the useFilteredRecords SWR hook.
+ */
+export interface RecordFilters {
+  /** Filter by generation status. `"all"` = no status filter. */
+  status?: "all" | "success" | "failed" | "pending";
+  /** Filter by provider name (e.g. `"openai"`). */
+  provider?: string;
+  /** Case-insensitive LIKE match on the prompt text. */
+  search?: string;
+  /** 1-based page number. */
+  page?: number;
+  /** Number of records per page. */
+  pageSize?: number;
+}
+
 // ---------------------------------------------------------------------------
 // Images API
 // ---------------------------------------------------------------------------

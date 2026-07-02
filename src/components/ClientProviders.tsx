@@ -21,6 +21,7 @@ import { SWRConfig } from "swr";
 import SessionProvider from "@/components/SessionProvider";
 import { ThemeProvider } from "@/components/ThemeContext";
 import { AppHeader, ThemeAwareProviders } from "@/components/layout";
+import { Lightbox } from "@/components/lightbox/Lightbox";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -49,6 +50,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
             <div className="mesh-bg" />
             <AppHeader />
             <ThemeAwareProviders>{children}</ThemeAwareProviders>
+            <Lightbox />
           </AntdRegistry>
         </SWRConfig>
       </ThemeProvider>

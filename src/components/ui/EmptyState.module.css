@@ -13,6 +13,13 @@
   margin-bottom: 12px;
 }
 
+.title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
 .description {
   color: var(--text-secondary);
 }

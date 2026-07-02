@@ -245,6 +245,18 @@ function initSchema(db: Database) {
       FOREIGN KEY (user_id) REFERENCES users(id),
       FOREIGN KEY (generation_id) REFERENCES generation_records(id)
     );
+
+    CREATE TABLE IF NOT EXISTS favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      record_id INTEGER NOT NULL,
+      collection TEXT NOT NULL DEFAULT '默认',
+      created_at DATETIME DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (record_id) REFERENCES generation_records(id),
+      UNIQUE(user_id, record_id, collection)
+    );
+    CREATE INDEX IF NOT EXISTS idx_favorites_user_collection ON favorites(user_id, collection);
   `);
 
   // Clean up records stuck in 'pending' for more than 10 minutes
@@ -357,6 +369,7 @@ export interface GenerationRecord {
 export interface RecordFilters {
   provider?: string;
   status?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
 }
@@ -376,6 +389,10 @@ export async function getRecords(filters: RecordFilters = {}): Promise<{
   if (filters.status) {
     conditions.push("status = ?");
     params.push(filters.status);
+  }
+  if (filters.search) {
+    conditions.push("prompt LIKE ?");
+    params.push(`%${filters.search}%`);
   }
 
   const where =
@@ -562,5 +579,163 @@ export async function setSetting(key: string, value: string): Promise<void> {
   db
     .prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)")
     .run(key, valueToStore);
+  db.saveToDisk();
+}
+
+// ---------------------------------------------------------------------------
+// Favorites
+// ---------------------------------------------------------------------------
+
+export interface FavoriteRecord {
+  id: number;
+  record_id: number;
+  collection: string;
+  created_at: string;
+}
+
+export async function listFavorites(
+  userId: number,
+  collection?: string,
+): Promise<FavoriteRecord[]> {
+  const db = await getDb();
+  if (collection) {
+    return db
+      .prepare(
+        "SELECT id, record_id, collection, created_at FROM favorites WHERE user_id = ? AND collection = ? ORDER BY created_at DESC",
+      )
+      .all(userId, collection) as unknown as FavoriteRecord[];
+  }
+  return db
+    .prepare(
+      "SELECT id, record_id, collection, created_at FROM favorites WHERE user_id = ? ORDER BY created_at DESC",
+    )
+    .all(userId) as unknown as FavoriteRecord[];
+}
+
+/** List all distinct collections for a user. */
+export async function listFavoriteCollections(
+  userId: number,
+): Promise<string[]> {
+  const db = await getDb();
+  const rows = db
+    .prepare(
+      "SELECT collection, COUNT(*) as count FROM favorites WHERE user_id = ? GROUP BY collection ORDER BY MIN(created_at) ASC",
+    )
+    .all(userId) as unknown as Array<{ collection: string; count: number }>;
+  return rows.map((r) => r.collection);
+}
+
+export async function isFavorite(
+  userId: number,
+  recordId: number,
+  collection: string,
+): Promise<boolean> {
+  const db = await getDb();
+  const row = db
+    .prepare(
+      "SELECT 1 FROM favorites WHERE user_id = ? AND record_id = ? AND collection = ?",
+    )
+    .get(userId, recordId, collection);
+  return !!row;
+}
+
+export async function addFavorite(
+  userId: number,
+  recordId: number,
+  collection: string,
+): Promise<void> {
+  const db = await getDb();
+  db.prepare(
+    "INSERT OR IGNORE INTO favorites (user_id, record_id, collection) VALUES (?, ?, ?)",
+  ).run(userId, recordId, collection);
+  db.saveToDisk();
+}
+
+export async function removeFavorite(
+  userId: number,
+  recordId: number,
+  collection: string,
+): Promise<void> {
+  const db = await getDb();
+  db.prepare(
+    "DELETE FROM favorites WHERE user_id = ? AND record_id = ? AND collection = ?",
+  ).run(userId, recordId, collection);
+  db.saveToDisk();
+}
+
+export async function createCollection(
+  userId: number,
+  name: string,
+): Promise<void> {
+  // No-op if the user passes an empty string; the table's default takes care of the empty case.
+  if (!name.trim()) return;
+  const db = await getDb();
+  // We can't have a collection with no favs. The collection name is stored only as rows.
+  // To expose the name in listFavoriteCollections when there are no favs, we instead seed
+  // a no-op placeholder row with a negative record id (reserved sentinel). Easier alternative:
+  // Just upsert a "seed" row. But to keep schema clean, we simply allow collection names to
+  // appear as soon as a fav is added — and expose a settings key for collection list.
+  // Since the plan keeps Phase 4 simple, we rely on the seeded settings key for naming.
+  const existing = (db
+    .prepare("SELECT value FROM settings WHERE key = ?")
+    .get(`favorites:collections:${userId}`) as { value: string } | undefined);
+  const collections: string[] = existing?.value ? JSON.parse(existing.value) : [];
+  if (!collections.includes(name)) {
+    collections.push(name);
+    db.prepare(
+      "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+    ).run(`favorites:collections:${userId}`, JSON.stringify(collections));
+  }
+  db.saveToDisk();
+}
+
+export async function renameCollection(
+  userId: number,
+  oldName: string,
+  newName: string,
+): Promise<void> {
+  if (!newName.trim()) return;
+  const db = await getDb();
+  db.prepare(
+    "UPDATE favorites SET collection = ? WHERE user_id = ? AND collection = ?",
+  ).run(newName, userId, oldName);
+  // Update persisted collection list
+  const existing = (db
+    .prepare("SELECT value FROM settings WHERE key = ?")
+    .get(`favorites:collections:${userId}`) as { value: string } | undefined);
+  const collections: string[] = existing?.value ? JSON.parse(existing.value) : [];
+  const idx = collections.indexOf(oldName);
+  if (idx >= 0) {
+    // Avoid duplicates when the target name already exists
+    if (!collections.includes(newName)) {
+      collections[idx] = newName;
+    } else {
+      collections.splice(idx, 1);
+    }
+    db.prepare(
+      "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+    ).run(`favorites:collections:${userId}`, JSON.stringify(collections));
+  }
+  db.saveToDisk();
+}
+
+export async function deleteCollection(
+  userId: number,
+  name: string,
+): Promise<void> {
+  const db = await getDb();
+  db.prepare(
+    "DELETE FROM favorites WHERE user_id = ? AND collection = ?",
+  ).run(userId, name);
+  // Remove from persisted list
+  const existing = (db
+    .prepare("SELECT value FROM settings WHERE key = ?")
+    .get(`favorites:collections:${userId}`) as { value: string } | undefined);
+  if (existing?.value) {
+    const collections: string[] = JSON.parse(existing.value).filter((c: string) => c !== name);
+    db.prepare(
+      "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+    ).run(`favorites:collections:${userId}`, JSON.stringify(collections));
+  }
   db.saveToDisk();
 }

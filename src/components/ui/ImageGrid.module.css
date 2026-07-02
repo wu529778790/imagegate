@@ -1,8 +1,15 @@
-/* ImageGrid — 图片网格组件样式 */
+/* ImageGrid — pure CSS responsive grid. No runtime resize listener. */
 
 .grid {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--ig-col, 240px), 1fr));
+  gap: var(--ig-gap, 16px);
 }
+
+/* Column width breakpoints — override --ig-col per page via inline style. */
+@media (max-width: 480px)  { .grid { --ig-col: 160px; } }
+@media (min-width: 1280px) { .grid { --ig-col: 260px; } }
+@media (min-width: 1600px) { .grid { --ig-col: 280px; } }
 
 .gridItem {
   opacity: 0;

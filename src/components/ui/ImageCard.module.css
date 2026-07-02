@@ -65,6 +65,23 @@
   padding: 10px 12px;
 }
 
+.cardSelected {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+.cardClickable {
+  cursor: pointer;
+}
+
+.statusBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .syncedIcon {
   color: #22c55e;
 }

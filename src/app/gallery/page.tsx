@@ -1,51 +1,49 @@
-/**
- * GalleryPage — User's saved images gallery.
- *
- * Phase 3 refactoring:
- * - Uses SWR hooks for images and sync status (no raw fetch)
- * - Auth check via AuthContext (client-side)
- * - apiClient for sync mutations
- * - No silent catch blocks
- */
+"use client";
 
-'use client';
-
-import { useState, useEffect } from "react";
-import { App, Typography, Empty, Tag, Pagination, Button, Space, Tooltip } from "antd";
-import { PictureOutlined, CloudSyncOutlined, GithubOutlined } from "@ant-design/icons";
+import React, { useMemo } from "react";
+import { Pagination, Button, Space } from "antd";
+import { GithubOutlined, CloudSyncOutlined, PictureOutlined } from "@ant-design/icons";
 import { useSession } from "next-auth/react";
-import dynamic from "next/dynamic";
+import { App } from "antd";
 import { useAuthModal } from "@/components/AuthContext";
-import { HeaderSection, EmptyState, EmptyStates, ProviderBadge } from "@/components/ui";
+import {
+  HeaderSection,
+  EmptyState,
+  EmptyStates,
+  FilterBar,
+  SearchInput,
+  ImageGrid,
+} from "@/components/ui";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { useImages } from "@/lib/api/hooks";
+import { GalleryCard } from "@/components/gallery/GalleryCard";
+import { GallerySkeleton } from "@/components/gallery/GallerySkeleton";
+import { DetailModal } from "@/components/gallery/DetailModal";
+import { useFilteredImages } from "@/lib/api/hooks";
+import { useGalleryStore } from "@/stores/gallery-store";
+import { GALLERY_STATUS_OPTIONS } from "@/types/images";
 import { apiClient } from "@/lib/api/client";
-import type { ImageItem, SyncStatus } from "@/types";
-
-// Lazy-load heavy components ( reduce initial bundle )
-const ImageGrid = dynamic(() => import("@/components/ui/ImageGrid").then((m) => ({ default: m.ImageGrid })), { ssr: false });
-const LoadingGrid = dynamic(() => import("@/components/ui/LoadingCard").then((m) => ({ default: m.LoadingGrid })), { ssr: false });
-
-const { Text } = Typography;
+import type { SyncStatus } from "@/types";
+import styles from "./Gallery.module.css";
 
 export default function GalleryPage() {
   const { message } = App.useApp();
   const { data: session, status } = useSession();
   const authModal = useAuthModal();
-  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [page, setPage] = useState(1);
 
-  // SWR for images data
-  const { data: imagesData, isLoading: loading, mutate: refreshImages } = useImages(page);
-  const images: ImageItem[] = imagesData?.images ?? [];
-  const pagination = imagesData?.pagination ?? { page: 1, pageSize: 20, total: 0, totalPages: 0 };
+  const { statusFilter, search, page, setSearch, setPage, setStatusFilter } = useGalleryStore();
 
-  const user = session?.user as { id?: string; username?: string; avatarUrl?: string } | undefined;
+  const { data, isLoading, mutate } = useFilteredImages(
+    status === "authenticated"
+      ? { status: statusFilter, search, page, pageSize: 20 }
+      : null,
+  );
 
-  // Fetch sync status ( one-time, not cached by SWR since it's rare )
-  // Failures are silent: UI gracefully hides the sync block when status is null,
-  // and a red toast on every visit is just noise (e.g. 401 when not logged in).
+  const images = data?.images ?? [];
+  const pagination = data?.pagination ?? { page: 1, pageSize: 20, total: 0, totalPages: 0 };
+
+  const [syncStatus, setSyncStatus] = React.useState<SyncStatus | null>(null);
+  const [syncing, setSyncing] = React.useState(false);
+
   const fetchSyncStatus = async () => {
     try {
       const data = await apiClient.get<SyncStatus>("/api/sync");
@@ -55,26 +53,12 @@ export default function GalleryPage() {
     }
   };
 
-  const handleSyncImage = async (imageId: number) => {
-    setSyncing(true);
-    try {
-      const result = await apiClient.post<{ success: boolean; error?: string }>("/api/sync", {
-        action: "sync-image",
-        imageId,
-      });
-      if (result.success) {
-        message.success("已同步到 GitHub");
-        refreshImages();
-        fetchSyncStatus();
-      } else {
-        message.error(result.error || "同步失败");
-      }
-    } catch (err: unknown) {
-      message.error(err instanceof Error ? err.message : "同步失败");
-    } finally {
-      setSyncing(false);
+  React.useEffect(() => {
+    if (status === "authenticated") {
+      fetchSyncStatus();
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   const handleRetryAll = async () => {
     setSyncing(true);
@@ -95,30 +79,26 @@ export default function GalleryPage() {
     }
   };
 
-  // Initial sync status fetch on auth (must be in useEffect, not render phase)
-  useEffect(() => {
-    if (status === "authenticated" && !syncStatus) {
-      fetchSyncStatus();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  const items = useMemo(
+    () =>
+      images.map((img) => ({
+        key: String(img.id),
+        src: img.imageUrl,
+        alt: img.prompt,
+      })),
+    [images],
+  );
+
+  const siblingUrls = useMemo(() => images.map((img) => img.imageUrl), [images]);
 
   if (status === "unauthenticated") {
     return (
       <PageLayout>
-        <div style={{ textAlign: "center", padding: 40 }}>
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={<span style={{ color: "var(--text-muted)" }}>登录后查看您保存的图片</span>}
-          >
-            <Button
-              type="primary"
-              onClick={() => authModal.openAuthModal({ action: "查看图片库" })}
-              style={{ borderRadius: 8 }}
-            >
-              立即登录
-            </Button>
-          </Empty>
+        <div className={styles.loginPrompt}>
+          <EmptyState
+            {...EmptyStates.loginRequired}
+            action={<Button type="primary" onClick={() => authModal.requireAuth({ action: "gallery" })}>立即登录</Button>}
+          />
         </div>
       </PageLayout>
     );
@@ -127,79 +107,92 @@ export default function GalleryPage() {
   return (
     <PageLayout>
       <HeaderSection
-        title="我的图片"
+        title="相册"
         icon={<PictureOutlined />}
-        subtitle={user?.username ? `@${user.username}` : undefined}
+        subtitle={syncStatus ? `共 ${syncStatus.user.totalImages} 张` : undefined}
         actions={
           syncStatus && (
             <Space>
-              <Tooltip title={`${syncStatus.user.syncedImages} 已同步 / ${syncStatus.user.pendingImages} 待同步`}>
-                <Tag icon={<GithubOutlined />} style={{ background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>
-                  {syncStatus.user.syncedImages} / {syncStatus.user.totalImages}
-                </Tag>
-              </Tooltip>
+              <GithubOutlined style={{ color: "var(--text-muted)" }} />
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                {syncStatus.user.syncedImages} / {syncStatus.user.totalImages} 已同步
+              </span>
               {syncStatus.user.pendingImages > 0 && (
-                <Button icon={<CloudSyncOutlined />} onClick={handleRetryAll} loading={syncing} size="small" style={{ borderRadius: 8 }}>
+                <Button
+                  icon={<CloudSyncOutlined />}
+                  onClick={handleRetryAll}
+                  loading={syncing}
+                  size="small">
                   同步全部
                 </Button>
               )}
             </Space>
           )
         }
-        marginBottom={24}
       />
 
-      {loading ? (
-        <LoadingGrid cols={{ xs: 1, sm: 2, md: 3, lg: 4 }} count={12} />
+      <div className={styles.toolbar}>
+        <div className={styles.toolbarFilters}>
+          <FilterBar
+            options={GALLERY_STATUS_OPTIONS}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            ariaLabel="按状态筛选"
+          />
+        </div>
+        <div className={styles.toolbarSearch}>
+          <SearchInput
+            value={search}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+            placeholder="搜索提示词…"
+          />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <GallerySkeleton count={12} />
       ) : images.length === 0 ? (
         <EmptyState {...EmptyStates.noImages} />
       ) : (
         <>
           <ImageGrid
-            items={images.map((img) => ({
-              src: img.imageUrl!,
-              alt: img.prompt,
-              showDownload: true,
-              onDownload: (e: React.MouseEvent) => {
-                e.stopPropagation();
-                const link = document.createElement("a");
-                link.href = img.imageUrl!;
-                link.download = `imagegate-${img.id}.png`;
-                link.click();
-              },
-              showSync: true,
-              isSynced: !!img.githubPath,
-              onSync: img.githubPath ? undefined : (e: React.MouseEvent) => { e.stopPropagation(); handleSyncImage(img.id); },
-              metadata: (
-                <>
-                  <Text ellipsis={{ tooltip: img.prompt }} style={{ fontSize: 13, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
-                    {img.prompt}
-                  </Text>
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
-                    <ProviderBadge provider={img.provider} size="small" />
-                    {img.model && (
-                      <Tag style={{ margin: 0, fontSize: 10, background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>{img.model}</Tag>
-                    )}
-                  </div>
-                </>
-              ),
-            }))}
+            items={items.map((it) => {
+              const img = images.find((i) => String(i.id) === it.key)!;
+              return {
+                key: it.key,
+                src: it.src,
+                alt: it.alt,
+              };
+            })}
+            renderItem={(_, index) => (
+              <GalleryCard
+                image={images[index]}
+                onDeleted={() => mutate()}
+                siblingUrls={siblingUrls}
+                index={index}
+              />
+            )}
             emptyState={<EmptyState {...EmptyStates.noImages} />}
-            cols={{ xs: 1, sm: 2, md: 3, lg: 4 }}
           />
+
           {pagination.totalPages > 1 && (
-            <div style={{ marginTop: 24, textAlign: "center" }}>
+            <div className={styles.pagination}>
               <Pagination
                 current={page}
                 total={pagination.total}
                 pageSize={pagination.pageSize}
-                onChange={(p) => setPage(p)}
+                onChange={setPage}
                 showSizeChanger={false}
               />
             </div>
           )}
         </>
       )}
+
+      <DetailModal />
     </PageLayout>
   );
 }

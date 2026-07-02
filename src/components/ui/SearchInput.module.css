@@ -1,0 +1,49 @@
+/* SearchInput — compact search box with clear button */
+
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  min-width: 200px;
+  transition: border-color 0.15s ease;
+}
+
+.wrap:focus-within {
+  border-color: var(--accent-primary);
+}
+
+.icon {
+  color: var(--text-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.clear {
+  color: var(--text-muted);
+  font-size: 13px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.clear:hover {
+  color: var(--text-secondary);
+}

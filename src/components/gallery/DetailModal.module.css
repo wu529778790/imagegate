@@ -1,0 +1,63 @@
+/* DetailModal — side-by-side layout on desktop, stacked on mobile */
+
+.modal :global(.ant-modal-body) {
+  padding: 16px;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 280px);
+  gap: 16px;
+}
+
+.image {
+  width: 100%;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.time {
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.promptTitle {
+  margin: 0 !important;
+}
+
+.prompt {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.desc {
+  margin-top: auto;
+}
+
+.actions {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+}

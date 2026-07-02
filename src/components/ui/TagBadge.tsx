@@ -72,22 +72,24 @@ export function ProviderBadge({
   );
 }
 
-/** Status badge using shared STATUS_CONFIG. */
+/** Status badge using shared STATUS_CONFIG. Accepts any string for API flexibility. */
 export function StatusBadge({
   status,
 }: {
-  status: RecordStatus;
+  status: string;
 }) {
-  const config = STATUS_CONFIG[status];
+  const config = STATUS_CONFIG[status as RecordStatus];
+  const color = config?.color ?? "var(--text-muted)";
+  const label = config?.label ?? status;
 
   const icon =
     status === "success" ? (
       <span className={styles.statusIcon}>✓</span>
     ) : status === "failed" ? (
       <span className={styles.statusIcon}>✗</span>
-    ) : status === "running" ? (
+    ) : status === "running" || status === "pending" ? (
       <span className={styles.statusIconSpin}>⟳</span>
     ) : undefined;
 
-  return <TagBadge label={config.label} color={config.color} icon={icon} />;
+  return <TagBadge label={label} color={color} icon={icon} />;
 }
