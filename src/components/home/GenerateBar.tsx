@@ -1,13 +1,14 @@
 "use client";
 
-import React from "react";
-import { Button, Input, Select, App } from "antd";
-import { PictureOutlined } from "@ant-design/icons";
+import React, { useState, useRef, useEffect } from "react";
+import { Button, Input, Select, App, Tooltip } from "antd";
+import { PictureOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useGenerateStore } from "@/stores/generate-store";
 import { useGenerateMutation } from "@/lib/api/hooks";
 import { useAuthModal } from "@/components/AuthContext";
 import { PROVIDER_LABELS, PROVIDER_COLORS } from "@/types";
-import { AR_OPTIONS, QUALITY_OPTIONS } from "@/types/generation";
+import { AR_OPTIONS, QUALITY_OPTIONS, type GenerateParams } from "@/types/generation";
+import { PROMPT_TEMPLATES } from "@/lib/prompts";
 import { formatMs } from "@/lib/format";
 import styles from "./GenerateBar.module.css";
 
@@ -30,9 +31,16 @@ export function GenerateBar() {
   const setResults = useGenerateStore((s) => s.setResults);
   const updateResult = useGenerateStore((s) => s.updateResult);
 
-  const triggerMut = useGenerateMutation();
+  // Seed state (for future use — currently UI only; backend will later accept seed)
+  const [seed, setSeed] = useState<string>("");
 
+  // Template shimmer
+  const [shimmerId, setShimmerId] = useState<string | null>(null);
+  const shimmerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerMut = useGenerateMutation();
   const providerOptions = Object.entries(PROVIDER_LABELS).map(([value, label]) => ({ value, label }));
+
 
   const handleSubmit = async () => {
     const text = prompt.trim();
@@ -48,7 +56,8 @@ export function GenerateBar() {
     setResults([{ id: resultId, status: "pending" }]);
 
     try {
-      const body = { prompt: text, provider, ar, quality, model: model || undefined };
+      const body: GenerateParams = { prompt: text, provider, ar, quality, model: model || undefined };
+
       const data = await triggerMut.trigger(body);
       updateResult(resultId, {
         status: "success",
@@ -64,8 +73,40 @@ export function GenerateBar() {
     }
   };
 
+  const handleTemplateClick = (templateId: string) => {
+    const tpl = PROMPT_TEMPLATES.find((t) => t.id === templateId);
+    if (!tpl) return;
+    setPrompt(tpl.prompt);
+
+    // Shimmer effect
+    setShimmerId(templateId);
+    if (shimmerTimer.current) clearTimeout(shimmerTimer.current);
+    shimmerTimer.current = setTimeout(() => setShimmerId(null), 600);
+  };
+
+  // Category templates for chips
+  const recentTemplates = PROMPT_TEMPLATES.slice(0, 8);
+
   return (
     <div className={styles.bar}>
+      {/* ── Template chips row ── */}
+      <div className={styles.templates}>
+        <span className={styles.templatesLabel}>模板</span>
+        <div className={styles.templateChips}>
+          {recentTemplates.map((tpl) => (
+            <button
+              key={tpl.id}
+              className={`${styles.templateChip} ${shimmerId === tpl.id ? styles.templateChipShimmer : ""}`}
+              onClick={() => handleTemplateClick(tpl.id)}
+              title={tpl.prompt}
+            >
+              {tpl.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Main prompt row ── */}
       <div className={styles.main}>
         <TextArea
           className={styles.prompt}
@@ -89,6 +130,7 @@ export function GenerateBar() {
         </Button>
       </div>
 
+      {/* ── Parameter + seed row ── */}
       <div className={styles.params}>
         <div className={styles.paramGroup}>
           <span className={styles.paramLabel}>提供方</span>
@@ -137,6 +179,20 @@ export function GenerateBar() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Seed area */}
+        <div className={styles.seedGroup}>
+          <Tooltip title="指定种子可复现结果；留空则随机">
+            <span className={styles.paramLabel}>Seed</span>
+          </Tooltip>
+          <Input
+            size="small"
+            className={styles.seedInput}
+            value={seed}
+            onChange={(e) => setSeed(e.target.value.replace(/\D/g, "").slice(0, 10))}
+            placeholder="随机"
+          />
         </div>
       </div>
     </div>

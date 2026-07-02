@@ -1,12 +1,18 @@
-/* ImageCard — 图片卡片组件样式 */
+/* ImageCard — Premium image card with CivitAI/Tensor.Art hover pattern */
 
 .card {
   position: relative;
   overflow: hidden;
   border-radius: 12px;
   border: 1px solid var(--border-subtle);
-  background: var(--bg-surface, #1e1e2e);
-  transition: all 0.2s ease;
+  background: var(--bg-surface);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-sm);
+  z-index: 2;
 }
 
 .cardPreviewable {
@@ -20,7 +26,11 @@
 
 .image {
   display: block;
-  transition: opacity 0.2s ease;
+  transition: filter 0.25s ease, opacity 0.2s ease;
+}
+
+.card:hover .image {
+  filter: brightness(0.75);
 }
 
 .imageHidden {
@@ -45,20 +55,35 @@
   justify-content: center;
 }
 
+/* ── Overlay with bottom gradient — */
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.4) 40%,
+    transparent 100%
+  );
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 8px;
+  padding-bottom: 12px;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
 }
 
 .card:hover .overlay {
   opacity: 1;
+  pointer-events: auto;
+}
+
+/* Make the antd buttons inside overlay visible */
+.overlay :global(.ant-btn) {
+  border-radius: 8px;
+  font-size: 12px;
 }
 
 .metadata {

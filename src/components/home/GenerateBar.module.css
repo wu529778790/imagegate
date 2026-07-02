@@ -46,6 +46,65 @@
   font-weight: 500 !important;
 }
 
+.templates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 1200px;
+  margin: 0 auto 6px;
+  width: 100%;
+}
+
+.templatesLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.templateChips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  padding-bottom: 2px;
+}
+
+.templateChip {
+  appearance: none;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.templateChip:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--accent-primary-soft);
+}
+
+.templateChipShimmer {
+  animation: chipShimmer 0.6s ease-out;
+}
+
+@keyframes chipShimmer {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-primary), 0 0 16px 8px var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 .params {
   display: flex;
   align-items: center;
@@ -54,6 +113,19 @@
   margin: 0 auto;
   width: 100%;
   flex-wrap: wrap;
+}
+
+/* Seed area */
+.seedGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.seedInput {
+  width: 110px !important;
+  font-variant-numeric: tabular-nums;
 }
 
 .paramGroup {

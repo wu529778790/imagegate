@@ -1,0 +1,99 @@
+/* StatusPipeline — ComfyUI-inspired 5-stage ripple */
+
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 16px;
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 72px;
+  flex-shrink: 0;
+  padding: 6px 4px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.stageIcon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stageDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+/* States */
+.stageDone .stageIcon { color: var(--color-success); }
+.stageActive .stageIcon { color: var(--accent-primary); }
+.stageError .stageIcon { color: var(--color-error); }
+.stagePending .stageIcon { color: var(--text-muted); }
+
+.stageActive {
+  background: var(--accent-primary-soft);
+}
+
+.stageError {
+  background: var(--color-error-soft);
+}
+
+.stageText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  text-align: center;
+}
+
+.stageLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.stageDetail {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Connector between stages */
+.connector {
+  flex: 1;
+  min-width: 12px;
+  height: 2px;
+  background: var(--border-default);
+  border-radius: 2px;
+  margin-bottom: 18px;
+}
+
+.connectorDone {
+  background: var(--color-success);
+}
+
+@media (max-width: 500px) {
+  .stage {
+    min-width: 56px;
+  }
+  .stageLabel {
+    font-size: 10px;
+  }
+}

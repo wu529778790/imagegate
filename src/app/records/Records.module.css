@@ -74,6 +74,10 @@
 }
 
 .recordPrompt {
+  margin-bottom: 10px;
+}
+
+.recordPipeline {
   margin-bottom: 12px;
 }
 

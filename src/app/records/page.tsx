@@ -19,7 +19,7 @@ import { apiClient } from "@/lib/api/client";
 import { formatDuration } from "@/lib/utils";
 import { PROVIDER_LABELS, STATUS_CONFIG } from "@/types";
 import type { GenerationRecord, RecordStatus } from "@/types";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { StatusPipeline, pipelineFromRecord } from "@/components/records/StatusPipeline";
 
 import styles from "./Records.module.css";
 
@@ -74,7 +74,7 @@ export default function RecordsPage() {
   }, [records, providerFilter, statusFilter]);
 
   return (
-    <PageLayout>
+    <div>
       <HeaderSection title="生成记录" subtitle="查看所有历史生成记录" marginBottom={24} />
 
       <div className={styles.statsGrid}>
@@ -151,7 +151,7 @@ export default function RecordsPage() {
           )}
         </>
       )}
-    </PageLayout>
+    </div>
   );
 }
 
@@ -200,6 +200,11 @@ const RecordCard = React.memo(function RecordCard({
             {showFullPrompt ? "收起" : "展开"}
           </Button>
         )}
+      </div>
+
+      {/* Status pipeline — ComfyUI-style stage ripple */}
+      <div className={styles.recordPipeline}>
+        <StatusPipeline {...pipelineFromRecord(record)} />
       </div>
 
       <div className={styles.recordMeta}>

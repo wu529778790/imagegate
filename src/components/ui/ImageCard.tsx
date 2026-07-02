@@ -152,58 +152,37 @@ export const ImageCard = React.memo(function ImageCard({
           />
         )}
 
-        {/* Overlay Actions */}
-        <div className={styles.overlay} style={{ opacity: isHovered ? 1 : 0 }}>
-          {previewable && (
-            <Tooltip title="预览">
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<EyeOutlined />}
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Preview handler
-                }}
-              />
-            </Tooltip>
+        {/* Overlay Actions — bottom-visible on hover */}
+        <div className={styles.overlay}>
+          {previewable && onClick && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={(e) => { e.stopPropagation(); onClick(); }}
+            >
+              查看
+            </Button>
           )}
           {showDownload && (
-            <Tooltip title="下载">
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<DownloadOutlined />}
-                size="small"
-                onClick={handleDownload}
-              />
-            </Tooltip>
+            <Button size="small" icon={<DownloadOutlined />} onClick={handleDownload}>
+              下载
+            </Button>
           )}
-          {showSync && !isSynced && (
-            <Tooltip title="同步到 GitHub">
-              <Button
-                shape="circle"
-                icon={<SyncOutlined />}
-                size="small"
-                onClick={onSync}
-              />
-            </Tooltip>
+          {showSync && !isSynced && onSync && (
+            <Button size="small" icon={<SyncOutlined />} onClick={onSync}>
+              同步
+            </Button>
           )}
           {showSync && isSynced && (
-            <Tooltip title="已同步">
-              <Button shape="circle" icon={<CheckCircleOutlined />} size="small" className={styles.syncedIcon} />
-            </Tooltip>
+            <Button size="small" icon={<CheckCircleOutlined />} className={styles.syncedIcon} disabled>
+              已同步
+            </Button>
           )}
-          {showDelete && (
-            <Tooltip title="删除">
-              <Button
-                shape="circle"
-                icon={<DeleteOutlined />}
-                size="small"
-                danger
-                onClick={onDelete}
-              />
-            </Tooltip>
+          {showDelete && onDelete && (
+            <Button size="small" danger icon={<DeleteOutlined />} onClick={onDelete}>
+              删除
+            </Button>
           )}
           {actions}
         </div>
