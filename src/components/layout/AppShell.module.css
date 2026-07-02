@@ -1,0 +1,237 @@
+/* AppShell — sidebar + topbar + content */
+
+.shell {
+  display: flex;
+  height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--bg-deep);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  transition: width 0.2s var(--easing-spring);
+  overflow: hidden;
+}
+
+.sidebarCollapsed {
+  width: 64px;
+}
+
+.sidebarCollapsed .brandName,
+.sidebarCollapsed .navLabel {
+  display: none;
+}
+
+.sidebarBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 20px;
+  flex-shrink: 0;
+}
+
+.brandLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.brandName {
+  font-size: 16px;
+  font-weight: 700;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+}
+
+/* Nav links */
+.sidebarNav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  background: var(--nav-hover-bg);
+  color: var(--text-primary);
+}
+
+.navLinkActive {
+  background: var(--nav-active-bg);
+  color: var(--accent-primary);
+}
+
+.navIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.sidebarFooter {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.sidebarBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.sidebarBtn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* ── Main area ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.topbar {
+  height: var(--header-height);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.topbarTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.topbarBtn:hover {
+  background: var(--nav-hover-bg);
+  color: var(--text-primary);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  /* Allow pages to fill the space */
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100% !important;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+  }
+
+  .sidebarCollapsed {
+    width: 100% !important;
+  }
+
+  .sidebarBrand {
+    padding: 0 12px 0 0;
+  }
+
+  .sidebarNav {
+    flex-direction: row;
+    flex: 1;
+    gap: 2px;
+  }
+
+  .navLink {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .sidebarFooter {
+    border-top: none;
+    border-left: 1px solid var(--border-subtle);
+    padding: 0 0 0 8px;
+    margin-left: 8px;
+  }
+
+  .brandName {
+    display: none;
+  }
+
+  .navLabel {
+    display: none;
+  }
+
+  .sidebarCollapsed .navLabel {
+    display: none;
+  }
+}
