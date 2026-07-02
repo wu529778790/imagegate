@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { Button, App, Tabs } from "antd";
 import { PlusOutlined, PictureOutlined } from "@ant-design/icons";
 import { useSession } from "next-auth/react";
@@ -12,7 +12,8 @@ import {
 } from "@/components/ui";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { useFavoritesStore } from "@/stores/favorites-store";
-import { useFavoriteCollections } from "@/lib/api/hooks";
+import { useFavorites, useFavoriteCollections } from "@/lib/api/hooks";
+import { FavoriteCard } from "@/components/favorites/FavoriteCard";
 import { apiClient } from "@/lib/api/client";
 
 export default function FavoritesPage() {
@@ -20,11 +21,18 @@ export default function FavoritesPage() {
   const { data: session, status } = useSession();
   const authModal = useAuthModal();
 
-  const { data, mutate } = useFavoriteCollections();
   const collections = useFavoritesStore((s) => s.collections);
   const active = useFavoritesStore((s) => s.activeCollection);
   const setActive = useFavoritesStore((s) => s.setActiveCollection);
   const setCollections = useFavoritesStore((s) => s.setCollections);
+
+  const { data, mutate } = useFavoriteCollections();
+  const { data: favs } = useFavorites(active || null);
+
+  const favoriteIds = useMemo(
+    () => new Set((favs?.favorites ?? []).map((f) => f.record_id)),
+    [favs?.favorites],
+  );
 
   useEffect(() => {
     if (data?.collections) {
@@ -32,6 +40,41 @@ export default function FavoritesPage() {
       setCollections(cols);
     }
   }, [data?.collections, setCollections]);
+
+  // When the active tab changes, push ids into the store for fast isFavorite checks
+  useEffect(() => {
+    useFavoritesStore.getState().setFavoriteIds(Array.from(favoriteIds));
+  }, [favoriteIds]);
+
+  const handleNew = useCallback(async () => {
+    const name = window.prompt("请输入收藏夹名称：")?.trim();
+    if (!name) return;
+    await apiClient.post("/api/favorites", { name });
+    await mutate();
+  }, [mutate]);
+
+  const handleRename = useCallback(
+    async (oldName: string) => {
+      const newName = window.prompt("重命名为：", oldName)?.trim();
+      if (!newName || newName === oldName) return;
+      await apiClient.post("/api/favorites", {
+        action: "rename",
+        oldName,
+        newName,
+      });
+      await mutate();
+    },
+    [mutate],
+  );
+
+  const handleDeleteCollection = useCallback(
+    async (name: string) => {
+      if (!window.confirm(`确定删除收藏夹「${name}」？`)) return;
+      await apiClient.post("/api/favorites", { action: "delete", name });
+      await mutate();
+    },
+    [mutate],
+  );
 
   const tabItems = useMemo(
     () => collections.map((col) => ({ key: col, label: col })),
@@ -55,15 +98,7 @@ export default function FavoritesPage() {
         title="我的收藏"
         icon={<PictureOutlined />}
         actions={
-          <Button
-            icon={<PlusOutlined />}
-            onClick={async () => {
-              const name = window.prompt("请输入收藏夹名称：")?.trim();
-              if (!name) return;
-              await apiClient.post("/api/favorites", { name });
-              await mutate();
-            }}
-          >
+          <Button icon={<PlusOutlined />} onClick={handleNew}>
             新建收藏夹
           </Button>
         }
@@ -71,14 +106,43 @@ export default function FavoritesPage() {
 
       <Tabs
         activeKey={active}
-        items={tabItems}
+        items={tabItems.map((t) => ({
+          ...t,
+          label: (
+            <span
+              onContextMenu={(e) => {
+                e.preventDefault();
+                const action = window.prompt(`收藏夹「${t.label}」操作：输入 rename 重命名，delete 删除`);
+                if (action === "rename") handleRename(t.label as string);
+                else if (action === "delete") handleDeleteCollection(t.label as string);
+              }}
+            >
+              {t.label}
+            </span>
+          ),
+        }))}
         onChange={(key) => setActive(key)}
         type="card"
       />
 
-      <div style={{ padding: "24px 0", color: "var(--text-muted)" }}>
-        收藏夹内容请在相册中星标图片后查看（功能建设中 🚧）
-      </div>
+      {(favs?.favorites ?? []).length === 0 ? (
+        <div style={{ padding: "40px 0", textAlign: "center", color: "var(--text-muted)" }}>
+          在相册中点击星标即可将图片收藏至此
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+            gap: 12,
+            padding: "20px 0",
+          }}
+        >
+          {favs?.favorites.map((fav) => (
+            <FavoriteCard key={fav.id} recordId={fav.record_id} collection={active} />
+          ))}
+        </div>
+      )}
     </PageLayout>
   );
 }

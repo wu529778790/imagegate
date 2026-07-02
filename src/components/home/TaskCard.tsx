@@ -1,10 +1,19 @@
 "use client";
 
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button, Image, Tooltip, App } from "antd";
 import { DownloadOutlined, RetweetOutlined } from "@ant-design/icons";
+import { useGenerateStore } from "@/stores/generate-store";
 import styles from "./TaskCard.module.css";
 import type { ResultItem } from "@/stores/generate-store";
+
+const fadeUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, scale: 0.96 },
+  transition: { duration: 0.25, ease: "easeOut" as const },
+};
 
 interface TaskCardProps {
   result: ResultItem;
@@ -28,15 +37,15 @@ export function TaskCard({ result, index }: TaskCardProps) {
     document.body.removeChild(link);
   };
 
+  const addReferences = useGenerateStore((s) => s.addReferences);
+
   const handleAddRef = () => {
-    // Note: This requires access to the store. Parent passes the data URL back.
-    // For now — bubble through window event so the parent can wire it in.
-    window.dispatchEvent(new CustomEvent("imagegate:addRef", { detail: img.dataUrl }));
+    addReferences([{ id: `ref-from-result-${Date.now()}`, name: "result.png", dataUrl: img.dataUrl }]);
     message.success("已加入参考图");
   };
 
   return (
-    <div className={styles.card}>
+    <motion.div className={styles.card} {...fadeUp} layout>
       <Image
         src={img.dataUrl}
         alt={`生成结果 ${index + 1}`}
@@ -61,24 +70,24 @@ export function TaskCard({ result, index }: TaskCardProps) {
           </Tooltip>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function PendingCard() {
   return (
-    <div className={styles.pending}>
+    <motion.div className={styles.pending} {...fadeUp} layout>
       <div className={styles.pendingInner}>
         <div className={styles.spinner} />
         <span>生成中</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function FailedCard({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
-    <div className={styles.failed}>
+    <motion.div className={styles.failed} {...fadeUp} layout>
       <div className={styles.failedInner}>
         <div className={styles.failedTitle}>生成失败</div>
         <div className={styles.failedError}>{error}</div>
@@ -88,6 +97,6 @@ export function FailedCard({ error, onRetry }: { error: string; onRetry: () => v
           重试
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }

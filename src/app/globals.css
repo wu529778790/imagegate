@@ -1,5 +1,3 @@
-@import "tailwindcss";
-
 :root {
   /* ── Background layers (light default, matching reference design) ── */
   --bg-deep: #ffffff;

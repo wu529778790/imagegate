@@ -1,0 +1,33 @@
+/* FavoriteCard — thumbnail with prompt + provider + duration */
+
+.skeleton {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.metadata {
+  padding: 8px 10px;
+}
+
+.promptRow {
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  margin: 0;
+  font-size: 10px;
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+}
